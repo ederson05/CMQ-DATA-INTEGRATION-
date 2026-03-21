@@ -1,27 +1,32 @@
 import { useState, useEffect } from 'react'
-import { FiUsers, FiCalendar, FiFileText, FiUser, FiSearch, FiEdit2, FiTrash2, FiLogOut } from 'react-icons/fi'
+import {
+  FiUsers, FiCalendar, FiFileText, FiUser,
+  FiSearch, FiEdit2, FiLogOut
+} from 'react-icons/fi'
 import { FaStethoscope } from 'react-icons/fa'
-import './secretaria_principal.css'
 import { useNavigate } from 'react-router-dom'
-
+import './secretaria_principal.css'
 
 function SecretariaPrincipal() {
+  const navigate = useNavigate()
   const [activeModule, setActiveModule] = useState('pacientes')
-   const navigate = useNavigate()
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [pacienteEditando, setPacienteEditando] = useState(null)
+
   const [pacientes, setPacientes] = useState([
-    { id: '10821', nombre: 'Ederson', telefono: '3214568741' },
-    { id: '87026', nombre: 'Manuel', telefono: '3182456322' },
-    { id: '59741', nombre: 'Meneses', telefono: '3007045896' },
-    { id: '10887', nombre: 'Cristian', telefono: '3185632489' },
-    { id: '9965',  nombre: 'Jhonatan Erazo', telefono: '3258963214' },
+    { id: '10821', nombre: 'Ederson',        telefono: '3214568741' },
+    { id: '87026', nombre: 'Manuel',          telefono: '3182456322' },
+    { id: '59741', nombre: 'Meneses',         telefono: '3007045896' },
+    { id: '10887', nombre: 'Cristian',        telefono: '3185632489' },
+    { id: '9965',  nombre: 'Jhonatan Erazo',  telefono: '3258963214' },
   ])
+
   const [busqueda, setBusqueda] = useState('')
   const [nuevoPaciente, setNuevoPaciente] = useState({
     nombre: '', identificacion: '', telefono: '', edad: '', genero: ''
   })
 
-  // Reloj en tiempo real
+  // ⏰ Reloj
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
@@ -30,16 +35,15 @@ function SecretariaPrincipal() {
   const formatDate = (date) => date.toLocaleDateString('es-CO', {
     day: '2-digit', month: '2-digit', year: 'numeric'
   })
-
   const formatTime = (date) => date.toLocaleTimeString('es-CO', {
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
   })
 
+  // Nuevo paciente
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setNuevoPaciente(prev => ({ ...prev, [name]: value }))
   }
-
   const handleSubmit = (e) => {
     e.preventDefault()
     const nuevo = {
@@ -52,12 +56,28 @@ function SecretariaPrincipal() {
     alert('✅ Paciente registrado correctamente')
   }
 
+  // Abrir modal editar
+  const handleEditar = (paciente) => {
+    setPacienteEditando({ ...paciente })
+  }
 
+  // Guardar edición con validación
+  const handleGuardarEdicion = () => {
+    const original = pacientes.find(p => p.id === pacienteEditando.id)
+    const sinCambios =
+      pacienteEditando.nombre.trim() === original.nombre.trim() &&
+      pacienteEditando.telefono.trim() === original.telefono.trim()
 
-  const handleEliminar = (id) => {
-    if (window.confirm('¿Estás seguro de eliminar este paciente?')) {
-      setPacientes(prev => prev.filter(p => p.id !== id))
+    if (sinCambios) {
+      alert('⚠️ No se modificaron datos')
+      return
     }
+
+    setPacientes(prev =>
+      prev.map(p => p.id === pacienteEditando.id ? pacienteEditando : p)
+    )
+    setPacienteEditando(null)
+    alert('✅ Modificación exitosa')
   }
 
   const pacientesFiltrados = pacientes.filter(p =>
@@ -66,10 +86,10 @@ function SecretariaPrincipal() {
   )
 
   const modules = [
-    { id: 'pacientes', name: 'Pacientes',      count: pacientes.length, icon: <FiUsers /> },
-    { id: 'citas',     name: 'Citas Médicas',  count: 0,                icon: <FiCalendar /> },
-    { id: 'historia',  name: 'Historia Clínica', count: 2,              icon: <FiFileText /> },
-  ]
+  { id: 'pacientes', name: 'Pacientes',        count: pacientes.length, icon: <FiUsers />,    path: '/secretaria' },
+  { id: 'citas',     name: 'Citas Médicas',    count: 0,                icon: <FiCalendar />, path: '/citas' },
+  { id: 'historia',  name: 'Historia Clínica', count: 2,                icon: <FiFileText />, path: '/historia' },
+]
 
   const stats = [
     { label: 'TOTAL PACIENTES', value: pacientes.length, subtext: 'Registrados en sistema', color: 'blue',   icon: <FiUsers size={22} />,       dot: '#3b82f6' },
@@ -92,16 +112,9 @@ function SecretariaPrincipal() {
           </div>
         </div>
         <div className="header-right">
-
-
           <button className="btn-logout" onClick={() => navigate('/')}>
             <FiLogOut /> Cerrar sesión
-    </button>
-
-
-
-
-
+          </button>
           <div className="datetime-box">
             <span className="current-date">{formatDate(currentTime)}</span>
             <span className="current-time">{formatTime(currentTime)}</span>
@@ -123,7 +136,7 @@ function SecretariaPrincipal() {
               <button
                 key={mod.id}
                 className={`module-item ${activeModule === mod.id ? 'active' : ''}`}
-                onClick={() => setActiveModule(mod.id)}
+                onClick={() => navigate(mod.path)}
               >
                 <span className="module-icon">{mod.icon}</span>
                 <span className="module-name">{mod.name}</span>
@@ -133,9 +146,8 @@ function SecretariaPrincipal() {
           </nav>
         </aside>
 
-        {/* ── CONTENIDO PRINCIPAL ── */}
+        {/* ── CONTENIDO ── */}
         <main className="content-area">
-
           <div className="page-header">
             <h2>Gestión de Pacientes</h2>
             <p>Registro, consulta y actualización de pacientes del sistema</p>
@@ -165,40 +177,24 @@ function SecretariaPrincipal() {
               <form onSubmit={handleSubmit} className="patient-form">
                 <div className="form-group">
                   <label>NOMBRE COMPLETO</label>
-                  <input
-                    type="text" name="nombre"
-                    placeholder="Ej. Juan Pérez García"
-                    value={nuevoPaciente.nombre}
-                    onChange={handleInputChange} required
-                  />
+                  <input type="text" name="nombre" placeholder="Ej. Juan Pérez García"
+                    value={nuevoPaciente.nombre} onChange={handleInputChange} required />
                 </div>
                 <div className="form-group">
                   <label>IDENTIFICACIÓN</label>
-                  <input
-                    type="text" name="identificacion"
-                    placeholder="Ej. 87526984"
-                    value={nuevoPaciente.identificacion}
-                    onChange={handleInputChange} required
-                  />
+                  <input type="text" name="identificacion" placeholder="Ej. 87526984"
+                    value={nuevoPaciente.identificacion} onChange={handleInputChange} required />
                 </div>
                 <div className="form-group">
                   <label>TELÉFONO</label>
-                  <input
-                    type="tel" name="telefono"
-                    placeholder="Ej. 3214556879"
-                    value={nuevoPaciente.telefono}
-                    onChange={handleInputChange} required
-                  />
+                  <input type="tel" name="telefono" placeholder="Ej. 3214556879"
+                    value={nuevoPaciente.telefono} onChange={handleInputChange} required />
                 </div>
                 <div className="form-row">
                   <div className="form-group">
                     <label>EDAD (AÑOS)</label>
-                    <input
-                      type="number" name="edad"
-                      placeholder="0"
-                      value={nuevoPaciente.edad}
-                      onChange={handleInputChange} required
-                    />
+                    <input type="number" name="edad" placeholder="0"
+                      value={nuevoPaciente.edad} onChange={handleInputChange} required />
                   </div>
                   <div className="form-group">
                     <label>GÉNERO</label>
@@ -221,12 +217,8 @@ function SecretariaPrincipal() {
               <h3><FiUsers className="section-icon" /> Directorio de Pacientes</h3>
               <div className="search-box">
                 <FiSearch className="search-icon" />
-                <input
-                  type="text"
-                  placeholder="Búsqueda por nombre o ID..."
-                  value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
-                />
+                <input type="text" placeholder="Búsqueda por nombre o ID..."
+                  value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
               </div>
               <div className="patient-table">
                 <table>
@@ -246,9 +238,8 @@ function SecretariaPrincipal() {
                         <td>{p.telefono}</td>
                         <td>
                           <div className="action-btns">
-                            <button className="btn-edit"><FiEdit2 size={12} /> Editar</button>
-                            <button className="btn-delete" onClick={() => handleEliminar(p.id)}>
-                              <FiTrash2 size={12} />
+                            <button className="btn-edit" onClick={() => handleEditar(p)}>
+                              <FiEdit2 size={12} /> Editar
                             </button>
                           </div>
                         </td>
@@ -276,6 +267,60 @@ function SecretariaPrincipal() {
           Sesión activa — {formatTime(currentTime)}
         </span>
       </footer>
+
+      {/* ── MODAL EDITAR ── */}
+      {pacienteEditando && (
+        <div className="modal-overlay" onClick={() => setPacienteEditando(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+
+            <div className="modal-header">
+              <div className="modal-title-group">
+                <div className="modal-icon-box">
+                  <FiUser size={18} />
+                </div>
+                <div>
+                  <h3>Editar Paciente</h3>
+                  <p>Modifica la información del paciente</p>
+                </div>
+              </div>
+              <button className="modal-close" onClick={() => setPacienteEditando(null)}>✕</button>
+            </div>
+
+            <div className="modal-body">
+              <div className="form-group">
+                <label>ID DEL PACIENTE</label>
+                <input type="text" value={pacienteEditando.id} disabled />
+              </div>
+              <div className="form-group">
+                <label>NOMBRE DEL PACIENTE</label>
+                <input
+                  type="text"
+                  value={pacienteEditando.nombre}
+                  onChange={(e) => setPacienteEditando(prev => ({ ...prev, nombre: e.target.value }))}
+                />
+              </div>
+              <div className="form-group">
+                <label>TELÉFONO</label>
+                <input
+                  type="tel"
+                  value={pacienteEditando.telefono}
+                  onChange={(e) => setPacienteEditando(prev => ({ ...prev, telefono: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn-cancelar" onClick={() => setPacienteEditando(null)}>
+                Cancelar
+              </button>
+              <button className="btn-guardar" onClick={handleGuardarEdicion}>
+                <FiEdit2 size={13} /> Guardar Cambios
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   )
