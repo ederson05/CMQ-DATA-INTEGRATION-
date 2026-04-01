@@ -7,72 +7,67 @@ import { FaStethoscope } from 'react-icons/fa'
 import { useNavigate } from 'react-router-dom'
 import './secretaria_principal.css'
 
+const API = 'http://localhost:3001/api'
+const hoy = new Date().toISOString().split('T')[0]
+
+const validarTelefono = (tel) => tel.replace(/\D/g, '').length === 10
+const validarFecha = (fecha) => fecha && fecha <= hoy
+
 function SecretariaPrincipal() {
   const navigate = useNavigate()
   const [currentTime, setCurrentTime] = useState(new Date())
   const [pacienteEditando, setPacienteEditando] = useState(null)
   const [pacienteViendo, setPacienteViendo] = useState(null)
-
-  const [pacientes, setPacientes] = useState([
-    {
-      id: '10821', nombre: 'Ederson García', telefono: '3214568741',
-      fechaNacimiento: '1995-06-15', genero: 'M', tipoSangre: 'O+',
-      email: 'ederson@email.com', direccion: 'Calle 5 # 10-20', ciudad: 'Popayán',
-      contactoEmergenciaNombre: 'Carlos García', contactoEmergenciaTel: '3101234567'
-    },
-    {
-      id: '87026', nombre: 'Manuel Torres', telefono: '3182456322',
-      fechaNacimiento: '1988-03-22', genero: 'M', tipoSangre: 'A+',
-      email: 'manuel@email.com', direccion: 'Carrera 8 # 3-45', ciudad: 'Popayán',
-      contactoEmergenciaNombre: 'Ana Torres', contactoEmergenciaTel: '3209876543'
-    },
-    {
-      id: '59741', nombre: 'Meneses Ruiz', telefono: '3007045896',
-      fechaNacimiento: '2000-11-10', genero: 'M', tipoSangre: 'B-',
-      email: 'meneses@email.com', direccion: 'Av 4 Norte # 12-30', ciudad: 'Cali',
-      contactoEmergenciaNombre: 'Rosa Ruiz', contactoEmergenciaTel: '3154567890'
-    },
-    {
-      id: '10887', nombre: 'Cristian López', telefono: '3185632489',
-      fechaNacimiento: '1992-07-08', genero: 'M', tipoSangre: 'AB+',
-      email: 'cristian@email.com', direccion: 'Calle 15 # 8-60', ciudad: 'Bogotá',
-      contactoEmergenciaNombre: 'María López', contactoEmergenciaTel: '3187654321'
-    },
-    {
-      id: '9965', nombre: 'Jhonatan Erazo', telefono: '3258963214',
-      fechaNacimiento: '1997-01-25', genero: 'M', tipoSangre: 'O-',
-      email: 'jhonatan@email.com', direccion: 'Cra 3 # 20-15', ciudad: 'Pasto',
-      contactoEmergenciaNombre: 'Luis Erazo', contactoEmergenciaTel: '3223456789'
-    },
-  ])
-
+  const [pacientes, setPacientes] = useState([])
   const [busqueda, setBusqueda] = useState('')
+  const [errores, setErrores] = useState({})
+  const [erroresEdit, setErroresEdit] = useState({})
   const [nuevoPaciente, setNuevoPaciente] = useState({
     nombre: '', id: '', telefono: '', fechaNacimiento: '', genero: '',
     tipoSangre: '', email: '', direccion: '', ciudad: '',
     contactoEmergenciaNombre: '', contactoEmergenciaTel: ''
   })
 
-  // ⏰ Reloj
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
 
-  const formatDate = (date) => date.toLocaleDateString('es-CO', {
-    day: '2-digit', month: '2-digit', year: 'numeric'
-  })
-  const formatTime = (date) => date.toLocaleTimeString('es-CO', {
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-  })
+  useEffect(() => { cargarPacientes() }, [])
+
+  const cargarPacientes = async () => {
+    try {
+      const res = await fetch(`${API}/pacientes`)
+      const data = await res.json()
+      const mapeados = data.map(row => ({
+        id: String(row[0]),
+        nombre: row[1],
+        telefono: row[2],
+        fechaNacimiento: row[3] ? row[3].split('T')[0] : '',
+        genero: row[4],
+        tipoSangre: row[5],
+        email: row[6] || '',
+        direccion: row[7] || '',
+        ciudad: row[8] || '',
+        contactoEmergenciaNombre: row[9] || '',
+        contactoEmergenciaTel: row[10] || ''
+      }))
+      setPacientes(mapeados)
+    } catch (err) {
+      console.error('Error cargando pacientes:', err)
+    }
+  }
+
+  const formatDate = (date) => date.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const formatTime = (date) => date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
 
   const calcularEdad = (fechaNacimiento) => {
     if (!fechaNacimiento) return '-'
-    const hoy = new Date()
+    const hoyDate = new Date()
     const nac = new Date(fechaNacimiento)
-    let edad = hoy.getFullYear() - nac.getFullYear()
-    const m = hoy.getMonth() - nac.getMonth()
-    if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--
+    let edad = hoyDate.getFullYear() - nac.getFullYear()
+    const m = hoyDate.getMonth() - nac.getMonth()
+    if (m < 0 || (m === 0 && hoyDate.getDate() < nac.getDate())) edad--
     return `${edad} años`
   }
 
@@ -83,52 +78,122 @@ function SecretariaPrincipal() {
     return '-'
   }
 
-  // Handlers nuevo paciente
+  // Validar campo individual en tiempo real
+  const validarCampo = (name, value) => {
+    let error = ''
+    if (name === 'telefono' || name === 'contactoEmergenciaTel') {
+      const digits = value.replace(/\D/g, '')
+      if (value && digits.length !== 10) error = 'El teléfono debe tener exactamente 10 dígitos'
+    }
+    if (name === 'fechaNacimiento') {
+      if (value && value > hoy) error = 'La fecha no puede ser mayor a hoy'
+    }
+    return error
+  }
+
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setNuevoPaciente(prev => ({ ...prev, [name]: value }))
+    const error = validarCampo(name, value)
+    setErrores(prev => ({ ...prev, [name]: error }))
   }
 
-  const handleSubmit = (e) => {
+  const handleInputEditChange = (e) => {
+    const { name, value } = e.target
+    setPacienteEditando(prev => ({ ...prev, [name]: value }))
+    const error = validarCampo(name, value)
+    setErroresEdit(prev => ({ ...prev, [name]: error }))
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!nuevoPaciente.id.trim()) {
-      alert('⚠️ Por favor ingresa el número de identificación')
+
+    // Validaciones finales
+    const nuevosErrores = {}
+    if (!nuevoPaciente.id.trim()) nuevosErrores.id = 'Campo requerido'
+    if (!validarTelefono(nuevoPaciente.telefono)) nuevosErrores.telefono = 'El teléfono debe tener exactamente 10 dígitos'
+    if (!validarFecha(nuevoPaciente.fechaNacimiento)) nuevosErrores.fechaNacimiento = 'La fecha no puede ser mayor a hoy'
+    if (nuevoPaciente.contactoEmergenciaTel && !validarTelefono(nuevoPaciente.contactoEmergenciaTel))
+      nuevosErrores.contactoEmergenciaTel = 'El teléfono debe tener exactamente 10 dígitos'
+
+    if (Object.values(nuevosErrores).some(e => e)) {
+      setErrores(nuevosErrores)
       return
     }
+
     if (pacientes.find(p => p.id === nuevoPaciente.id.trim())) {
       alert('⚠️ Ya existe un paciente con esa identificación')
       return
     }
-    setPacientes(prev => [...prev, { ...nuevoPaciente, id: nuevoPaciente.id.trim() }])
-    setNuevoPaciente({
-      nombre: '', id: '', telefono: '', fechaNacimiento: '', genero: '',
-      tipoSangre: '', email: '', direccion: '', ciudad: '',
-      contactoEmergenciaNombre: '', contactoEmergenciaTel: ''
-    })
-    alert('✅ Paciente registrado correctamente')
+
+    try {
+      const res = await fetch(`${API}/pacientes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...nuevoPaciente, id: nuevoPaciente.id.trim() })
+      })
+      const data = await res.json()
+      if (data.success) {
+        await cargarPacientes()
+        setNuevoPaciente({
+          nombre: '', id: '', telefono: '', fechaNacimiento: '', genero: '',
+          tipoSangre: '', email: '', direccion: '', ciudad: '',
+          contactoEmergenciaNombre: '', contactoEmergenciaTel: ''
+        })
+        setErrores({})
+        alert('✅ Paciente registrado correctamente')
+      } else {
+        alert('❌ Error: ' + data.error)
+      }
+    } catch (err) {
+      alert('❌ Error conectando al servidor')
+    }
   }
 
-  // Handlers editar
-  const handleEditar = (p) => setPacienteEditando({ ...p })
-  const handleGuardarEdicion = () => {
-    const original = pacientes.find(p => p.id === pacienteEditando.id)
-    const sinCambios =
-      pacienteEditando.nombre.trim() === original.nombre.trim() &&
-      pacienteEditando.telefono.trim() === original.telefono.trim() &&
-      pacienteEditando.email.trim() === original.email.trim() &&
-      pacienteEditando.direccion.trim() === original.direccion.trim() &&
-      pacienteEditando.ciudad.trim() === original.ciudad.trim() &&
-      pacienteEditando.contactoEmergenciaNombre.trim() === original.contactoEmergenciaNombre.trim() &&
-      pacienteEditando.contactoEmergenciaTel.trim() === original.contactoEmergenciaTel.trim()
+  const handleEditar = (p) => {
+    setPacienteEditando({ ...p })
+    setErroresEdit({})
+  }
 
-    if (sinCambios) {
-      alert('⚠️ No se modificaron datos')
+  const handleGuardarEdicion = async () => {
+    const nuevosErrores = {}
+    if (!validarTelefono(pacienteEditando.telefono)) nuevosErrores.telefono = 'El teléfono debe tener exactamente 10 dígitos'
+    if (pacienteEditando.contactoEmergenciaTel && !validarTelefono(pacienteEditando.contactoEmergenciaTel))
+      nuevosErrores.contactoEmergenciaTel = 'El teléfono debe tener exactamente 10 dígitos'
+
+    if (Object.values(nuevosErrores).some(e => e)) {
+      setErroresEdit(nuevosErrores)
       return
     }
-    setPacientes(prev => prev.map(p => p.id === pacienteEditando.id ? pacienteEditando : p))
-    setPacienteEditando(null)
-    alert('✅ Modificación exitosa')
+
+    try {
+      const res = await fetch(`${API}/pacientes/${pacienteEditando.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pacienteEditando)
+      })
+      const data = await res.json()
+      if (data.success) {
+        await cargarPacientes()
+        setPacienteEditando(null)
+        alert('✅ Modificación exitosa')
+      } else {
+        alert('❌ Error: ' + data.error)
+      }
+    } catch (err) {
+      alert('❌ Error conectando al servidor')
+    }
   }
+
+  const inputStyle = (campo) => ({
+    borderColor: errores[campo] ? '#ef4444' : '',
+    background: errores[campo] ? '#fff5f5' : ''
+  })
+
+  const inputStyleEdit = (campo) => ({
+    borderColor: erroresEdit[campo] ? '#ef4444' : '',
+    background: erroresEdit[campo] ? '#fff5f5' : ''
+  })
 
   const pacientesFiltrados = pacientes.filter(p =>
     p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -151,7 +216,6 @@ function SecretariaPrincipal() {
   return (
     <div className="secretaria-container">
 
-      {/* ── HEADER ── */}
       <header className="main-header">
         <div className="header-left">
           <div className="logo-icon">+</div>
@@ -177,17 +241,13 @@ function SecretariaPrincipal() {
       </header>
 
       <div className="main-content">
-
-        {/* ── SIDEBAR ── */}
         <aside className="sidebar">
           <h3>MÓDULOS</h3>
           <nav className="modules-nav">
             {modules.map(mod => (
-              <button
-                key={mod.id}
+              <button key={mod.id}
                 className={`module-item ${mod.id === 'pacientes' ? 'active' : ''}`}
-                onClick={() => navigate(mod.path)}
-              >
+                onClick={() => navigate(mod.path)}>
                 <span className="module-icon">{mod.icon}</span>
                 <span className="module-name">{mod.name}</span>
                 <span className="module-count">{mod.count}</span>
@@ -196,14 +256,12 @@ function SecretariaPrincipal() {
           </nav>
         </aside>
 
-        {/* ── CONTENIDO ── */}
         <main className="content-area">
           <div className="page-header">
             <h2>Gestión de Pacientes</h2>
             <p>Registro, consulta y actualización de pacientes del sistema</p>
           </div>
 
-          {/* Stats */}
           <div className="stats-grid">
             {stats.map((stat, i) => (
               <div key={i} className="stat-card">
@@ -219,8 +277,6 @@ function SecretariaPrincipal() {
           </div>
 
           <div className="patient-sections">
-
-            {/* ── NUEVO PACIENTE ── */}
             <div className="form-section">
               <h3><FiUser className="section-icon" /> Nuevo Paciente</h3>
               <form onSubmit={handleSubmit} className="patient-form">
@@ -229,7 +285,8 @@ function SecretariaPrincipal() {
                 <div className="form-group">
                   <label>NÚMERO DE IDENTIFICACIÓN</label>
                   <input type="text" name="id" placeholder="Ej. 1062554433"
-                    value={nuevoPaciente.id} onChange={handleInputChange} required />
+                    value={nuevoPaciente.id} onChange={handleInputChange} required style={inputStyle('id')} />
+                  {errores.id && <span style={{ color: '#ef4444', fontSize: '11px' }}>{errores.id}</span>}
                 </div>
                 <div className="form-group">
                   <label>NOMBRE COMPLETO</label>
@@ -239,8 +296,10 @@ function SecretariaPrincipal() {
                 <div className="form-row">
                   <div className="form-group">
                     <label>FECHA DE NACIMIENTO</label>
-                    <input type="date" name="fechaNacimiento"
-                      value={nuevoPaciente.fechaNacimiento} onChange={handleInputChange} required />
+                    <input type="date" name="fechaNacimiento" max={hoy}
+                      value={nuevoPaciente.fechaNacimiento} onChange={handleInputChange} required
+                      style={inputStyle('fechaNacimiento')} />
+                    {errores.fechaNacimiento && <span style={{ color: '#ef4444', fontSize: '11px' }}>{errores.fechaNacimiento}</span>}
                   </div>
                   <div className="form-group">
                     <label>GÉNERO</label>
@@ -266,7 +325,9 @@ function SecretariaPrincipal() {
                 <div className="form-group">
                   <label>TELÉFONO</label>
                   <input type="tel" name="telefono" placeholder="Ej. 3214556879"
-                    value={nuevoPaciente.telefono} onChange={handleInputChange} required />
+                    value={nuevoPaciente.telefono} onChange={handleInputChange} required
+                    style={inputStyle('telefono')} maxLength={10} />
+                  {errores.telefono && <span style={{ color: '#ef4444', fontSize: '11px' }}>{errores.telefono}</span>}
                 </div>
                 <div className="form-group">
                   <label>EMAIL</label>
@@ -293,7 +354,9 @@ function SecretariaPrincipal() {
                 <div className="form-group">
                   <label>TELÉFONO</label>
                   <input type="tel" name="contactoEmergenciaTel" placeholder="Ej. 3119900112"
-                    value={nuevoPaciente.contactoEmergenciaTel} onChange={handleInputChange} />
+                    value={nuevoPaciente.contactoEmergenciaTel} onChange={handleInputChange}
+                    style={inputStyle('contactoEmergenciaTel')} maxLength={10} />
+                  {errores.contactoEmergenciaTel && <span style={{ color: '#ef4444', fontSize: '11px' }}>{errores.contactoEmergenciaTel}</span>}
                 </div>
 
                 <button type="submit" className="btn-register">
@@ -302,7 +365,6 @@ function SecretariaPrincipal() {
               </form>
             </div>
 
-            {/* ── DIRECTORIO ── */}
             <div className="directory-section">
               <h3><FiUsers className="section-icon" /> Directorio de Pacientes</h3>
               <div className="search-box">
@@ -313,12 +375,7 @@ function SecretariaPrincipal() {
               <div className="patient-table">
                 <table>
                   <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>NOMBRE</th>
-                      <th>TELÉFONO</th>
-                      <th>ACCIÓN</th>
-                    </tr>
+                    <tr><th>ID</th><th>NOMBRE</th><th>TELÉFONO</th><th>ACCIÓN</th></tr>
                   </thead>
                   <tbody>
                     {pacientesFiltrados.map((p) => (
@@ -328,13 +385,8 @@ function SecretariaPrincipal() {
                         <td>{p.telefono}</td>
                         <td>
                           <div className="action-btns">
-                            <button className="btn-eye" title="Ver perfil"
-                              onClick={() => setPacienteViendo(p)}>
-                              <FiEye size={13} />
-                            </button>
-                            <button className="btn-edit" onClick={() => handleEditar(p)}>
-                              <FiEdit2 size={12} /> Editar
-                            </button>
+                            <button className="btn-eye" onClick={() => setPacienteViendo(p)}><FiEye size={13} /></button>
+                            <button className="btn-edit" onClick={() => handleEditar(p)}><FiEdit2 size={12} /> Editar</button>
                           </div>
                         </td>
                       </tr>
@@ -346,12 +398,10 @@ function SecretariaPrincipal() {
                 </table>
               </div>
             </div>
-
           </div>
         </main>
       </div>
 
-      {/* ── FOOTER ── */}
       <footer className="main-footer">
         <span>CMQ - Módulo Clínica</span>
         <span className="session-info">
@@ -360,55 +410,39 @@ function SecretariaPrincipal() {
         </span>
       </footer>
 
-      {/* ══════════════════════════════
-          MODAL VER PERFIL
-      ══════════════════════════════ */}
+      {/* MODAL VER PERFIL */}
       {pacienteViendo && (
         <div className="modal-overlay" onClick={() => setPacienteViendo(null)}>
           <div className="modal modal-perfil" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div className="modal-title-group">
                 <div className="modal-icon-box"><FiUser size={18} /></div>
-                <div>
-                  <h3>Perfil del Paciente</h3>
-                  <p>{pacienteViendo.nombre}</p>
-                </div>
+                <div><h3>Perfil del Paciente</h3><p>{pacienteViendo.nombre}</p></div>
               </div>
               <button className="modal-close" onClick={() => setPacienteViendo(null)}>✕</button>
             </div>
-
             <div className="modal-body perfil-body">
-
               <div className="perfil-seccion-titulo">IDENTIFICACIÓN</div>
               <div className="perfil-fila"><span>Número ID</span><span>CC {pacienteViendo.id}</span></div>
               <div className="perfil-fila"><span>Nombre Completo</span><span>{pacienteViendo.nombre}</span></div>
               <div className="perfil-fila"><span>Fecha de Nacimiento</span>
-                <span>{pacienteViendo.fechaNacimiento
-                  ? new Date(pacienteViendo.fechaNacimiento + 'T00:00:00').toLocaleDateString('es-CO')
-                  : '-'}</span>
+                <span>{pacienteViendo.fechaNacimiento ? new Date(pacienteViendo.fechaNacimiento + 'T00:00:00').toLocaleDateString('es-CO') : '-'}</span>
               </div>
               <div className="perfil-fila"><span>Edad</span><span>{calcularEdad(pacienteViendo.fechaNacimiento)}</span></div>
               <div className="perfil-fila"><span>Género</span><span>{formatGenero(pacienteViendo.genero)}</span></div>
               <div className="perfil-fila"><span>Tipo de Sangre</span><span className="badge-sangre">{pacienteViendo.tipoSangre || '-'}</span></div>
-
               <div className="perfil-seccion-titulo">CONTACTO</div>
               <div className="perfil-fila"><span>Teléfono</span><span>{pacienteViendo.telefono}</span></div>
               <div className="perfil-fila"><span>Email</span><span>{pacienteViendo.email || '-'}</span></div>
               <div className="perfil-fila"><span>Dirección</span><span>{pacienteViendo.direccion || '-'}</span></div>
               <div className="perfil-fila"><span>Ciudad</span><span>{pacienteViendo.ciudad || '-'}</span></div>
-
               <div className="perfil-seccion-titulo">CONTACTO DE EMERGENCIA</div>
               <div className="perfil-fila"><span>Nombre</span><span>{pacienteViendo.contactoEmergenciaNombre || '-'}</span></div>
               <div className="perfil-fila"><span>Teléfono</span><span>{pacienteViendo.contactoEmergenciaTel || '-'}</span></div>
-
             </div>
-
             <div className="modal-footer">
               <button className="btn-cancelar" onClick={() => setPacienteViendo(null)}>Cerrar</button>
-              <button className="btn-guardar" onClick={() => {
-                setPacienteViendo(null)
-                handleEditar(pacienteViendo)
-              }}>
+              <button className="btn-guardar" onClick={() => { setPacienteViendo(null); handleEditar(pacienteViendo) }}>
                 <FiEdit2 size={13} /> Editar Paciente
               </button>
             </div>
@@ -416,70 +450,51 @@ function SecretariaPrincipal() {
         </div>
       )}
 
-      {/* ══════════════════════════════
-          MODAL EDITAR PACIENTE
-      ══════════════════════════════ */}
+      {/* MODAL EDITAR */}
       {pacienteEditando && (
         <div className="modal-overlay" onClick={() => setPacienteEditando(null)}>
           <div className="modal modal-perfil" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div className="modal-title-group">
                 <div className="modal-icon-box"><FiUser size={18} /></div>
-                <div>
-                  <h3>Editar Paciente</h3>
-                  <p>Modifica la información del paciente</p>
-                </div>
+                <div><h3>Editar Paciente</h3><p>Modifica la información del paciente</p></div>
               </div>
               <button className="modal-close" onClick={() => setPacienteEditando(null)}>✕</button>
             </div>
-
             <div className="modal-body">
-              <div className="form-group">
-                <label>ID DEL PACIENTE</label>
-                <input type="text" value={pacienteEditando.id} disabled />
+              <div className="form-group"><label>ID DEL PACIENTE</label>
+                <input type="text" value={pacienteEditando.id} disabled /></div>
+              <div className="form-group"><label>NOMBRE COMPLETO</label>
+                <input type="text" name="nombre" value={pacienteEditando.nombre}
+                  onChange={(e) => { setPacienteEditando(prev => ({ ...prev, nombre: e.target.value })) }} /></div>
+              <div className="form-group"><label>TELÉFONO</label>
+                <input type="tel" name="telefono" value={pacienteEditando.telefono} maxLength={10}
+                  onChange={(e) => { setPacienteEditando(prev => ({ ...prev, telefono: e.target.value })); setErroresEdit(prev => ({ ...prev, telefono: validarCampo('telefono', e.target.value) })) }}
+                  style={inputStyleEdit('telefono')} />
+                {erroresEdit.telefono && <span style={{ color: '#ef4444', fontSize: '11px' }}>{erroresEdit.telefono}</span>}
               </div>
-              <div className="form-group">
-                <label>NOMBRE COMPLETO</label>
-                <input type="text" value={pacienteEditando.nombre}
-                  onChange={(e) => setPacienteEditando(prev => ({ ...prev, nombre: e.target.value }))} />
-              </div>
-              <div className="form-group">
-                <label>TELÉFONO</label>
-                <input type="tel" value={pacienteEditando.telefono}
-                  onChange={(e) => setPacienteEditando(prev => ({ ...prev, telefono: e.target.value }))} />
-              </div>
-              <div className="form-group">
-                <label>EMAIL</label>
+              <div className="form-group"><label>EMAIL</label>
                 <input type="email" value={pacienteEditando.email}
-                  onChange={(e) => setPacienteEditando(prev => ({ ...prev, email: e.target.value }))} />
-              </div>
-              <div className="form-group">
-                <label>DIRECCIÓN</label>
+                  onChange={(e) => setPacienteEditando(prev => ({ ...prev, email: e.target.value }))} /></div>
+              <div className="form-group"><label>DIRECCIÓN</label>
                 <input type="text" value={pacienteEditando.direccion}
-                  onChange={(e) => setPacienteEditando(prev => ({ ...prev, direccion: e.target.value }))} />
-              </div>
-              <div className="form-group">
-                <label>CIUDAD</label>
+                  onChange={(e) => setPacienteEditando(prev => ({ ...prev, direccion: e.target.value }))} /></div>
+              <div className="form-group"><label>CIUDAD</label>
                 <input type="text" value={pacienteEditando.ciudad}
-                  onChange={(e) => setPacienteEditando(prev => ({ ...prev, ciudad: e.target.value }))} />
-              </div>
-              <div className="form-group">
-                <label>CONTACTO EMERGENCIA — NOMBRE</label>
+                  onChange={(e) => setPacienteEditando(prev => ({ ...prev, ciudad: e.target.value }))} /></div>
+              <div className="form-group"><label>CONTACTO EMERGENCIA — NOMBRE</label>
                 <input type="text" value={pacienteEditando.contactoEmergenciaNombre}
-                  onChange={(e) => setPacienteEditando(prev => ({ ...prev, contactoEmergenciaNombre: e.target.value }))} />
-              </div>
-              <div className="form-group">
-                <label>CONTACTO EMERGENCIA — TELÉFONO</label>
-                <input type="tel" value={pacienteEditando.contactoEmergenciaTel}
-                  onChange={(e) => setPacienteEditando(prev => ({ ...prev, contactoEmergenciaTel: e.target.value }))} />
+                  onChange={(e) => setPacienteEditando(prev => ({ ...prev, contactoEmergenciaNombre: e.target.value }))} /></div>
+              <div className="form-group"><label>CONTACTO EMERGENCIA — TELÉFONO</label>
+                <input type="tel" value={pacienteEditando.contactoEmergenciaTel} maxLength={10}
+                  onChange={(e) => { setPacienteEditando(prev => ({ ...prev, contactoEmergenciaTel: e.target.value })); setErroresEdit(prev => ({ ...prev, contactoEmergenciaTel: validarCampo('contactoEmergenciaTel', e.target.value) })) }}
+                  style={inputStyleEdit('contactoEmergenciaTel')} />
+                {erroresEdit.contactoEmergenciaTel && <span style={{ color: '#ef4444', fontSize: '11px' }}>{erroresEdit.contactoEmergenciaTel}</span>}
               </div>
             </div>
-
             <div className="modal-footer">
               <button className="btn-cancelar" onClick={() => setPacienteEditando(null)}>Cancelar</button>
-              <button className="btn-guardar" onClick={handleGuardarEdicion}>
-                <FiEdit2 size={13} /> Guardar Cambios
-              </button>
+              <button className="btn-guardar" onClick={handleGuardarEdicion}><FiEdit2 size={13} /> Guardar Cambios</button>
             </div>
           </div>
         </div>

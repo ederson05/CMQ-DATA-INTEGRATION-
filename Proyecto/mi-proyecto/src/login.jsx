@@ -1,22 +1,33 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'  // ← 1. Importar useNavigate
+import { useNavigate } from 'react-router-dom'
 import './login.css'
 
 function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const navigate = useNavigate()  // ← 2. Inicializar navigate
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    
-    // ← 3. Lógica de autenticación simple
-    if (email === 'maria@gmail.com' && password === 'maria776') {
-      console.log('✅ Login exitoso')
-      navigate('/secretaria')  // ← 4. Redirigir a secretaria
-    } else {
-      console.log('❌ Credenciales incorrectas')
-      alert('Email o contraseña incorrectos')  // ← 5. Mensaje de error
+    setLoading(true)
+    try {
+      const response = await fetch('http://localhost:3001/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
+      const data = await response.json()
+      if (data.success) {
+        localStorage.setItem('usuario', JSON.stringify(data.usuario))
+        navigate('/secretaria')
+      } else {
+        alert('Email o contraseña incorrectos')
+      }
+    } catch (err) {
+      alert('Error conectando al servidor')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -58,8 +69,8 @@ function Login() {
             />
           </div>
 
-          <button type="submit" className="btn-login">
-            Iniciar Sesión
+          <button type="submit" className="btn-login" disabled={loading}>
+            {loading ? 'Cargando...' : 'Iniciar Sesión'}
           </button>
         </form>
       </div>
