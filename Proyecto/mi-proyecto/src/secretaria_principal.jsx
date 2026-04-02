@@ -7,7 +7,8 @@ import { FaStethoscope } from 'react-icons/fa'
 import { useNavigate } from 'react-router-dom'
 import './secretaria_principal.css'
 
-const API = 'http://localhost:3001/api'
+//const API = 'http://localhost:3001/api'
+const API = 'https://cmq-backend.onrender.com/api'
 const hoy = new Date().toISOString().split('T')[0]
 
 const validarTelefono = (tel) => tel.replace(/\D/g, '').length === 10
