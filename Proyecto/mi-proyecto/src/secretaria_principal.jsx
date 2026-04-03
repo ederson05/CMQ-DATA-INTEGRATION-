@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   FiUsers, FiCalendar, FiFileText, FiUser,
   FiSearch, FiEdit2, FiLogOut, FiEye
@@ -7,128 +7,180 @@ import { FaStethoscope } from 'react-icons/fa'
 import { useNavigate } from 'react-router-dom'
 import './secretaria_principal.css'
 
-//const API = 'http://localhost:3001/api'
-const API = 'https://cmq-backend.onrender.com/api'
+const API = 'http://localhost:3001/api'
 const hoy = new Date().toISOString().split('T')[0]
 
-const validarTelefono = (tel) => tel.replace(/\D/g, '').length === 10
-const validarFecha = (fecha) => fecha && fecha <= hoy
+const validarTelefono = (tel) => String(tel || '').replace(/\D/g, '').length === 10
+const validarFecha    = (fecha) => fecha && fecha <= hoy
 
+/* ══════════════════════════════
+   SISTEMA DE TOASTS
+══════════════════════════════ */
+function ToastContainer({ toasts }) {
+  return (
+    <div className="toast-wrapper">
+      {toasts.map(t => (
+        <div key={t.id} className={`toast toast-${t.type}`}>
+          <span className="toast-icon">{t.type === 'success' ? '✓' : '!'}</span>
+          <span>{t.msg}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function useToast() {
+  const [toasts, setToasts] = useState([])
+  const show = useCallback((msg, type = 'success') => {
+    const id = Date.now()
+    setToasts(prev => [...prev, { id, msg, type }])
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500)
+  }, [])
+  return { toasts, success: m => show(m, 'success'), error: m => show(m, 'error') }
+}
+
+/* ══════════════════════════════
+   COMPONENTE PRINCIPAL
+══════════════════════════════ */
 function SecretariaPrincipal() {
   const navigate = useNavigate()
-  const [currentTime, setCurrentTime] = useState(new Date())
+  const { toasts, success, error: showError } = useToast()
+
+  const [currentTime, setCurrentTime]       = useState(new Date())
   const [pacienteEditando, setPacienteEditando] = useState(null)
-  const [pacienteViendo, setPacienteViendo] = useState(null)
-  const [pacientes, setPacientes] = useState([])
-  const [busqueda, setBusqueda] = useState('')
-  const [errores, setErrores] = useState({})
-  const [erroresEdit, setErroresEdit] = useState({})
-  const [nuevoPaciente, setNuevoPaciente] = useState({
+  const [pacienteViendo, setPacienteViendo]     = useState(null)
+  const [pacientes, setPacientes]           = useState([])
+  const [numMedicos, setNumMedicos]         = useState(0)
+  const [numHistorias, setNumHistorias]     = useState(0)
+  const [busqueda, setBusqueda]             = useState('')
+  const [errores, setErrores]               = useState({})
+  const [erroresEdit, setErroresEdit]       = useState({})
+  const [nuevoPaciente, setNuevoPaciente]   = useState({
     nombre: '', id: '', telefono: '', fechaNacimiento: '', genero: '',
     tipoSangre: '', email: '', direccion: '', ciudad: '',
     contactoEmergenciaNombre: '', contactoEmergenciaTel: ''
   })
 
+  /* Reloj */
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
 
-  useEffect(() => { cargarPacientes() }, [])
+  /* Carga inicial */
+  useEffect(() => {
+    cargarPacientes()
+    cargarMedicos()
+    cargarHistorias()
+  }, [])
 
+  /* ── API calls ── */
   const cargarPacientes = async () => {
+  try {
+    const res  = await fetch(`${API}/pacientes`)
+    const data = await res.json()
+    setPacientes(data.map(row => ({
+      id: String(row[0]),
+      nombre: row[1],
+      telefono: String(row[2] || ''), // <--- Forzamos String aquí
+      fechaNacimiento: row[3] ? row[3].split('T')[0] : '',
+      genero: row[4],
+      tipoSangre: row[5],
+      email: row[6] || '',
+      direccion: row[7] || '',
+      ciudad: row[8] || '',
+      contactoEmergenciaNombre: row[9] || '',
+      contactoEmergenciaTel: String(row[10] || '') // <--- Forzamos String aquí
+    })))
+  } catch (err) { console.error('Error cargando pacientes:', err) }
+}
+
+  const cargarMedicos = async () => {
     try {
-      const res = await fetch(`${API}/pacientes`)
+      const res  = await fetch(`${API}/medicos`)
       const data = await res.json()
-      const mapeados = data.map(row => ({
-        id: String(row[0]),
-        nombre: row[1],
-        telefono: row[2],
-        fechaNacimiento: row[3] ? row[3].split('T')[0] : '',
-        genero: row[4],
-        tipoSangre: row[5],
-        email: row[6] || '',
-        direccion: row[7] || '',
-        ciudad: row[8] || '',
-        contactoEmergenciaNombre: row[9] || '',
-        contactoEmergenciaTel: row[10] || ''
-      }))
-      setPacientes(mapeados)
-    } catch (err) {
-      console.error('Error cargando pacientes:', err)
-    }
+      setNumMedicos(Array.isArray(data) ? data.length : 0)
+    } catch { setNumMedicos(0) }
   }
 
-  const formatDate = (date) => date.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
-  const formatTime = (date) => date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+  const cargarHistorias = async () => {
+    try {
+      const res  = await fetch(`${API}/historias`)
+      const data = await res.json()
+      setNumHistorias(Array.isArray(data) ? data.length : 0)
+    } catch { setNumHistorias(0) }
+  }
+
+  /* ── Helpers ── */
+  const formatDate = (d) => d.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const formatTime = (d) => d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
 
   const calcularEdad = (fechaNacimiento) => {
     if (!fechaNacimiento) return '-'
-    const hoyDate = new Date()
-    const nac = new Date(fechaNacimiento)
-    let edad = hoyDate.getFullYear() - nac.getFullYear()
-    const m = hoyDate.getMonth() - nac.getMonth()
-    if (m < 0 || (m === 0 && hoyDate.getDate() < nac.getDate())) edad--
+    const hoyD = new Date(), nac = new Date(fechaNacimiento)
+    let edad = hoyD.getFullYear() - nac.getFullYear()
+    const m = hoyD.getMonth() - nac.getMonth()
+    if (m < 0 || (m === 0 && hoyD.getDate() < nac.getDate())) edad--
     return `${edad} años`
   }
 
-  const formatGenero = (g) => {
-    if (g === 'M') return 'Masculino'
-    if (g === 'F') return 'Femenino'
-    if (g === 'O') return 'Otro'
-    return '-'
-  }
+  const formatGenero = (g) =>
+    g === 'M' ? 'Masculino' : g === 'F' ? 'Femenino' : g === 'O' ? 'Otro' : '-'
 
-  // Validar campo individual en tiempo real
   const validarCampo = (name, value) => {
-    let error = ''
     if (name === 'telefono' || name === 'contactoEmergenciaTel') {
-      const digits = value.replace(/\D/g, '')
-      if (value && digits.length !== 10) error = 'El teléfono debe tener exactamente 10 dígitos'
+      if (value && value.replace(/\D/g, '').length !== 10) return 'El teléfono debe tener exactamente 10 dígitos'
     }
-    if (name === 'fechaNacimiento') {
-      if (value && value > hoy) error = 'La fecha no puede ser mayor a hoy'
-    }
-    return error
+    if (name === 'fechaNacimiento' && value && value > hoy) return 'La fecha no puede ser mayor a hoy'
+    return ''
   }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setNuevoPaciente(prev => ({ ...prev, [name]: value }))
-    const error = validarCampo(name, value)
-    setErrores(prev => ({ ...prev, [name]: error }))
+    setErrores(prev => ({ ...prev, [name]: validarCampo(name, value) }))
   }
 
-  const handleInputEditChange = (e) => {
-    const { name, value } = e.target
-    setPacienteEditando(prev => ({ ...prev, [name]: value }))
-    const error = validarCampo(name, value)
-    setErroresEdit(prev => ({ ...prev, [name]: error }))
-  }
-
+  /* ── Registrar paciente ── */
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    // Validaciones finales
+    // Campos requeridos vacíos
+    const camposRequeridos = ['id', 'nombre', 'fechaNacimiento', 'genero', 'tipoSangre', 'telefono']
+    if (camposRequeridos.some(c => !nuevoPaciente[c]?.trim())) {
+      showError('Ingrese los datos requeridos en cada campo')
+      return
+    }
+
+    // Formato incorrecto
     const nuevosErrores = {}
-    if (!nuevoPaciente.id.trim()) nuevosErrores.id = 'Campo requerido'
-    if (!validarTelefono(nuevoPaciente.telefono)) nuevosErrores.telefono = 'El teléfono debe tener exactamente 10 dígitos'
-    if (!validarFecha(nuevoPaciente.fechaNacimiento)) nuevosErrores.fechaNacimiento = 'La fecha no puede ser mayor a hoy'
+    if (!validarTelefono(nuevoPaciente.telefono))
+      nuevosErrores.telefono = 'El teléfono debe tener exactamente 10 dígitos'
+    if (!validarFecha(nuevoPaciente.fechaNacimiento))
+      nuevosErrores.fechaNacimiento = 'La fecha no puede ser mayor a hoy'
     if (nuevoPaciente.contactoEmergenciaTel && !validarTelefono(nuevoPaciente.contactoEmergenciaTel))
       nuevosErrores.contactoEmergenciaTel = 'El teléfono debe tener exactamente 10 dígitos'
 
     if (Object.values(nuevosErrores).some(e => e)) {
       setErrores(nuevosErrores)
+      showError('Por favor ingrese correctamente los datos')
       return
     }
 
+    // ID duplicado
     if (pacientes.find(p => p.id === nuevoPaciente.id.trim())) {
-      alert('⚠️ Ya existe un paciente con esa identificación')
+      showError('Datos ya existentes en la base de datos')
       return
     }
+
+    // Validar que la cédula sea solo números
+if (!/^\d+$/.test(nuevoPaciente.id)) {
+  showError('No se puede agregar')
+  return
+}
 
     try {
-      const res = await fetch(`${API}/pacientes`, {
+      const res  = await fetch(`${API}/pacientes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...nuevoPaciente, id: nuevoPaciente.id.trim() })
@@ -142,81 +194,96 @@ function SecretariaPrincipal() {
           contactoEmergenciaNombre: '', contactoEmergenciaTel: ''
         })
         setErrores({})
-        alert('✅ Paciente registrado correctamente')
+        success('Paciente registrado exitosamente')
       } else {
-        alert('❌ Error: ' + data.error)
+        showError('Por favor ingrese correctamente los datos')
       }
-    } catch (err) {
-      alert('❌ Error conectando al servidor')
+    } catch {
+      showError('Por favor ingrese correctamente los datos')
     }
   }
 
-  const handleEditar = (p) => {
-    setPacienteEditando({ ...p })
-    setErroresEdit({})
-  }
+  /* ── Editar paciente ── */
+  const handleEditar = (p) => { setPacienteEditando({ ...p }); setErroresEdit({}) }
 
   const handleGuardarEdicion = async () => {
-    const nuevosErrores = {}
-    if (!validarTelefono(pacienteEditando.telefono)) nuevosErrores.telefono = 'El teléfono debe tener exactamente 10 dígitos'
-    if (pacienteEditando.contactoEmergenciaTel && !validarTelefono(pacienteEditando.contactoEmergenciaTel))
-      nuevosErrores.contactoEmergenciaTel = 'El teléfono debe tener exactamente 10 dígitos'
+  try {
+    const original = pacientes.find(p => p.id === pacienteEditando.id)
 
-    if (Object.values(nuevosErrores).some(e => e)) {
-      setErroresEdit(nuevosErrores)
+    // Detectar cambios reales
+    const huboCambios = Object.keys(pacienteEditando).some(
+      key => String(pacienteEditando[key] || '') !== String(original[key] || '')
+    )
+
+    if (!huboCambios) {
+      showError('No se detectaron cambios')
       return
     }
 
-    try {
-      const res = await fetch(`${API}/pacientes/${pacienteEditando.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(pacienteEditando)
-      })
-      const data = await res.json()
-      if (data.success) {
-        await cargarPacientes()
-        setPacienteEditando(null)
-        alert('✅ Modificación exitosa')
-      } else {
-        alert('❌ Error: ' + data.error)
-      }
-    } catch (err) {
-      alert('❌ Error conectando al servidor')
+    const nuevosErrores = {}
+    
+    if (!validarTelefono(pacienteEditando.telefono)) {
+      nuevosErrores.telefono = 'El teléfono debe tener exactamente 10 dígitos'
     }
+
+    if (Object.values(nuevosErrores).some(e => e)) {
+      setErroresEdit(nuevosErrores)
+      showError('Por favor ingrese correctamente los datos')
+      return
+    }
+
+    const res = await fetch(`${API}/pacientes/${pacienteEditando.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(pacienteEditando)
+    })
+    
+    const data = await res.json()
+
+    if (data.success) {
+      await cargarPacientes()
+      setPacienteEditando(null)
+      success('Cambios guardados exitosamente')
+    } else {
+      showError('No se realizaron los cambios')
+    }
+
+  } catch (err) {
+    console.error(err)
+    showError('Error crítico al intentar guardar')
   }
+}
 
-  const inputStyle = (campo) => ({
-    borderColor: errores[campo] ? '#ef4444' : '',
-    background: errores[campo] ? '#fff5f5' : ''
-  })
-
-  const inputStyleEdit = (campo) => ({
-    borderColor: erroresEdit[campo] ? '#ef4444' : '',
-    background: erroresEdit[campo] ? '#fff5f5' : ''
-  })
+  const inputStyle     = (c) => ({ borderColor: errores[c]     ? '#ef4444' : '', background: errores[c]     ? '#fff5f5' : '' })
+  const inputStyleEdit = (c) => ({ borderColor: erroresEdit[c] ? '#ef4444' : '', background: erroresEdit[c] ? '#fff5f5' : '' })
 
   const pacientesFiltrados = pacientes.filter(p =>
-    p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-    p.id.includes(busqueda)
+    p.nombre.toLowerCase().includes(busqueda.toLowerCase()) || p.id.includes(busqueda)
   )
 
   const modules = [
-    { id: 'pacientes', name: 'Pacientes',        count: pacientes.length, icon: <FiUsers />,    path: '/secretaria' },
-    { id: 'citas',     name: 'Citas Médicas',    count: 0,                icon: <FiCalendar />, path: '/citas' },
-    { id: 'historia',  name: 'Historia Clínica', count: 2,                icon: <FiFileText />, path: '/historia' },
+    { id: 'pacientes', name: 'Pacientes',        count: pacientes.length,  icon: <FiUsers />,    path: '/secretaria' },
+    { id: 'citas',     name: 'Citas Médicas',    count: 0,                 icon: <FiCalendar />, path: '/citas' },
+    { id: 'historia',  name: 'Historia Clínica', count: numHistorias,      icon: <FiFileText />, path: '/historia' },
   ]
 
   const stats = [
     { label: 'TOTAL PACIENTES', value: pacientes.length, subtext: 'Registrados en sistema', color: 'blue',   icon: <FiUsers size={22} />,       dot: '#3b82f6' },
     { label: 'CITAS ACTIVAS',   value: 0,                subtext: 'Citas programadas',      color: 'green',  icon: <FiCalendar size={22} />,    dot: '#10b981' },
-    { label: 'MÉDICOS',         value: 5,                subtext: 'Especialistas activos',  color: 'orange', icon: <FaStethoscope size={22} />, dot: '#f97316' },
-    { label: 'HISTORIALES',     value: 2,                subtext: 'Registros clínicos',     color: 'purple', icon: <FiFileText size={22} />,    dot: '#8b5cf6' },
+    { label: 'MÉDICOS',         value: numMedicos,        subtext: 'Especialistas activos',  color: 'orange', icon: <FaStethoscope size={22} />, dot: '#f97316' },
+    { label: 'HISTORIALES',     value: numHistorias,      subtext: 'Registros clínicos',     color: 'purple', icon: <FiFileText size={22} />,    dot: '#8b5cf6' },
   ]
 
+  /* ══════════════════════════════════════════
+     RENDER
+  ══════════════════════════════════════════ */
   return (
     <div className="secretaria-container">
 
+      {/* TOASTS */}
+      <ToastContainer toasts={toasts} />
+
+      {/* HEADER */}
       <header className="main-header">
         <div className="header-left">
           <div className="logo-icon">+</div>
@@ -241,6 +308,7 @@ function SecretariaPrincipal() {
         </div>
       </header>
 
+      {/* LAYOUT */}
       <div className="main-content">
         <aside className="sidebar">
           <h3>MÓDULOS</h3>
@@ -263,6 +331,7 @@ function SecretariaPrincipal() {
             <p>Registro, consulta y actualización de pacientes del sistema</p>
           </div>
 
+          {/* STATS */}
           <div className="stats-grid">
             {stats.map((stat, i) => (
               <div key={i} className="stat-card">
@@ -277,7 +346,10 @@ function SecretariaPrincipal() {
             ))}
           </div>
 
+          {/* SECCIONES */}
           <div className="patient-sections">
+
+            {/* FORMULARIO */}
             <div className="form-section">
               <h3><FiUser className="section-icon" /> Nuevo Paciente</h3>
               <form onSubmit={handleSubmit} className="patient-form">
@@ -287,7 +359,7 @@ function SecretariaPrincipal() {
                   <label>NÚMERO DE IDENTIFICACIÓN</label>
                   <input type="text" name="id" placeholder="Ej. 1062554433"
                     value={nuevoPaciente.id} onChange={handleInputChange} required style={inputStyle('id')} />
-                  {errores.id && <span style={{ color: '#ef4444', fontSize: '11px' }}>{errores.id}</span>}
+                  {errores.id && <span className="field-error">{errores.id}</span>}
                 </div>
                 <div className="form-group">
                   <label>NOMBRE COMPLETO</label>
@@ -300,7 +372,7 @@ function SecretariaPrincipal() {
                     <input type="date" name="fechaNacimiento" max={hoy}
                       value={nuevoPaciente.fechaNacimiento} onChange={handleInputChange} required
                       style={inputStyle('fechaNacimiento')} />
-                    {errores.fechaNacimiento && <span style={{ color: '#ef4444', fontSize: '11px' }}>{errores.fechaNacimiento}</span>}
+                    {errores.fechaNacimiento && <span className="field-error">{errores.fechaNacimiento}</span>}
                   </div>
                   <div className="form-group">
                     <label>GÉNERO</label>
@@ -328,7 +400,7 @@ function SecretariaPrincipal() {
                   <input type="tel" name="telefono" placeholder="Ej. 3214556879"
                     value={nuevoPaciente.telefono} onChange={handleInputChange} required
                     style={inputStyle('telefono')} maxLength={10} />
-                  {errores.telefono && <span style={{ color: '#ef4444', fontSize: '11px' }}>{errores.telefono}</span>}
+                  {errores.telefono && <span className="field-error">{errores.telefono}</span>}
                 </div>
                 <div className="form-group">
                   <label>EMAIL</label>
@@ -357,7 +429,7 @@ function SecretariaPrincipal() {
                   <input type="tel" name="contactoEmergenciaTel" placeholder="Ej. 3119900112"
                     value={nuevoPaciente.contactoEmergenciaTel} onChange={handleInputChange}
                     style={inputStyle('contactoEmergenciaTel')} maxLength={10} />
-                  {errores.contactoEmergenciaTel && <span style={{ color: '#ef4444', fontSize: '11px' }}>{errores.contactoEmergenciaTel}</span>}
+                  {errores.contactoEmergenciaTel && <span className="field-error">{errores.contactoEmergenciaTel}</span>}
                 </div>
 
                 <button type="submit" className="btn-register">
@@ -366,6 +438,7 @@ function SecretariaPrincipal() {
               </form>
             </div>
 
+            {/* DIRECTORIO */}
             <div className="directory-section">
               <h3><FiUsers className="section-icon" /> Directorio de Pacientes</h3>
               <div className="search-box">
@@ -403,6 +476,7 @@ function SecretariaPrincipal() {
         </main>
       </div>
 
+      {/* FOOTER */}
       <footer className="main-footer">
         <span>CMQ - Módulo Clínica</span>
         <span className="session-info">
@@ -467,12 +541,12 @@ function SecretariaPrincipal() {
                 <input type="text" value={pacienteEditando.id} disabled /></div>
               <div className="form-group"><label>NOMBRE COMPLETO</label>
                 <input type="text" name="nombre" value={pacienteEditando.nombre}
-                  onChange={(e) => { setPacienteEditando(prev => ({ ...prev, nombre: e.target.value })) }} /></div>
+                  onChange={(e) => setPacienteEditando(prev => ({ ...prev, nombre: e.target.value }))} /></div>
               <div className="form-group"><label>TELÉFONO</label>
                 <input type="tel" name="telefono" value={pacienteEditando.telefono} maxLength={10}
                   onChange={(e) => { setPacienteEditando(prev => ({ ...prev, telefono: e.target.value })); setErroresEdit(prev => ({ ...prev, telefono: validarCampo('telefono', e.target.value) })) }}
                   style={inputStyleEdit('telefono')} />
-                {erroresEdit.telefono && <span style={{ color: '#ef4444', fontSize: '11px' }}>{erroresEdit.telefono}</span>}
+                {erroresEdit.telefono && <span className="field-error">{erroresEdit.telefono}</span>}
               </div>
               <div className="form-group"><label>EMAIL</label>
                 <input type="email" value={pacienteEditando.email}
@@ -490,7 +564,7 @@ function SecretariaPrincipal() {
                 <input type="tel" value={pacienteEditando.contactoEmergenciaTel} maxLength={10}
                   onChange={(e) => { setPacienteEditando(prev => ({ ...prev, contactoEmergenciaTel: e.target.value })); setErroresEdit(prev => ({ ...prev, contactoEmergenciaTel: validarCampo('contactoEmergenciaTel', e.target.value) })) }}
                   style={inputStyleEdit('contactoEmergenciaTel')} />
-                {erroresEdit.contactoEmergenciaTel && <span style={{ color: '#ef4444', fontSize: '11px' }}>{erroresEdit.contactoEmergenciaTel}</span>}
+                {erroresEdit.contactoEmergenciaTel && <span className="field-error">{erroresEdit.contactoEmergenciaTel}</span>}
               </div>
             </div>
             <div className="modal-footer">

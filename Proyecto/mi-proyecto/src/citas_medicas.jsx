@@ -6,8 +6,8 @@ import {
 import { useNavigate } from 'react-router-dom'
 import './citas_medicas.css'
 
-//const API = 'http://localhost:3001/api'
-const API = 'https://cmq-backend.onrender.com/api'
+const API = 'http://localhost:3001/api'
+//const API = 'https://cmq-backend.onrender.com/api'
 const ahora = () => new Date().toISOString().slice(0, 16)
 
 const ESTADOS = [
