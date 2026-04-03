@@ -1,3 +1,6 @@
+//LOCAL
+/*
+
 const express = require('express');
 const oracledb = require('oracledb');
 const cors = require('cors');
@@ -225,10 +228,10 @@ app.get('/api/usuarios', async (req, res) => {
 
 app.listen(3001, () => console.log('Backend corriendo en puerto 3001'));
 
+*/
 
 
-
-/*
+//SUPABASE
 
 const express = require('express');
 const { Pool } = require('pg');
@@ -388,4 +391,3 @@ app.get('/api/usuarios', async (req, res) => {
 
 app.listen(3001, () => console.log('Backend corriendo en puerto 3001'));
 
-*/
