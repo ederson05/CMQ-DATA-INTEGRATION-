@@ -1,3 +1,6 @@
+ 
+ 
+
 // ============================================================
 // validaciones.js
 // Lógica pura extraída de SecretariaPrincipal.jsx
@@ -101,3 +104,5 @@ export const huboCambios = (original, editado) =>
   Object.keys(editado).some(
     key => String(editado[key] || '') !== String(original[key] || '')
   )
+
+  

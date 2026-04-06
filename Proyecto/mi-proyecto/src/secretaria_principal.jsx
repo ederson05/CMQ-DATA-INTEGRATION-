@@ -426,7 +426,7 @@ if (!/^\d+$/.test(nuevoPaciente.id)) {
 
                 <div className="form-section-label">CONTACTO DE EMERGENCIA</div>
                 <div className="form-group">
-                  <label>NOMBRE</label>
+                  <label>NOMBRE COMPLETO</label>
                   <input type="text" name="contactoEmergenciaNombre" placeholder="Ej. Pedro Grijalba"
                     value={nuevoPaciente.contactoEmergenciaNombre} onChange={handleInputChange} />
                 </div>
@@ -449,13 +449,13 @@ if (!/^\d+$/.test(nuevoPaciente.id)) {
               <h3><FiUsers className="section-icon" /> Directorio de Pacientes</h3>
               <div className="search-box">
                 <FiSearch className="search-icon" />
-                <input type="text" placeholder="Búsqueda por nombre o ID..."
+                <input type="text" placeholder="Búsqueda por nombre o identificación..."
                   value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
               </div>
               <div className="patient-table">
                 <table>
                   <thead>
-                    <tr><th>ID</th><th>NOMBRE</th><th>TELÉFONO</th><th>ACCIÓN</th></tr>
+                    <tr><th>IDENTIFICACION</th><th>NOMBRE COMPLETO</th><th>TELÉFONO</th><th>ACCIÓN</th></tr>
                   </thead>
                   <tbody>
                     {pacientesFiltrados.map((p) => (
@@ -504,7 +504,7 @@ if (!/^\d+$/.test(nuevoPaciente.id)) {
             </div>
             <div className="modal-body perfil-body">
               <div className="perfil-seccion-titulo">IDENTIFICACIÓN</div>
-              <div className="perfil-fila"><span>Número ID</span><span>CC {pacienteViendo.id}</span></div>
+              <div className="perfil-fila"><span>Número identificacion</span><span>CC {pacienteViendo.id}</span></div>
               <div className="perfil-fila"><span>Nombre Completo</span><span>{pacienteViendo.nombre}</span></div>
               <div className="perfil-fila"><span>Fecha de Nacimiento</span>
                 <span>{pacienteViendo.fechaNacimiento ? new Date(pacienteViendo.fechaNacimiento + 'T00:00:00').toLocaleDateString('es-CO') : '-'}</span>
@@ -543,7 +543,7 @@ if (!/^\d+$/.test(nuevoPaciente.id)) {
               <button className="modal-close" onClick={() => setPacienteEditando(null)}>✕</button>
             </div>
             <div className="modal-body">
-              <div className="form-group"><label>ID DEL PACIENTE</label>
+              <div className="form-group"><label>IDENTIFICACION DEL PACIENTE</label>
                 <input type="text" value={pacienteEditando.id} disabled /></div>
               <div className="form-group"><label>NOMBRE COMPLETO</label>
                 <input type="text" name="nombre" value={pacienteEditando.nombre}
