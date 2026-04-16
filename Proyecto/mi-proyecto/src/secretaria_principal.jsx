@@ -8,16 +8,166 @@ import { useNavigate } from 'react-router-dom'
 import './secretaria_principal.css'
 
 //Local
-//const API = 'http://localhost:3001/api'
+const API = 'http://localhost:3001/api'
 
 //API
-const API = 'https://cmq-backend.onrender.com/api'
-
+//const API = 'https://cmq-backend.onrender.com/api'
 
 const hoy = new Date().toISOString().split('T')[0]
 
-const validarTelefono = (tel) => String(tel || '').replace(/\D/g, '').length === 10
-const validarFecha    = (fecha) => fecha && fecha <= hoy
+/* REGLAS DE VALIDACIÓN*/
+const REGLAS = {
+  // Solo letras (incluyendo acentos y ñ) y espacios
+  soloLetras: (valor) => /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/.test(valor.trim()),
+
+  // Email: letras, números, y solo estos caracteres especiales: @ . _ - +
+  // Sin tildes, sin ñ, sin caracteres raros
+  emailValido: (valor) => /^[a-zA-Z0-9._+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(valor),
+
+  // Solo dígitos
+  soloNumeros: (valor) => /^\d+$/.test(valor),
+
+  // Teléfono: exactamente 10 dígitos
+  telefono: (valor) => String(valor || '').replace(/\D/g, '').length === 10,
+
+  // Fecha no futura
+  fechaValida: (valor) => valor && valor <= hoy,
+}
+
+/* Valida un campo del formulario de REGISTRO y retorna string de error o '' */
+const validarCampoRegistro = (name, value) => {
+  const v = String(value || '').trim()
+
+  switch (name) {
+    case 'id':
+      if (!v) return 'El número de identificación es requerido'
+      if (!REGLAS.soloNumeros(v)) return 'El número de identificación solo debe contener dígitos'
+      if (v.length < 5 || v.length > 15) return 'El número de identificación debe tener entre 5 y 15 dígitos'
+      return ''
+
+    case 'nombre':
+      if (!v) return 'El nombre completo es requerido'
+      if (!REGLAS.soloLetras(v)) return 'El nombre solo debe contener letras y espacios'
+      if (v.length < 3) return 'El nombre debe tener al menos 3 caracteres'
+      return ''
+
+    case 'fechaNacimiento':
+      if (!v) return 'La fecha de nacimiento es requerida'
+      if (!REGLAS.fechaValida(v)) return 'La fecha de nacimiento no puede ser una fecha futura'
+      return ''
+
+    case 'genero':
+      if (!v) return 'El género es requerido'
+      return ''
+
+    case 'tipoSangre':
+      if (!v) return 'El tipo de sangre es requerido'
+      return ''
+
+    case 'telefono':
+      if (!v) return 'El teléfono es requerido'
+      if (!REGLAS.telefono(v)) return 'El teléfono debe contener exactamente 10 dígitos numéricos'
+      return ''
+
+    case 'email':
+      // Opcional — solo valida formato si se llenó
+      if (v && !REGLAS.emailValido(v)) return 'El email no es válido. Use solo letras sin tildes, números, punto, guion o guion bajo'
+      return ''
+
+    case 'direccion':
+      if (!v) return 'La dirección es requerida'
+      return ''
+
+    case 'ciudad':
+      if (!v) return 'La ciudad es requerida'
+      if (!REGLAS.soloLetras(v)) return 'La ciudad solo debe contener letras y espacios'
+      return ''
+
+    case 'contactoEmergenciaNombre':
+      // Opcional — solo valida formato si se llenó
+      if (v && !REGLAS.soloLetras(v)) return 'El nombre de contacto solo debe contener letras y espacios'
+      return ''
+
+    case 'contactoEmergenciaTel':
+      // Opcional — solo valida formato si se llenó
+      if (v && !REGLAS.telefono(v)) return 'El teléfono de emergencia debe contener exactamente 10 dígitos numéricos'
+      return ''
+
+    default:
+      return ''
+  }
+}
+
+/* Valida un campo del formulario de EDICIÓN y retorna string de error o '' */
+const validarCampoEdicion = (name, value) => {
+  const v = String(value || '').trim()
+
+  switch (name) {
+    case 'nombre':
+      if (!v) return 'El nombre completo es requerido'
+      if (!REGLAS.soloLetras(v)) return 'El nombre solo debe contener letras y espacios, sin números ni caracteres especiales'
+      if (v.length < 3) return 'El nombre debe tener al menos 3 caracteres'
+      return ''
+
+    case 'telefono':
+      if (!v) return 'El teléfono es requerido'
+      if (!REGLAS.telefono(v)) return 'El teléfono debe contener exactamente 10 dígitos numéricos'
+      return ''
+
+    case 'email':
+      if (v && !REGLAS.emailValido(v)) return 'El email no es válido. Use solo letras sin tildes, números, punto, guion o guion bajo'
+      return ''
+
+    case 'direccion':
+      if (!v) return 'La dirección es requerida'
+      return ''
+
+    case 'ciudad':
+      if (!v) return 'La ciudad es requerida'
+      if (!REGLAS.soloLetras(v)) return 'La ciudad solo debe contener letras y espacios'
+      return ''
+
+    case 'contactoEmergenciaNombre':
+      if (v && !REGLAS.soloLetras(v)) return 'El nombre de contacto solo debe contener letras y espacios'
+      return ''
+
+    case 'contactoEmergenciaTel':
+      if (v && !REGLAS.telefono(v)) return 'El teléfono de emergencia debe contener exactamente 10 dígitos numéricos'
+      return ''
+
+    default:
+      return ''
+  }
+}
+
+/* Recorre todos los campos del registro y devuelve objeto con todos los errores */
+const validarFormularioCompleto = (paciente) => {
+  const campos = [
+    'id', 'nombre', 'fechaNacimiento', 'genero', 'tipoSangre',
+    'telefono', 'email', 'direccion', 'ciudad',
+    'contactoEmergenciaNombre', 'contactoEmergenciaTel'
+  ]
+  const errores = {}
+  campos.forEach(campo => {
+    const err = validarCampoRegistro(campo, paciente[campo])
+    if (err) errores[campo] = err
+  })
+  return errores
+}
+
+/* Recorre todos los campos de edición y devuelve objeto con todos los errores */
+const validarEdicionCompleta = (paciente) => {
+  const campos = [
+    'nombre', 'telefono', 'email', 'direccion', 'ciudad',
+    'contactoEmergenciaNombre', 'contactoEmergenciaTel'
+  ]
+  const errores = {}
+  campos.forEach(campo => {
+    const err = validarCampoEdicion(campo, paciente[campo])
+    if (err) errores[campo] = err
+  })
+  return errores
+}
 
 /* ══════════════════════════════
    SISTEMA DE TOASTS
@@ -37,17 +187,24 @@ function ToastContainer({ toasts }) {
 
 function useToast() {
   const [toasts, setToasts] = useState([])
-  const show = useCallback((msg, type = 'success') => {
-    const id = Date.now()
-    setToasts(prev => [...prev, { id, msg, type }])
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500)
+  const show = useCallback((msg, type = 'success', delay = 0) => {
+    setTimeout(() => {
+      const id = Date.now() + Math.random()
+      setToasts(prev => [...prev, { id, msg, type }])
+      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000)
+    }, delay)
   }, [])
-  return { toasts, success: m => show(m, 'success'), error: m => show(m, 'error') }
+  return {
+    toasts,
+    success: m => show(m, 'success'),
+    error:   m => show(m, 'error'),
+    // Muestra múltiples errores con retardo escalonado para que no se sobrepongan
+    errors:  (lista) => lista.forEach((m, i) => show(m, 'error', i * 180))
+  }
 }
 
 /* ══════════════════════════════
-   CAMPO CON VALIDACIÓN REQUERIDA
-   Muestra el mensajito rojo debajo del input
+   CAMPO CON VALIDACIÓN
 ══════════════════════════════ */
 function CampoRequerido({ error, children }) {
   return (
@@ -55,26 +212,13 @@ function CampoRequerido({ error, children }) {
       {children}
       {error && (
         <span style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '4px',
-          marginTop: '4px',
-          fontSize: '12px',
-          color: '#dc2626',
-          fontWeight: 500
+          display: 'inline-flex', alignItems: 'center', gap: '4px',
+          marginTop: '4px', fontSize: '12px', color: '#dc2626', fontWeight: 500
         }}>
           <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '14px',
-            height: '14px',
-            background: '#f97316',
-            borderRadius: '3px',
-            color: 'white',
-            fontSize: '10px',
-            fontWeight: 700,
-            flexShrink: 0
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: '14px', height: '14px', background: '#f97316',
+            borderRadius: '3px', color: 'white', fontSize: '10px', fontWeight: 700, flexShrink: 0
           }}>!</span>
           {error}
         </span>
@@ -88,20 +232,20 @@ function CampoRequerido({ error, children }) {
 ══════════════════════════════ */
 function SecretariaPrincipal() {
   const navigate = useNavigate()
-  const { toasts, success, error: showError } = useToast()
+  const { toasts, success, error: showError, errors: showErrors } = useToast()
 
-  const [currentTime, setCurrentTime]       = useState(new Date())
+  const [currentTime, setCurrentTime]           = useState(new Date())
   const [pacienteEditando, setPacienteEditando] = useState(null)
   const [pacienteViendo, setPacienteViendo]     = useState(null)
-  const [pacientes, setPacientes]           = useState([])
-  const [numMedicos, setNumMedicos]         = useState(0)
-  const [numHistorias, setNumHistorias]     = useState(0)
-  const [busqueda, setBusqueda]             = useState('')
-  const [errores, setErrores]               = useState({})
-  const [erroresEdit, setErroresEdit]       = useState({})
-  const [intentoEnvio, setIntentoEnvio]     = useState(false)
-  const [intentoEdit, setIntentoEdit]       = useState(false)
-  const [nuevoPaciente, setNuevoPaciente]   = useState({
+  const [pacientes, setPacientes]               = useState([])
+  const [numMedicos, setNumMedicos]             = useState(0)
+  const [numHistorias, setNumHistorias]         = useState(0)
+  const [busqueda, setBusqueda]                 = useState('')
+  const [errores, setErrores]                   = useState({})
+  const [erroresEdit, setErroresEdit]           = useState({})
+  const [intentoEnvio, setIntentoEnvio]         = useState(false)
+  const [intentoEdit, setIntentoEdit]           = useState(false)
+  const [nuevoPaciente, setNuevoPaciente]       = useState({
     nombre: '', id: '', telefono: '', fechaNacimiento: '', genero: '',
     tipoSangre: '', email: '', direccion: '', ciudad: '',
     contactoEmergenciaNombre: '', contactoEmergenciaTel: ''
@@ -122,24 +266,24 @@ function SecretariaPrincipal() {
 
   /* ── API calls ── */
   const cargarPacientes = async () => {
-  try {
-    const res  = await fetch(`${API}/pacientes`)
-    const data = await res.json()
-    setPacientes(data.map(row => ({
-      id: String(row[0]),
-      nombre: row[1],
-      telefono: String(row[2] || ''),
-      fechaNacimiento: row[3] ? row[3].split('T')[0] : '',
-      genero: row[4],
-      tipoSangre: row[5],
-      email: row[6] || '',
-      direccion: row[7] || '',
-      ciudad: row[8] || '',
-      contactoEmergenciaNombre: row[9] || '',
-      contactoEmergenciaTel: String(row[10] || '')
-    })))
-  } catch (err) { console.error('Error cargando pacientes:', err) }
-}
+    try {
+      const res  = await fetch(`${API}/pacientes`)
+      const data = await res.json()
+      setPacientes(data.map(row => ({
+        id: String(row[0]),
+        nombre: row[1],
+        telefono: String(row[2] || ''),
+        fechaNacimiento: row[3] ? row[3].split('T')[0] : '',
+        genero: row[4],
+        tipoSangre: row[5],
+        email: row[6] || '',
+        direccion: row[7] || '',
+        ciudad: row[8] || '',
+        contactoEmergenciaNombre: row[9] || '',
+        contactoEmergenciaTel: String(row[10] || '')
+      })))
+    } catch (err) { console.error('Error cargando pacientes:', err) }
+  }
 
   const cargarMedicos = async () => {
     try {
@@ -157,18 +301,12 @@ function SecretariaPrincipal() {
     } catch { setNumHistorias(0) }
   }
 
-  /* ── Helpers ── */
-
-  // Formato unificado: "20/03/2026, 22:29:09"
+  /* ── Helpers de formato ── */
   const formatDateTime = (d) => d.toLocaleString('es-CO', {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
   })
-
-  // Solo fecha para el header (si la necesitas separada en algún lugar)
   const formatDate = (d) => d.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
-
-  // Solo hora para el header
   const formatTime = (d) => d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
 
   const calcularEdad = (fechaNacimiento) => {
@@ -183,55 +321,41 @@ function SecretariaPrincipal() {
   const formatGenero = (g) =>
     g === 'M' ? 'Masculino' : g === 'F' ? 'Femenino' : g === 'O' ? 'Otro' : '-'
 
-  /* ── Validación de campo individual ── */
-  const validarCampo = (name, value) => {
-    // Campos requeridos (excepto email y contacto de emergencia)
-    const camposRequeridos = ['id', 'nombre', 'fechaNacimiento', 'genero', 'tipoSangre', 'telefono', 'direccion', 'ciudad']
-    if (camposRequeridos.includes(name) && (!value || !value.trim())) {
-      return 'Este campo es requerido'
-    }
-    if (name === 'telefono' || name === 'contactoEmergenciaTel') {
-      if (value && value.replace(/\D/g, '').length !== 10) return 'El teléfono debe tener exactamente 10 dígitos'
-    }
-    if (name === 'fechaNacimiento' && value && value > hoy) return 'La fecha no puede ser mayor a hoy'
-    return ''
-  }
-
-  /* ── Validación edición ── */
-  const validarCampoEdit = (name, value) => {
-    const camposRequeridosEdit = ['nombre', 'telefono', 'direccion', 'ciudad']
-    if (camposRequeridosEdit.includes(name) && (!value || !value.trim())) {
-      return 'Este campo es requerido'
-    }
-    if (name === 'telefono' || name === 'contactoEmergenciaTel') {
-      if (value && value.replace(/\D/g, '').length !== 10) return 'El teléfono debe tener exactamente 10 dígitos'
-    }
-    return ''
-  }
-
+  /* ── Cambio de input en REGISTRO ── */
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setNuevoPaciente(prev => ({ ...prev, [name]: value }))
+    // Valida en tiempo real solo si ya se intentó enviar, o si es campo de formato
     if (intentoEnvio) {
-      setErrores(prev => ({ ...prev, [name]: validarCampo(name, value) }))
+      setErrores(prev => ({ ...prev, [name]: validarCampoRegistro(name, value) }))
     } else {
-      // Solo valida formato (teléfono/fecha) en tiempo real, no requerido
-      const camposFormato = ['telefono', 'contactoEmergenciaTel', 'fechaNacimiento']
-      if (camposFormato.includes(name)) {
-        setErrores(prev => ({ ...prev, [name]: validarCampo(name, value) }))
+      const camposInmediatos = ['telefono', 'contactoEmergenciaTel', 'fechaNacimiento', 'email',
+                                'nombre', 'ciudad', 'contactoEmergenciaNombre']
+      if (camposInmediatos.includes(name)) {
+        // Solo muestra error de formato si el campo tiene contenido
+        if (value.trim()) {
+          setErrores(prev => ({ ...prev, [name]: validarCampoRegistro(name, value) }))
+        } else {
+          setErrores(prev => ({ ...prev, [name]: '' }))
+        }
       }
     }
   }
 
-  /* ── Calcular todos los errores del formulario ── */
-  const calcularErroresFormulario = (paciente) => {
-    const camposAValidar = ['id', 'nombre', 'fechaNacimiento', 'genero', 'tipoSangre', 'telefono', 'direccion', 'ciudad', 'contactoEmergenciaTel']
-    const nuevosErrores = {}
-    camposAValidar.forEach(campo => {
-      const err = validarCampo(campo, paciente[campo])
-      if (err) nuevosErrores[campo] = err
-    })
-    return nuevosErrores
+  /* ── Cambio de input en EDICIÓN ── */
+  const handleCambioEdit = (field, value) => {
+    setPacienteEditando(prev => ({ ...prev, [field]: value }))
+    if (intentoEdit) {
+      setErroresEdit(prev => ({ ...prev, [field]: validarCampoEdicion(field, value) }))
+    } else {
+      const camposInmediatos = ['telefono', 'contactoEmergenciaTel', 'email',
+                                'nombre', 'ciudad', 'contactoEmergenciaNombre']
+      if (camposInmediatos.includes(field) && value.trim()) {
+        setErroresEdit(prev => ({ ...prev, [field]: validarCampoEdicion(field, value) }))
+      } else if (camposInmediatos.includes(field)) {
+        setErroresEdit(prev => ({ ...prev, [field]: '' }))
+      }
+    }
   }
 
   /* ── Registrar paciente ── */
@@ -239,21 +363,17 @@ function SecretariaPrincipal() {
     e.preventDefault()
     setIntentoEnvio(true)
 
-    const nuevosErrores = calcularErroresFormulario(nuevoPaciente)
+    const nuevosErrores = validarFormularioCompleto(nuevoPaciente)
     setErrores(nuevosErrores)
 
     if (Object.keys(nuevosErrores).length > 0) {
-      showError('Ingrese los datos requeridos en cada campo')
+      // Muestra un toast específico por cada error encontrado
+      const mensajes = Object.values(nuevosErrores)
+      showErrors(mensajes)
       return
     }
 
-    // Validar que la cédula sea solo números
-    if (!/^\d+$/.test(nuevoPaciente.id)) {
-      showError('No se puede agregar')
-      return
-    }
-
-    // ID duplicado
+    // ID duplicado — verificado después de pasar las validaciones de formato
     if (pacientes.find(p => p.id === nuevoPaciente.id.trim())) {
       showError('Datos ya existentes en la base de datos')
       return
@@ -280,7 +400,7 @@ function SecretariaPrincipal() {
         showError('Por favor ingrese correctamente los datos')
       }
     } catch {
-      showError('Por favor ingrese correctamente los datos')
+      showError('Error al conectar con el servidor')
     }
   }
 
@@ -291,54 +411,35 @@ function SecretariaPrincipal() {
     setIntentoEdit(false)
   }
 
-  const handleCambioEdit = (field, value) => {
-    setPacienteEditando(prev => ({ ...prev, [field]: value }))
-    if (intentoEdit) {
-      setErroresEdit(prev => ({ ...prev, [field]: validarCampoEdit(field, value) }))
-    } else {
-      const camposFormato = ['telefono', 'contactoEmergenciaTel']
-      if (camposFormato.includes(field)) {
-        setErroresEdit(prev => ({ ...prev, [field]: validarCampoEdit(field, value) }))
-      }
-    }
-  }
-
   const handleGuardarEdicion = async () => {
     setIntentoEdit(true)
 
-    const camposAValidarEdit = ['nombre', 'telefono', 'direccion', 'ciudad', 'contactoEmergenciaTel']
-    const nuevosErrores = {}
-    camposAValidarEdit.forEach(campo => {
-      const err = validarCampoEdit(campo, pacienteEditando[campo])
-      if (err) nuevosErrores[campo] = err
-    })
+    const nuevosErrores = validarEdicionCompleta(pacienteEditando)
     setErroresEdit(nuevosErrores)
 
     if (Object.keys(nuevosErrores).length > 0) {
-      showError('Por favor ingrese correctamente los datos')
+      const mensajes = Object.values(nuevosErrores)
+      showErrors(mensajes)
+      return
+    }
+
+    // Verificar que hubo cambios reales
+    const original = pacientes.find(p => p.id === pacienteEditando.id)
+    const huboCambios = Object.keys(pacienteEditando).some(
+      key => String(pacienteEditando[key] || '') !== String(original[key] || '')
+    )
+    if (!huboCambios) {
+      showError('No se detectaron cambios en la información del paciente')
       return
     }
 
     try {
-      const original = pacientes.find(p => p.id === pacienteEditando.id)
-
-      const huboCambios = Object.keys(pacienteEditando).some(
-        key => String(pacienteEditando[key] || '') !== String(original[key] || '')
-      )
-
-      if (!huboCambios) {
-        showError('No se detectaron cambios')
-        return
-      }
-
       const res = await fetch(`${API}/pacientes/${pacienteEditando.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(pacienteEditando)
       })
-
       const data = await res.json()
-
       if (data.success) {
         await cargarPacientes()
         setPacienteEditando(null)
@@ -347,10 +448,9 @@ function SecretariaPrincipal() {
       } else {
         showError('No se realizaron los cambios')
       }
-
     } catch (err) {
       console.error(err)
-      showError('Error crítico al intentar guardar')
+      showError('Error al conectar con el servidor')
     }
   }
 
@@ -362,9 +462,9 @@ function SecretariaPrincipal() {
   )
 
   const modules = [
-    { id: 'pacientes', name: 'Pacientes',        count: pacientes.length,  icon: <FiUsers />,    path: '/secretaria' },
-    { id: 'citas',     name: 'Citas Médicas',    count: 0,                 icon: <FiCalendar />, path: '/citas' },
-    { id: 'historia',  name: 'Historia Clínica', count: numHistorias,      icon: <FiFileText />, path: '/historia' },
+    { id: 'pacientes', name: 'Pacientes',        count: pacientes.length, icon: <FiUsers />,    path: '/secretaria' },
+    { id: 'citas',     name: 'Citas Médicas',    count: 0,                icon: <FiCalendar />, path: '/citas' },
+    { id: 'historia',  name: 'Historia Clínica', count: numHistorias,     icon: <FiFileText />, path: '/historia' },
   ]
 
   const stats = [
@@ -380,7 +480,6 @@ function SecretariaPrincipal() {
   return (
     <div className="secretaria-container">
 
-      {/* TOASTS */}
       <ToastContainer toasts={toasts} />
 
       {/* HEADER */}
@@ -398,7 +497,6 @@ function SecretariaPrincipal() {
             <FiLogOut /> Cerrar sesión
           </button>
           <div className="datetime-box">
-            {/* Fecha y hora unificadas con coma: "20/03/2026, 22:29:09" */}
             <span className="current-date">{formatDateTime(currentTime)}</span>
           </div>
           <div className="user-profile">
@@ -449,7 +547,7 @@ function SecretariaPrincipal() {
           {/* SECCIONES */}
           <div className="patient-sections">
 
-            {/* FORMULARIO — sin noValidate para activar tooltips nativos del browser */}
+            {/* ── FORMULARIO REGISTRO ── */}
             <div className="form-section">
               <h3><FiUser className="section-icon" /> Nuevo Paciente</h3>
               <form onSubmit={handleSubmit} className="patient-form">
@@ -459,30 +557,18 @@ function SecretariaPrincipal() {
                 <div className="form-group">
                   <label>NÚMERO DE IDENTIFICACIÓN *</label>
                   <CampoRequerido error={errores.id}>
-                    <input
-                      type="text"
-                      name="id"
-                      placeholder="Ej. 1062554433"
-                      value={nuevoPaciente.id}
-                      onChange={handleInputChange}
-                      style={inputStyle('id')}
-                      required
-                    />
+                    <input type="text" name="id" placeholder="Ej. 1062554433"
+                      value={nuevoPaciente.id} onChange={handleInputChange}
+                      style={inputStyle('id')} required />
                   </CampoRequerido>
                 </div>
 
                 <div className="form-group">
                   <label>NOMBRE COMPLETO *</label>
                   <CampoRequerido error={errores.nombre}>
-                    <input
-                      type="text"
-                      name="nombre"
-                      placeholder="Ej. Laura Grijalba Mena"
-                      value={nuevoPaciente.nombre}
-                      onChange={handleInputChange}
-                      style={inputStyle('nombre')}
-                      required
-                    />
+                    <input type="text" name="nombre" placeholder="Ej. Laura Grijalba Mena"
+                      value={nuevoPaciente.nombre} onChange={handleInputChange}
+                      style={inputStyle('nombre')} required />
                   </CampoRequerido>
                 </div>
 
@@ -490,27 +576,16 @@ function SecretariaPrincipal() {
                   <div className="form-group">
                     <label>FECHA DE NACIMIENTO *</label>
                     <CampoRequerido error={errores.fechaNacimiento}>
-                      <input
-                        type="date"
-                        name="fechaNacimiento"
-                        max={hoy}
-                        value={nuevoPaciente.fechaNacimiento}
-                        onChange={handleInputChange}
-                        style={inputStyle('fechaNacimiento')}
-                        required
-                      />
+                      <input type="date" name="fechaNacimiento" max={hoy}
+                        value={nuevoPaciente.fechaNacimiento} onChange={handleInputChange}
+                        style={inputStyle('fechaNacimiento')} required />
                     </CampoRequerido>
                   </div>
                   <div className="form-group">
                     <label>GÉNERO *</label>
                     <CampoRequerido error={errores.genero}>
-                      <select
-                        name="genero"
-                        value={nuevoPaciente.genero}
-                        onChange={handleInputChange}
-                        style={inputStyle('genero')}
-                        required
-                      >
+                      <select name="genero" value={nuevoPaciente.genero}
+                        onChange={handleInputChange} style={inputStyle('genero')} required>
                         <option value="">Seleccione</option>
                         <option value="M">Masculino</option>
                         <option value="F">Femenino</option>
@@ -523,13 +598,8 @@ function SecretariaPrincipal() {
                 <div className="form-group">
                   <label>TIPO DE SANGRE *</label>
                   <CampoRequerido error={errores.tipoSangre}>
-                    <select
-                      name="tipoSangre"
-                      value={nuevoPaciente.tipoSangre}
-                      onChange={handleInputChange}
-                      style={inputStyle('tipoSangre')}
-                      required
-                    >
+                    <select name="tipoSangre" value={nuevoPaciente.tipoSangre}
+                      onChange={handleInputChange} style={inputStyle('tipoSangre')} required>
                       <option value="">Seleccione</option>
                       {['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(t => (
                         <option key={t} value={t}>{t}</option>
@@ -541,89 +611,58 @@ function SecretariaPrincipal() {
                 <div className="form-section-label">CONTACTO</div>
 
                 <div className="form-group">
-                  <label>TELÉFONO *</label>
+                  <label>TELÉFONO * <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 400 }}>(10 dígitos)</span></label>
                   <CampoRequerido error={errores.telefono}>
-                    <input
-                      type="tel"
-                      name="telefono"
-                      placeholder="Ej. 3214556879"
-                      value={nuevoPaciente.telefono}
-                      onChange={handleInputChange}
-                      style={inputStyle('telefono')}
-                      maxLength={10}
-                      required
-                    />
+                    <input type="tel" name="telefono" placeholder="Ej. 3214556879"
+                      value={nuevoPaciente.telefono} onChange={handleInputChange}
+                      style={inputStyle('telefono')} maxLength={10} required />
                   </CampoRequerido>
                 </div>
 
-                {/* EMAIL — opcional, sin required */}
                 <div className="form-group">
-                  <label>EMAIL</label>
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="Ej. correo@email.com"
-                    value={nuevoPaciente.email}
-                    onChange={handleInputChange}
-                  />
+                  <label>EMAIL <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 400 }}>(opcional)</span></label>
+                  <CampoRequerido error={errores.email}>
+                    <input type="text" name="email" placeholder="Ej. correo@email.com"
+                      value={nuevoPaciente.email} onChange={handleInputChange}
+                      style={inputStyle('email')} />
+                  </CampoRequerido>
                 </div>
 
                 <div className="form-group">
                   <label>DIRECCIÓN *</label>
                   <CampoRequerido error={errores.direccion}>
-                    <input
-                      type="text"
-                      name="direccion"
-                      placeholder="Ej. Calle 12 # 3-45"
-                      value={nuevoPaciente.direccion}
-                      onChange={handleInputChange}
-                      style={inputStyle('direccion')}
-                      required
-                    />
+                    <input type="text" name="direccion" placeholder="Ej. Calle 12 # 3-45"
+                      value={nuevoPaciente.direccion} onChange={handleInputChange}
+                      style={inputStyle('direccion')} required />
                   </CampoRequerido>
                 </div>
 
                 <div className="form-group">
                   <label>CIUDAD *</label>
                   <CampoRequerido error={errores.ciudad}>
-                    <input
-                      type="text"
-                      name="ciudad"
-                      placeholder="Ej. Popayán"
-                      value={nuevoPaciente.ciudad}
-                      onChange={handleInputChange}
-                      style={inputStyle('ciudad')}
-                      required
-                    />
+                    <input type="text" name="ciudad" placeholder="Ej. Popayán"
+                      value={nuevoPaciente.ciudad} onChange={handleInputChange}
+                      style={inputStyle('ciudad')} required />
                   </CampoRequerido>
                 </div>
 
-                {/* CONTACTO DE EMERGENCIA — sin tocar, sin required */}
                 <div className="form-section-label">CONTACTO DE EMERGENCIA</div>
 
                 <div className="form-group">
-                  <label>NOMBRE COMPLETO</label>
-                  <input
-                    type="text"
-                    name="contactoEmergenciaNombre"
-                    placeholder="Ej. Pedro Grijalba"
-                    value={nuevoPaciente.contactoEmergenciaNombre}
-                    onChange={handleInputChange}
-                  />
+                  <label>NOMBRE COMPLETO <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 400 }}>(opcional)</span></label>
+                  <CampoRequerido error={errores.contactoEmergenciaNombre}>
+                    <input type="text" name="contactoEmergenciaNombre" placeholder="Ej. Pedro Grijalba"
+                      value={nuevoPaciente.contactoEmergenciaNombre} onChange={handleInputChange}
+                      style={inputStyle('contactoEmergenciaNombre')} />
+                  </CampoRequerido>
                 </div>
 
                 <div className="form-group">
-                  <label>TELÉFONO</label>
+                  <label>TELÉFONO <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 400 }}>(opcional, 10 dígitos)</span></label>
                   <CampoRequerido error={errores.contactoEmergenciaTel}>
-                    <input
-                      type="tel"
-                      name="contactoEmergenciaTel"
-                      placeholder="Ej. 3119900112"
-                      value={nuevoPaciente.contactoEmergenciaTel}
-                      onChange={handleInputChange}
-                      style={inputStyle('contactoEmergenciaTel')}
-                      maxLength={10}
-                    />
+                    <input type="tel" name="contactoEmergenciaTel" placeholder="Ej. 3119900112"
+                      value={nuevoPaciente.contactoEmergenciaTel} onChange={handleInputChange}
+                      style={inputStyle('contactoEmergenciaTel')} maxLength={10} />
                   </CampoRequerido>
                 </div>
 
@@ -633,7 +672,7 @@ function SecretariaPrincipal() {
               </form>
             </div>
 
-            {/* DIRECTORIO */}
+            {/* ── DIRECTORIO ── */}
             <div className="directory-section">
               <h3><FiUsers className="section-icon" /> Directorio de Pacientes</h3>
               <div className="search-box">
@@ -676,12 +715,11 @@ function SecretariaPrincipal() {
         <span>CMQ - Módulo Clínica</span>
         <span className="session-info">
           <span className="status-dot" />
-          {/* Formato unificado con coma en el footer también */}
           Sesión activa — {formatDateTime(currentTime)}
         </span>
       </footer>
 
-      {/* MODAL VER PERFIL */}
+      {/* ── MODAL VER PERFIL ── */}
       {pacienteViendo && (
         <div className="modal-overlay" onClick={() => setPacienteViendo(null)}>
           <div className="modal modal-perfil" onClick={(e) => e.stopPropagation()}>
@@ -721,7 +759,7 @@ function SecretariaPrincipal() {
         </div>
       )}
 
-      {/* MODAL EDITAR */}
+      {/* ── MODAL EDITAR ── */}
       {pacienteEditando && (
         <div className="modal-overlay" onClick={() => setPacienteEditando(null)}>
           <div className="modal modal-perfil" onClick={(e) => e.stopPropagation()}>
@@ -739,95 +777,66 @@ function SecretariaPrincipal() {
                 <input type="text" value={pacienteEditando.id} disabled />
               </div>
 
-              {/* NOMBRE — requerido en edición */}
               <div className="form-group">
                 <label>NOMBRE COMPLETO *</label>
                 <CampoRequerido error={erroresEdit.nombre}>
-                  <input
-                    type="text"
-                    name="nombre"
-                    value={pacienteEditando.nombre}
+                  <input type="text" name="nombre" value={pacienteEditando.nombre}
                     onChange={(e) => handleCambioEdit('nombre', e.target.value)}
-                    style={inputStyleEdit('nombre')}
-                    required
-                  />
+                    style={inputStyleEdit('nombre')} required />
                 </CampoRequerido>
               </div>
 
-              {/* TELÉFONO — requerido en edición */}
               <div className="form-group">
-                <label>TELÉFONO *</label>
+                <label>TELÉFONO * <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 400 }}>(10 dígitos)</span></label>
                 <CampoRequerido error={erroresEdit.telefono}>
-                  <input
-                    type="tel"
-                    name="telefono"
-                    value={pacienteEditando.telefono}
-                    maxLength={10}
+                  <input type="tel" value={pacienteEditando.telefono} maxLength={10}
                     onChange={(e) => handleCambioEdit('telefono', e.target.value)}
-                    style={inputStyleEdit('telefono')}
-                    required
-                  />
+                    style={inputStyleEdit('telefono')} required />
                 </CampoRequerido>
               </div>
 
-              {/* EMAIL — opcional en edición, sin required */}
               <div className="form-group">
-                <label>EMAIL</label>
-                <input
-                  type="email"
-                  value={pacienteEditando.email}
-                  onChange={(e) => handleCambioEdit('email', e.target.value)}
-                />
+                <label>EMAIL <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 400 }}>(opcional)</span></label>
+                <CampoRequerido error={erroresEdit.email}>
+                  <input type="text" value={pacienteEditando.email}
+                    onChange={(e) => handleCambioEdit('email', e.target.value)}
+                    style={inputStyleEdit('email')} />
+                </CampoRequerido>
               </div>
 
-              {/* DIRECCIÓN — requerido en edición */}
               <div className="form-group">
                 <label>DIRECCIÓN *</label>
                 <CampoRequerido error={erroresEdit.direccion}>
-                  <input
-                    type="text"
-                    value={pacienteEditando.direccion}
+                  <input type="text" value={pacienteEditando.direccion}
                     onChange={(e) => handleCambioEdit('direccion', e.target.value)}
-                    style={inputStyleEdit('direccion')}
-                    required
-                  />
+                    style={inputStyleEdit('direccion')} required />
                 </CampoRequerido>
               </div>
 
-              {/* CIUDAD — requerido en edición */}
               <div className="form-group">
                 <label>CIUDAD *</label>
                 <CampoRequerido error={erroresEdit.ciudad}>
-                  <input
-                    type="text"
-                    value={pacienteEditando.ciudad}
+                  <input type="text" value={pacienteEditando.ciudad}
                     onChange={(e) => handleCambioEdit('ciudad', e.target.value)}
-                    style={inputStyleEdit('ciudad')}
-                    required
-                  />
+                    style={inputStyleEdit('ciudad')} required />
                 </CampoRequerido>
               </div>
 
-              {/* CONTACTO DE EMERGENCIA — sin tocar, sin required */}
               <div className="form-group">
-                <label>CONTACTO EMERGENCIA — NOMBRE</label>
-                <input
-                  type="text"
-                  value={pacienteEditando.contactoEmergenciaNombre}
-                  onChange={(e) => handleCambioEdit('contactoEmergenciaNombre', e.target.value)}
-                />
+                <label>CONTACTO EMERGENCIA — NOMBRE <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 400 }}>(opcional)</span></label>
+                <CampoRequerido error={erroresEdit.contactoEmergenciaNombre}>
+                  <input type="text" value={pacienteEditando.contactoEmergenciaNombre}
+                    onChange={(e) => handleCambioEdit('contactoEmergenciaNombre', e.target.value)}
+                    style={inputStyleEdit('contactoEmergenciaNombre')} />
+                </CampoRequerido>
               </div>
 
               <div className="form-group">
-                <label>CONTACTO EMERGENCIA — TELÉFONO</label>
+                <label>CONTACTO EMERGENCIA — TELÉFONO <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 400 }}>(opcional, 10 dígitos)</span></label>
                 <CampoRequerido error={erroresEdit.contactoEmergenciaTel}>
-                  <input
-                    type="tel"
-                    value={pacienteEditando.contactoEmergenciaTel}
-                    maxLength={10}
+                  <input type="tel" value={pacienteEditando.contactoEmergenciaTel} maxLength={10}
                     onChange={(e) => handleCambioEdit('contactoEmergenciaTel', e.target.value)}
-                    style={inputStyleEdit('contactoEmergenciaTel')}
-                  />
+                    style={inputStyleEdit('contactoEmergenciaTel')} />
                 </CampoRequerido>
               </div>
 
