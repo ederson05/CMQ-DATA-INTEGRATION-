@@ -8,10 +8,11 @@ import { useNavigate } from 'react-router-dom'
 import './secretaria_principal.css'
 
 //Local
-const API = 'http://localhost:3001/api'
+//const API = 'http://localhost:3001/api'
 
 //API
-//const API = 'https://cmq-backend.onrender.com/api'
+const API = 'https://cmq-backend.onrender.com/api'
+
 
 const hoy = new Date().toISOString().split('T')[0]
 
