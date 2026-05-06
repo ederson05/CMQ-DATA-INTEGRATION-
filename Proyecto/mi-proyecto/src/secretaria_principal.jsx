@@ -17,24 +17,13 @@ const hoy = new Date().toISOString().split('T')[0]
 
 /* REGLAS DE VALIDACIÓN*/
 const REGLAS = {
-  // Solo letras (incluyendo acentos y ñ) y espacios
   soloLetras: (valor) => /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/.test(valor.trim()),
-
-  // Email: letras, números, y solo estos caracteres especiales: @ . _ - +
-  // Sin tildes, sin ñ, sin caracteres raros
   emailValido: (valor) => /^[a-zA-Z0-9._+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(valor),
-
-  // Solo dígitos
   soloNumeros: (valor) => /^\d+$/.test(valor),
-
-  // Teléfono: exactamente 10 dígitos
   telefono: (valor) => String(valor || '').replace(/\D/g, '').length === 10,
-
-  // Fecha no futura
   fechaValida: (valor) => valor && valor <= hoy,
 }
 
-/* Valida un campo del formulario de REGISTRO y retorna string de error o '' */
 const validarCampoRegistro = (name, value) => {
   const v = String(value || '').trim()
 
@@ -70,7 +59,6 @@ const validarCampoRegistro = (name, value) => {
       return ''
 
     case 'email':
-      // Opcional — solo valida formato si se llenó
       if (v && !REGLAS.emailValido(v)) return 'El email no es válido. Use solo letras sin tildes, números, punto, guion o guion bajo'
       return ''
 
@@ -84,12 +72,10 @@ const validarCampoRegistro = (name, value) => {
       return ''
 
     case 'contactoEmergenciaNombre':
-      // Opcional — solo valida formato si se llenó
       if (v && !REGLAS.soloLetras(v)) return 'El nombre de contacto solo debe contener letras y espacios'
       return ''
 
     case 'contactoEmergenciaTel':
-      // Opcional — solo valida formato si se llenó
       if (v && !REGLAS.telefono(v)) return 'El teléfono de emergencia debe contener exactamente 10 dígitos numéricos'
       return ''
 
@@ -98,7 +84,6 @@ const validarCampoRegistro = (name, value) => {
   }
 }
 
-/* Valida un campo del formulario de EDICIÓN y retorna string de error o '' */
 const validarCampoEdicion = (name, value) => {
   const v = String(value || '').trim()
 
@@ -140,7 +125,6 @@ const validarCampoEdicion = (name, value) => {
   }
 }
 
-/* Recorre todos los campos del registro y devuelve objeto con todos los errores */
 const validarFormularioCompleto = (paciente) => {
   const campos = [
     'id', 'nombre', 'fechaNacimiento', 'genero', 'tipoSangre',
@@ -155,7 +139,6 @@ const validarFormularioCompleto = (paciente) => {
   return errores
 }
 
-/* Recorre todos los campos de edición y devuelve objeto con todos los errores */
 const validarEdicionCompleta = (paciente) => {
   const campos = [
     'nombre', 'telefono', 'email', 'direccion', 'ciudad',
@@ -198,7 +181,6 @@ function useToast() {
     toasts,
     success: m => show(m, 'success'),
     error:   m => show(m, 'error'),
-    // Muestra múltiples errores con retardo escalonado para que no se sobrepongan
     errors:  (lista) => lista.forEach((m, i) => show(m, 'error', i * 180))
   }
 }
@@ -325,14 +307,12 @@ function SecretariaPrincipal() {
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setNuevoPaciente(prev => ({ ...prev, [name]: value }))
-    // Valida en tiempo real solo si ya se intentó enviar, o si es campo de formato
     if (intentoEnvio) {
       setErrores(prev => ({ ...prev, [name]: validarCampoRegistro(name, value) }))
     } else {
       const camposInmediatos = ['telefono', 'contactoEmergenciaTel', 'fechaNacimiento', 'email',
                                 'nombre', 'ciudad', 'contactoEmergenciaNombre']
       if (camposInmediatos.includes(name)) {
-        // Solo muestra error de formato si el campo tiene contenido
         if (value.trim()) {
           setErrores(prev => ({ ...prev, [name]: validarCampoRegistro(name, value) }))
         } else {
@@ -367,13 +347,11 @@ function SecretariaPrincipal() {
     setErrores(nuevosErrores)
 
     if (Object.keys(nuevosErrores).length > 0) {
-      // Muestra un toast específico por cada error encontrado
       const mensajes = Object.values(nuevosErrores)
       showErrors(mensajes)
       return
     }
 
-    // ID duplicado — verificado después de pasar las validaciones de formato
     if (pacientes.find(p => p.id === nuevoPaciente.id.trim())) {
       showError('Datos ya existentes en la base de datos')
       return
@@ -423,7 +401,6 @@ function SecretariaPrincipal() {
       return
     }
 
-    // Verificar que hubo cambios reales
     const original = pacientes.find(p => p.id === pacienteEditando.id)
     const huboCambios = Object.keys(pacienteEditando).some(
       key => String(pacienteEditando[key] || '') !== String(original[key] || '')
@@ -680,10 +657,17 @@ function SecretariaPrincipal() {
                 <input type="text" placeholder="Búsqueda por nombre o identificación..."
                   value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
               </div>
-              <div className="patient-table">
-                <table>
+
+              {/* ✅ FIX: overflow:auto para scroll si hay desbordamiento, y sin div duplicado */}
+              <div className="patient-table" style={{ overflow: 'auto' }}>
+                <table style={{ tableLayout: 'fixed', width: '100%' }}>
                   <thead>
-                    <tr><th>IDENTIFICACION</th><th>NOMBRE COMPLETO</th><th>TELÉFONO</th><th>ACCIÓN</th></tr>
+                    <tr>
+                      <th style={{ width: '30%' }}>IDENTIFICACION</th>
+                      <th style={{ width: '40%' }}>NOMBRE COMPLETO</th>
+                      <th style={{ width: '20%' }}>TELÉFONO</th>
+                      <th style={{ width: '10%' }}>ACCIÓN</th>
+                    </tr>
                   </thead>
                   <tbody>
                     {pacientesFiltrados.map((p) => (
@@ -705,6 +689,8 @@ function SecretariaPrincipal() {
                   </tbody>
                 </table>
               </div>
+              {/* ✅ DIV DUPLICADO ELIMINADO */}
+
             </div>
           </div>
         </main>
