@@ -26,59 +26,47 @@ const REGLAS = {
 
 const validarCampoRegistro = (name, value) => {
   const v = String(value || '').trim()
-
   switch (name) {
     case 'id':
       if (!v) return 'El número de identificación es requerido'
       if (!REGLAS.soloNumeros(v)) return 'El número de identificación solo debe contener dígitos'
       if (v.length < 5 || v.length > 15) return 'El número de identificación debe tener entre 5 y 15 dígitos'
       return ''
-
     case 'nombre':
       if (!v) return 'El nombre completo es requerido'
       if (!REGLAS.soloLetras(v)) return 'El nombre solo debe contener letras y espacios'
       if (v.length < 3) return 'El nombre debe tener al menos 3 caracteres'
       return ''
-
     case 'fechaNacimiento':
       if (!v) return 'La fecha de nacimiento es requerida'
       if (!REGLAS.fechaValida(v)) return 'La fecha de nacimiento no puede ser una fecha futura'
       return ''
-
     case 'genero':
       if (!v) return 'El género es requerido'
       return ''
-
     case 'tipoSangre':
       if (!v) return 'El tipo de sangre es requerido'
       return ''
-
     case 'telefono':
       if (!v) return 'El teléfono es requerido'
       if (!REGLAS.telefono(v)) return 'El teléfono debe contener exactamente 10 dígitos numéricos'
       return ''
-
     case 'email':
       if (v && !REGLAS.emailValido(v)) return 'El email no es válido. Use solo letras sin tildes, números, punto, guion o guion bajo'
       return ''
-
     case 'direccion':
       if (!v) return 'La dirección es requerida'
       return ''
-
     case 'ciudad':
       if (!v) return 'La ciudad es requerida'
       if (!REGLAS.soloLetras(v)) return 'La ciudad solo debe contener letras y espacios'
       return ''
-
     case 'contactoEmergenciaNombre':
       if (v && !REGLAS.soloLetras(v)) return 'El nombre de contacto solo debe contener letras y espacios'
       return ''
-
     case 'contactoEmergenciaTel':
       if (v && !REGLAS.telefono(v)) return 'El teléfono de emergencia debe contener exactamente 10 dígitos numéricos'
       return ''
-
     default:
       return ''
   }
@@ -86,40 +74,32 @@ const validarCampoRegistro = (name, value) => {
 
 const validarCampoEdicion = (name, value) => {
   const v = String(value || '').trim()
-
   switch (name) {
     case 'nombre':
       if (!v) return 'El nombre completo es requerido'
       if (!REGLAS.soloLetras(v)) return 'El nombre solo debe contener letras y espacios, sin números ni caracteres especiales'
       if (v.length < 3) return 'El nombre debe tener al menos 3 caracteres'
       return ''
-
     case 'telefono':
       if (!v) return 'El teléfono es requerido'
       if (!REGLAS.telefono(v)) return 'El teléfono debe contener exactamente 10 dígitos numéricos'
       return ''
-
     case 'email':
       if (v && !REGLAS.emailValido(v)) return 'El email no es válido. Use solo letras sin tildes, números, punto, guion o guion bajo'
       return ''
-
     case 'direccion':
       if (!v) return 'La dirección es requerida'
       return ''
-
     case 'ciudad':
       if (!v) return 'La ciudad es requerida'
       if (!REGLAS.soloLetras(v)) return 'La ciudad solo debe contener letras y espacios'
       return ''
-
     case 'contactoEmergenciaNombre':
       if (v && !REGLAS.soloLetras(v)) return 'El nombre de contacto solo debe contener letras y espacios'
       return ''
-
     case 'contactoEmergenciaTel':
       if (v && !REGLAS.telefono(v)) return 'El teléfono de emergencia debe contener exactamente 10 dígitos numéricos'
       return ''
-
     default:
       return ''
   }
@@ -451,9 +431,6 @@ function SecretariaPrincipal() {
     { label: 'HISTORIALES',     value: numHistorias,      subtext: 'Registros clínicos',     color: 'purple', icon: <FiFileText size={22} />,    dot: '#8b5cf6' },
   ]
 
-  /* ══════════════════════════════════════════
-     RENDER
-  ══════════════════════════════════════════ */
   return (
     <div className="secretaria-container">
 
@@ -658,15 +635,15 @@ function SecretariaPrincipal() {
                   value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
               </div>
 
-              {/* ✅ FIX: overflow:auto para scroll si hay desbordamiento, y sin div duplicado */}
-              <div className="patient-table" style={{ overflow: 'auto' }}>
-                <table style={{ tableLayout: 'fixed', width: '100%' }}>
+              {/* ✅ Sin width fijos ni tableLayout fixed — se adapta al contenedor */}
+              <div className="patient-table">
+                <table>
                   <thead>
                     <tr>
-                      <th style={{ width: '30%' }}>IDENTIFICACION</th>
-                      <th style={{ width: '40%' }}>NOMBRE COMPLETO</th>
-                      <th style={{ width: '20%' }}>TELÉFONO</th>
-                      <th style={{ width: '10%' }}>ACCIÓN</th>
+                      <th>IDENTIFICACION</th>
+                      <th>NOMBRE COMPLETO</th>
+                      <th>TELÉFONO</th>
+                      <th>ACCIÓN</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -689,7 +666,6 @@ function SecretariaPrincipal() {
                   </tbody>
                 </table>
               </div>
-              {/* ✅ DIV DUPLICADO ELIMINADO */}
 
             </div>
           </div>
