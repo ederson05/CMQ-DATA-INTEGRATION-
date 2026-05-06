@@ -2,33 +2,40 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './login.css'
 
-const API = 'https://cmq-backend.onrender.com/api'
-
 function Login() {
-  const [email, setEmail] = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading]   = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setErrorMsg('')
     setLoading(true)
     try {
       const response = await fetch('http://localhost:3001/api/login', {
-       //const response = await fetch(`${API}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       })
       const data = await response.json()
+
       if (data.success) {
         localStorage.setItem('usuario', JSON.stringify(data.usuario))
-        navigate('/secretaria')
+
+        const rol = data.usuario.rol?.toUpperCase()
+        if (rol === 'MEDICO') {
+          navigate('/medico')
+        } else {
+          // SECRETARIA u otro rol
+          navigate('/secretaria')
+        }
       } else {
-        alert('Email o contraseña incorrectos')
+        setErrorMsg('Email o contraseña incorrectos')
       }
     } catch (err) {
-      alert('Error conectando al servidor')
+      setErrorMsg('Error al conectar con el servidor')
     } finally {
       setLoading(false)
     }
@@ -55,7 +62,7 @@ function Login() {
               id="email"
               placeholder="tu@email.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setEmail(e.target.value); setErrorMsg('') }}
               required
             />
           </div>
@@ -67,15 +74,28 @@ function Login() {
               id="password"
               placeholder="••••••••"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => { setPassword(e.target.value); setErrorMsg('') }}
               required
             />
           </div>
 
+          {errorMsg && (
+            <div className="login-error">
+              <span className="login-error-icon">!</span>
+              {errorMsg}
+            </div>
+          )}
+
           <button type="submit" className="btn-login" disabled={loading}>
-            {loading ? 'Cargando...' : 'Iniciar Sesión'}
+            {loading ? 'Verificando...' : 'Iniciar Sesión'}
           </button>
         </form>
+
+        <div className="login-hints">
+          <p>Secretaria: <code>laura.garcia@cmq.com</code></p>
+          <p>Médico: <code>c.mendoza@cmq.com</code></p>
+          <p>Contraseña médico: <code>medico123</code> · secretaria: <code>secretaria123</code></p>
+        </div>
       </div>
     </div>
   )
