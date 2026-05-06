@@ -8,8 +8,12 @@ import {
 import { FaStethoscope } from 'react-icons/fa'
 import { useNavigate } from 'react-router-dom'
 import './medico_principal.css'
+//local
+//const API = 'http://localhost:3001/api'
 
-const API = 'http://localhost:3001/api'
+
+//API
+const API = 'https://cmq-backend.onrender.com/api'
 
 /* ══════════════════════════════
    TOASTS  (igual que secretaria)

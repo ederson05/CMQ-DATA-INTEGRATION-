@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './login.css'
+
+//const API = 'http://localhost:3001/api'   // local
+const API = 'https://cmq-backend.onrender.com/api' // producción
 
 function Login() {
   const [email, setEmail]       = useState('')
@@ -9,12 +12,19 @@ function Login() {
   const [errorMsg, setErrorMsg] = useState('')
   const navigate = useNavigate()
 
+  // ── Limpia la sesión cada vez que se monta el Login ──
+  // Así si el usuario da "atrás" desde secretaria/médico,
+  // la sesión muere y tiene que volver a autenticarse
+  useEffect(() => {
+    localStorage.removeItem('usuario')
+  }, [])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErrorMsg('')
     setLoading(true)
     try {
-      const response = await fetch('http://localhost:3001/api/login', {
+      const response = await fetch(`${API}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -23,13 +33,12 @@ function Login() {
 
       if (data.success) {
         localStorage.setItem('usuario', JSON.stringify(data.usuario))
-
         const rol = data.usuario.rol?.toUpperCase()
+        // replace:true evita que /login quede en el historial del navegador
         if (rol === 'MEDICO') {
-          navigate('/medico')
+          navigate('/medico', { replace: true })
         } else {
-          // SECRETARIA u otro rol
-          navigate('/secretaria')
+          navigate('/secretaria', { replace: true })
         }
       } else {
         setErrorMsg('Email o contraseña incorrectos')
