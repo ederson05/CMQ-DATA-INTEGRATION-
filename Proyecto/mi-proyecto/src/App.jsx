@@ -1,20 +1,39 @@
+// App.jsx
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import Login from './login.jsx'
-import SecretariaPrincipal from './secretaria_principal.jsx'
-import CitasMedicas from './citas_medicas.jsx'
+import Login             from './login'
+import SecretariaPrincipal from './secretaria_principal'
+import CitasMedicas      from './citas_medicas'
+import MedicoPrincipal   from './medico_principal'
+import RutaProtegida     from './RutaProtegida'
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/"          element={<Login />} />
-        <Route path="/secretaria" element={<SecretariaPrincipal />} />
-        <Route path="/citas"      element={<CitasMedicas />} />
+        {/* Ruta pública — limpia la sesión al montarse */}
+        <Route path="/" element={<Login />} />
+
+        {/* Rutas protegidas — redirigen al login si no hay sesión */}
+        <Route path="/secretaria" element={
+          <RutaProtegida rol="SECRETARIA">
+            <SecretariaPrincipal />
+          </RutaProtegida>
+        } />
+
+        <Route path="/citas" element={
+          <RutaProtegida rol="SECRETARIA">
+            <CitasMedicas />
+          </RutaProtegida>
+        } />
+
+        <Route path="/medico" element={
+          <RutaProtegida rol="MEDICO">
+            <MedicoPrincipal />
+          </RutaProtegida>
+        } />
       </Routes>
     </BrowserRouter>
   )
 }
-
-
-
 
 export default App

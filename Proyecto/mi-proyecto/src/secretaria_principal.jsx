@@ -13,7 +13,6 @@ import './secretaria_principal.css'
 //API
 const API = 'https://cmq-backend.onrender.com/api'
 
-
 const hoy = new Date().toISOString().split('T')[0]
 
 /* REGLAS DE VALIDACIÓN*/

@@ -1,0 +1,413 @@
+/*
+  medico_principal.css
+  ─────────────────────────────────────────────────────────────
+  Este archivo REUTILIZA las clases de secretaria_principal.css
+  (main-header, sidebar, content-area, stats-grid, stat-card,
+   patient-table, modal-overlay, modal, etc.)
+  Solo agrega lo que es exclusivo del módulo médico.
+  ─────────────────────────────────────────────────────────────
+*/
+
+/* ── Importa el CSS base de secretaria ── */
+@import './secretaria_principal.css';
+
+/* ══ Contenedor raíz ══ */
+.medico-container {
+  min-height: 100vh;
+  background: #f1f5f9;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow-x: hidden;
+}
+
+/* ══ Avatar verde para médicos ══ */
+.med-avatar {
+  background: #10b981 !important;
+}
+
+/* ══ Info al pie del sidebar ══ */
+.med-sidebar-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px;
+  font-size: 12px;
+  color: #94a3b8;
+  border-top: 1px solid #f1f5f9;
+  margin-top: auto;
+}
+
+/* ══ Botón anotar (verde) ══ */
+.btn-anotar {
+  background: #f0fdf4;
+  color: #059669;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.btn-anotar:hover { background: #dcfce7; }
+
+/* ══ Historial header (con botón volver) ══ */
+.hist-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* ══ Botón volver ══ */
+.btn-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  padding: 7px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.btn-back:hover { background: #f1f5f9; }
+
+/* ══ Botón cancelar ══ */
+.btn-cancelar {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-cancelar:hover { background: #f1f5f9; }
+
+/* ══ Ficha rápida del paciente ══ */
+.pac-info-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: white;
+  border-radius: 10px;
+  padding: 14px 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  margin-bottom: 14px;
+}
+.pac-avatar {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.pac-datos {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.pac-datos strong { font-size: 14px; color: #1e293b; }
+.pac-datos span   { font-size: 12px; color: #64748b; }
+
+/* ══ Badge tipo sangre ══ */
+.badge-sangre {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ══ Barra de filtros ══ */
+.filtros-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  border-radius: 8px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.filtros-bar select,
+.filtros-bar input[type="date"] {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 13px;
+  background: #f8fafc;
+  color: #1e293b;
+  outline: none;
+}
+.filtros-bar select:focus,
+.filtros-bar input[type="date"]:focus {
+  border-color: #3b82f6;
+  background: white;
+}
+.btn-limpiar-filtros {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.filtro-count { margin-left: auto; font-size: 12px; color: #64748b; }
+
+/* ══ Lista de anotaciones ══ */
+.historial-list { display: flex; flex-direction: column; gap: 12px; }
+
+.anotacion-card {
+  background: white;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  border-left: 3px solid #e2e8f0;
+  transition: box-shadow 0.2s;
+}
+.anotacion-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
+
+.ano-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ano-left  { display: flex; align-items: center; gap: 8px; }
+.ano-fecha { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #94a3b8; }
+
+/* Badges de tipo */
+.tipo-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.tipo-azul  { background: #eff6ff; color: #2563eb; }
+.tipo-verde { background: #f0fdf4; color: #059669; }
+.tipo-rojo  { background: #fef2f2; color: #dc2626; }
+
+/* Indicador aclaratoria */
+.acl-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff7ed;
+  color: #c2410c;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ano-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.ano-campo { display: flex; flex-direction: column; gap: 2px; }
+.ano-label {
+  font-size: 10px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.ano-campo > span:last-child { font-size: 13px; color: #1e293b; }
+
+.ano-footer {
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-ver-acl {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff7ed;
+  color: #c2410c;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.btn-ver-acl:hover { background: #ffedd5; }
+
+.btn-acl {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f5f3ff;
+  color: #7c3aed;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-left: auto;
+}
+.btn-acl:hover { background: #ede9fe; }
+
+/* ══ Estado vacío ══ */
+.empty-state {
+  background: white;
+  border-radius: 10px;
+  padding: 48px;
+  text-align: center;
+  color: #94a3b8;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+.empty-state p { margin: 12px 0; font-size: 14px; }
+
+/* ══ Aviso inmutabilidad ══ */
+.inmutabilidad-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 7px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: #92400e;
+}
+
+/* ══ Anotación original (vista aclaratoria) ══ */
+.original-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+  max-width: 680px;
+}
+.original-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.original-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.original-fila {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  font-size: 13px;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.original-fila > span:first-child { color: #64748b; font-weight: 500; }
+.original-fila > span:last-child  { color: #1e293b; }
+
+/* ══ Textarea en el form (hereda input de secretaria) ══ */
+.patient-form textarea {
+  padding: 8px 11px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 13.5px;
+  background: #f8fafc;
+  color: #1e293b;
+  width: 100%;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.patient-form textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+.patient-form textarea::placeholder { color: #94a3b8; }
+
+/* ══ Modal aclaratorias ══ */
+.acl-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.acl-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+.acl-tag {
+  background: #f5f3ff;
+  color: #7c3aed;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.acl-fecha  { font-size: 11px; color: #94a3b8; }
+.acl-desc   { font-size: 13px; color: #1e293b; margin-bottom: 6px; line-height: 1.5; }
+.acl-medico { font-size: 11px; color: #64748b; }
+
+.acl-aviso-modal {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff7ed;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: #c2410c;
+  margin-top: 8px;
+}
+
+/* ══ Botón púrpura en modal ══ */
+.btn-purple {
+  background: #7c3aed !important;
+}
+.btn-purple:hover { background: #6d28d9 !important; }
+
+/* ══ Responsive ══ */
+@media (max-width: 1100px) {
+  .ano-body { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 768px) {
+  .ano-body       { grid-template-columns: 1fr; }
+  .hist-header    { flex-wrap: wrap; }
+  .filtros-bar    { gap: 6px; }
+  .pac-datos      { gap: 8px; }
+}
