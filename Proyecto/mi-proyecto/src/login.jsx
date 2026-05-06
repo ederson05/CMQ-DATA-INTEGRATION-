@@ -13,16 +13,16 @@ function Login() {
   const navigate = useNavigate()
 
   // ✅ Si ya hay sesión activa, redirige sin borrar nada
-  useEffect(() => {
-    try {
-      const usuario = JSON.parse(localStorage.getItem('usuario'))
-      if (usuario?.rol) {
-        const rol = usuario.rol.toUpperCase()
-        if (rol === 'MEDICO') navigate('/medico', { replace: true })
-        else navigate('/secretaria', { replace: true })
-      }
-    } catch { }
-  }, [])
+ useEffect(() => {
+  try {
+    const usuario = JSON.parse(localStorage.getItem('usuario'))
+    if (usuario?.rol) {
+      const rol = usuario.rol.toUpperCase()
+      if (rol === 'MEDICO') navigate('/medico', { replace: true })
+      else navigate('/secretaria', { replace: true })
+    }
+  } catch { }
+}, [navigate])
 
   const handleSubmit = async (e) => {
     e.preventDefault()

@@ -493,7 +493,7 @@ function SecretariaPrincipal() {
           </div>
         </div>
         <div className="header-right">
-          <button className="btn-logout" onClick={() => navigate('/')}>
+          <button className="btn-logout" onClick={() => { localStorage.removeItem('usuario'); navigate('/') }}>
             <FiLogOut /> Cerrar sesión
           </button>
           <div className="datetime-box">
