@@ -1463,6 +1463,8 @@ app.get('/api/citas', async (req, res) => {
   }
 });
 
+
+/*
 // POST /api/citas
 app.post('/api/citas', async (req, res) => {
   const { pacDocumento, medId, usuId, fechaHora, motivo, nivelPaciente } = req.body;
@@ -1488,6 +1490,40 @@ app.post('/api/citas', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+*/
+
+// POST /api/citas
+app.post('/api/citas', async (req, res) => {
+  const { pacDocumento, medId, usuId, fechaHora, motivo, nivelPaciente } = req.body;
+  try {
+    const idResult = await pool.query(
+      'SELECT COALESCE(MAX(cit_id), 0) + 1 AS nuevo_id FROM tbl_cita'
+    );
+    const citId = idResult.rows[0].nuevo_id;
+
+    await pool.query(
+      `INSERT INTO tbl_cita (
+         cit_id, pac_documento, med_id, usu_id,
+         cit_fecha_hora, cit_motivo_consulta,
+         cit_estado, cit_observaciones, cit_fecha_creacion, cit_nivel_paciente
+       ) VALUES ($1,$2,$3,$4,$5,$6,'PROGRAMADA',' ', NOW(),$7)`,
+      [
+        citId,
+        pacDocumento,
+        medId,
+        usuId         || 1,
+        fechaHora,
+        motivo        || 'Sin motivo',
+        nivelPaciente || 'ESTABLE'
+      ]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ ERROR POST /api/citas:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // PUT /api/citas/:id  — igual que local: solo medId, fechaHora, estado
 app.put('/api/citas/:id', async (req, res) => {
