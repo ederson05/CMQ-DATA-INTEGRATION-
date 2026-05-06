@@ -12,11 +12,16 @@ function Login() {
   const [errorMsg, setErrorMsg] = useState('')
   const navigate = useNavigate()
 
-  // ── Limpia la sesión cada vez que se monta el Login ──
-  // Así si el usuario da "atrás" desde secretaria/médico,
-  // la sesión muere y tiene que volver a autenticarse
+  // ✅ Si ya hay sesión activa, redirige sin borrar nada
   useEffect(() => {
-    localStorage.removeItem('usuario')
+    try {
+      const usuario = JSON.parse(localStorage.getItem('usuario'))
+      if (usuario?.rol) {
+        const rol = usuario.rol.toUpperCase()
+        if (rol === 'MEDICO') navigate('/medico', { replace: true })
+        else navigate('/secretaria', { replace: true })
+      }
+    } catch { }
   }, [])
 
   const handleSubmit = async (e) => {
@@ -34,7 +39,6 @@ function Login() {
       if (data.success) {
         localStorage.setItem('usuario', JSON.stringify(data.usuario))
         const rol = data.usuario.rol?.toUpperCase()
-        // replace:true evita que /login quede en el historial del navegador
         if (rol === 'MEDICO') {
           navigate('/medico', { replace: true })
         } else {
