@@ -18,6 +18,7 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   overflow-x: hidden;
 }
+.stat-icon-box.orange { background: #fff7ed; color: #f97316; }
 
 /* ══ Avatar verde para médicos ══ */
 .med-avatar {
@@ -410,4 +411,95 @@
   .hist-header    { flex-wrap: wrap; }
   .filtros-bar    { gap: 6px; }
   .pac-datos      { gap: 8px; }
+}
+/* ══ Tarjeta doctor en sidebar ══ */
+.med-sidebar-doctor-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  border: 1px solid #f1f5f9;
+  margin-top: auto;
+}
+
+.med-sidebar-doctor-icon {
+  width: 36px;
+  height: 36px;
+  background: #fff7ed;
+  color: #f97316;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.med-sidebar-doctor-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+}
+
+.med-sidebar-doctor-info strong {
+  font-size: 12px;
+  color: #1e293b;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.med-sidebar-doctor-info span {
+  font-size: 10px;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.med-sidebar-doctor-dot {
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px #d1fae5;
+}
+
+/* ══ Fix tabla derecha ══ */
+.patient-table table {
+  table-layout: fixed;
+  width: 100%;
+}
+.patient-table th,
+.patient-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Agregar al final del archivo o donde estén los stat-icon-box */
+.stat-icon-box.purple { background: #f5f3ff; color: #7c3aed; }
+
+/* Mejorar scrollbar en lista de citas */
+.directory-section div[style*="overflowY: auto"]::-webkit-scrollbar {
+  width: 6px;
+}
+
+.directory-section div[style*="overflowY: auto"]::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.directory-section div[style*="overflowY: auto"]::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.directory-section div[style*="overflowY: auto"]::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }

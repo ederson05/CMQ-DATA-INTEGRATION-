@@ -84,6 +84,9 @@ function CitasMedicas() {
         fetch(`${API}/medicos`),
         fetch(`${API}/pacientes`)
       ])
+
+
+      /*
       const dataCitas     = await resCitas.json()
       const dataMedicos   = await resMedicos.json()
       const dataPacientes = await resPacientes.json()
@@ -107,6 +110,33 @@ function CitasMedicas() {
       setPacientes(dataPacientes.map(row => ({
         id: String(row[0]), nombre: row[1]
       })))
+*/
+const dataCitas = await resCitas.json()
+const dataMedicos = await resMedicos.json()
+const dataPacientes = await resPacientes.json()
+
+setCitas(Array.isArray(dataCitas) ? dataCitas.map(row => ({
+  citId:         row[0],
+  pacDocumento:  String(row[1]),
+  nombre:        row[2],
+  medId:         row[3],
+  medico:        row[4],
+  fecha:         row[5] ? row[5].split('.')[0] : '',
+  motivo:        row[6] || '',
+  estado:        row[7] || 'PROGRAMADA',
+  nivelPaciente: row[8] || 'ESTABLE'
+})) : [])
+
+setMedicos(Array.isArray(dataMedicos) ? dataMedicos.map(row => ({
+  id: row[0], nombre: row[1], especialidad: row[2]
+})) : [])
+
+setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
+  id: String(row[0]), nombre: row[1]
+})) : [])
+
+
+
 
     } catch (err) {
       console.error('Error cargando datos:', err)

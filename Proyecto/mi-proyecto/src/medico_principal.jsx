@@ -3,21 +3,17 @@ import {
   FiUsers, FiFileText, FiUser,
   FiSearch, FiLogOut, FiEye,
   FiPlusCircle, FiChevronLeft,
-  FiAlertCircle, FiCalendar, FiFilter, FiX, FiCheckCircle
+  FiAlertCircle, FiCalendar, FiFilter, FiX, FiCheckCircle, FiEdit2
 } from 'react-icons/fi'
 import { FaStethoscope } from 'react-icons/fa'
 import { useNavigate } from 'react-router-dom'
 import './medico_principal.css'
+
 //local
 //const API = 'http://localhost:3001/api'
-
-
 //API
 const API = 'https://cmq-backend.onrender.com/api'
 
-/* ══════════════════════════════
-   TOASTS  (igual que secretaria)
-══════════════════════════════ */
 function ToastContainer({ toasts }) {
   return (
     <div className="toast-wrapper">
@@ -48,9 +44,6 @@ function useToast() {
   }
 }
 
-/* ══════════════════════════════
-   CAMPO CON VALIDACIÓN
-══════════════════════════════ */
 function CampoRequerido({ error, children }) {
   return (
     <div style={{ position: 'relative' }}>
@@ -72,12 +65,17 @@ function CampoRequerido({ error, children }) {
   )
 }
 
-/* ══════════════════════════════
-   HELPERS
-══════════════════════════════ */
 const TIPOS      = ['PRIMERA_VEZ', 'CONTROL', 'URGENCIA']
 const TIPO_LABEL = { PRIMERA_VEZ: 'Primera vez', CONTROL: 'Control', URGENCIA: 'Urgencia' }
 const TIPO_COLOR = { PRIMERA_VEZ: 'tipo-azul', CONTROL: 'tipo-verde', URGENCIA: 'tipo-rojo' }
+
+const ESTADOS_CITA   = ['PROGRAMADA', 'EN_ESPERA', 'ATENDIDO']
+const ESTADO_LABEL   = { ATENDIDO: 'Atendido', EN_ESPERA: 'En espera', PROGRAMADA: 'Pendiente' }
+const ESTADO_STYLE   = {
+  ATENDIDO:  { background: '#f0fdf4', color: '#059669', border: '1px solid #bbf7d0' },
+  EN_ESPERA: { background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa' },
+  PROGRAMADA:{ background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe' }
+}
 
 const calcEdad = (fn) => {
   if (!fn) return '-'
@@ -99,21 +97,161 @@ const fmtFecha = (ts) => {
 const initiales = (nombre) =>
   nombre ? nombre.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase() : 'DR'
 
-/* ══════════════════════════════
-   VALIDACIONES
-══════════════════════════════ */
 const validarAnotacion = (f) => {
   const e = {}
-  if (!f.tipoConsulta)        e.tipoConsulta  = 'Seleccione el tipo de consulta'
-  if (!f.diagnostico?.trim()) e.diagnostico   = 'El diagnóstico es requerido'
-  if (!f.tratamiento?.trim()) e.tratamiento   = 'El tratamiento es requerido'
+  if (!f.tipoConsulta)          e.tipoConsulta  = 'Seleccione el tipo de consulta'
+  if (!f.diagnostico?.trim())   e.diagnostico   = 'El diagnóstico es requerido'
+  if (!f.tratamiento?.trim())   e.tratamiento   = 'El tratamiento es requerido'
   if (!f.observaciones?.trim()) e.observaciones = 'Las observaciones son requeridas'
   return e
 }
 
-/* ══════════════════════════════
-   COMPONENTE PRINCIPAL
-══════════════════════════════ */
+// ── Tarjeta de cita con estado editable ──────────────────────
+function CitaCard({ cita, onEstadoChange, medId }) {
+  const [editando, setEditando]       = useState(false)
+  const [nuevoEstado, setNuevoEstado] = useState(cita.estado)
+  const [guardando, setGuardando]     = useState(false)
+
+  const fmtHora = (ts) => new Date(ts).toLocaleTimeString('es-CO', {
+    hour: '2-digit', minute: '2-digit', hour12: false
+  })
+
+  const handleAceptar = async () => {
+    if (nuevoEstado === cita.estado) { 
+      setEditando(false)
+      return 
+    }
+    setGuardando(true)
+    try {
+      const res = await fetch(`${API}/citas/${cita.citId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+  medId:     medId,
+  fechaHora: new Date(cita.fechaHora).toISOString().slice(0, 16),
+  estado:    nuevoEstado
+})
+      })
+      const data = await res.json()
+      if (data.success) {
+        onEstadoChange(cita.citId, nuevoEstado)
+        setEditando(false)
+      } else {
+        alert('Error al actualizar el estado: ' + (data.error || 'Error desconocido'))
+        setEditando(false)
+      }
+    } catch (e) {
+      console.error(e)
+      alert('Error de conexión al actualizar el estado')
+      setEditando(false)
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  const handleCancelar = () => {
+    setNuevoEstado(cita.estado)
+    setEditando(false)
+  }
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', gap: '8px',
+      padding: '12px 14px', background: 'white',
+      borderRadius: '10px', border: '1px solid #e2e8f0',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+      transition: 'all .2s'
+    }}>
+      {/* Fila superior: avatar + nombre + hora */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{
+          width: '40px', height: '40px', borderRadius: '50%',
+          background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'white', fontWeight: 700, fontSize: '13px', flexShrink: 0
+        }}>
+          {initiales(cita.pacNombre)}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 600, fontSize: '14px', color: '#1e293b',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {cita.pacNombre}
+          </div>
+          <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>{cita.motivo}</div>
+        </div>
+        <div style={{ fontSize: '14px', fontWeight: 700, color: '#475569', flexShrink: 0 }}>
+          {fmtHora(cita.fechaHora)}
+        </div>
+      </div>
+
+      {/* Fila inferior: estado + edición */}
+      {!editando ? (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{
+            fontSize: '11px', fontWeight: 700,
+            padding: '4px 12px', borderRadius: '12px',
+            ...ESTADO_STYLE[cita.estado]
+          }}>
+            {ESTADO_LABEL[cita.estado] || cita.estado}
+          </span>
+          <button
+            onClick={() => { setNuevoEstado(cita.estado); setEditando(true) }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '4px',
+              background: 'none', border: '1px solid #e2e8f0', borderRadius: '6px',
+              padding: '4px 10px', fontSize: '12px', color: '#64748b',
+              cursor: 'pointer', fontWeight: 500, transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => { e.target.style.background = '#f8fafc' }}
+            onMouseLeave={(e) => { e.target.style.background = 'none' }}>
+            <FiEdit2 size={12} /> Cambiar
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <select
+            value={nuevoEstado}
+            onChange={e => setNuevoEstado(e.target.value)}
+            style={{
+              flex: 1, fontSize: '12px', padding: '6px 10px',
+              border: '1px solid #93c5fd', borderRadius: '6px',
+              background: '#eff6ff', color: '#1d4ed8', fontWeight: 600, cursor: 'pointer',
+              outline: 'none'
+            }}>
+            {ESTADOS_CITA.map(e => (
+              <option key={e} value={e}>{ESTADO_LABEL[e] || e}</option>
+            ))}
+          </select>
+          <button
+            onClick={handleAceptar}
+            disabled={guardando}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '4px',
+              background: '#2563eb', color: 'white', border: 'none',
+              borderRadius: '6px', padding: '6px 12px', fontSize: '12px',
+              fontWeight: 600, cursor: guardando ? 'not-allowed' : 'pointer',
+              opacity: guardando ? 0.7 : 1, transition: 'all 0.2s'
+            }}>
+            <FiCheckCircle size={12} /> {guardando ? '...' : 'Aceptar'}
+          </button>
+          <button
+            onClick={handleCancelar}
+            disabled={guardando}
+            style={{
+              background: 'white', border: '1px solid #e2e8f0', borderRadius: '6px',
+              padding: '6px 10px', fontSize: '12px', color: '#94a3b8', 
+              cursor: guardando ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center'
+            }}>
+            <FiX size={12} />
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ════════════════════════════════════════════════════════════
 function MedicoPrincipal() {
   const navigate = useNavigate()
   const { toasts, success, error: showError } = useToast()
@@ -126,6 +264,7 @@ function MedicoPrincipal() {
   const [currentTime, setCurrentTime]           = useState(new Date())
   const [vista, setVista]                       = useState('pacientes')
   const [todosPacientes, setTodosPacientes]     = useState([])
+  const [citasHoy, setCitasHoy]                 = useState([])
   const [pacienteSeleccionado, setPaciente]     = useState(null)
   const [historial, setHistorial]               = useState([])
   const [aclaratorias, setAclaratorias]         = useState([])
@@ -133,35 +272,32 @@ function MedicoPrincipal() {
   const [busqueda, setBusqueda]                 = useState('')
   const [loading, setLoading]                   = useState(false)
 
-  // Filtros historial
   const [filtroTipo, setFiltroTipo]   = useState('')
   const [filtroDesde, setFiltroDesde] = useState('')
   const [filtroHasta, setFiltroHasta] = useState('')
 
-  // Formulario anotación
   const [formAnot, setFormAnot] = useState({
     tipoConsulta: '', diagnostico: '', tratamiento: '', observaciones: '', proximaCita: ''
   })
   const [errAnot, setErrAnot]         = useState({})
   const [intentoAnot, setIntentoAnot] = useState(false)
 
-  // Formulario aclaratoria
-  const [descAcl, setDescAcl]         = useState('')
-  const [errAcl, setErrAcl]           = useState('')
-  const [intentoAcl, setIntentoAcl]   = useState(false)
+  const [descAcl, setDescAcl]       = useState('')
+  const [errAcl, setErrAcl]         = useState('')
+  const [intentoAcl, setIntentoAcl] = useState(false)
 
-  // Modales
   const [modalDetalle, setModalDetalle] = useState(null)
   const [modalAcl, setModalAcl]         = useState(null)
 
-  /* Reloj */
   useEffect(() => {
     const t = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(t)
   }, [])
 
-  /* Carga inicial */
-  useEffect(() => { cargarTodosPacientes() }, [])
+  useEffect(() => {
+    cargarTodosPacientes()
+    cargarCitasHoy()
+  }, [])
 
   const cargarTodosPacientes = async () => {
     try {
@@ -179,6 +315,15 @@ function MedicoPrincipal() {
         ciudad:          r[8] || ''
       })) : [])
     } catch { setTodosPacientes([]) }
+  }
+
+  const cargarCitasHoy = async () => {
+    try {
+      const medId = usuario.medId || usuario.id
+      const res   = await fetch(`${API}/citas/hoy/${medId}`)
+      const data  = await res.json()
+      setCitasHoy(Array.isArray(data) ? data : [])
+    } catch { setCitasHoy([]) }
   }
 
   const cargarHistorial = async (doc) => {
@@ -204,6 +349,12 @@ function MedicoPrincipal() {
     cargarHistorial(pac.documento)
   }
 
+  // Actualiza el estado de una cita en el estado local sin recargar
+  const handleEstadoChange = (citId, nuevoEstado) => {
+    setCitasHoy(prev => prev.map(c => c.citId === citId ? { ...c, estado: nuevoEstado } : c))
+    success('Estado de cita actualizado correctamente')
+  }
+
   const histFiltrado = historial.filter(a => {
     if (filtroTipo && a.tipoConsulta !== filtroTipo) return false
     if (filtroDesde && new Date(a.fechaConsulta) < new Date(filtroDesde)) return false
@@ -220,7 +371,10 @@ function MedicoPrincipal() {
     p.nombre.toLowerCase().includes(busqueda.toLowerCase()) || p.documento.includes(busqueda)
   )
 
-  /* Guardar anotación */
+  // Stats derivados
+  const citasSinAtender = citasHoy.filter(c => c.estado !== 'ATENDIDO').length
+  const citasAtendidas  = citasHoy.filter(c => c.estado === 'ATENDIDO').length
+
   const handleGuardarAnotacion = async () => {
     setIntentoAnot(true)
     const errs = validarAnotacion(formAnot)
@@ -249,14 +403,11 @@ function MedicoPrincipal() {
         setErrAnot({}); setIntentoAnot(false)
         await cargarHistorial(pacienteSeleccionado.documento)
         setVista('historial')
-      } else {
-        showError('Error al registrar la anotación')
-      }
+      } else { showError('Error al registrar la anotación') }
     } catch { showError('Error al conectar con el servidor') }
     finally { setLoading(false) }
   }
 
-  /* Guardar aclaratoria */
   const handleGuardarAclaratoria = async () => {
     setIntentoAcl(true)
     if (!descAcl.trim() || descAcl.trim().length < 10) {
@@ -283,9 +434,7 @@ function MedicoPrincipal() {
         setDescAcl(''); setErrAcl(''); setIntentoAcl(false)
         await cargarHistorial(pacienteSeleccionado.documento)
         setVista('historial'); setAnotSeleccionada(null)
-      } else {
-        showError('Error al registrar la nota aclaratoria')
-      }
+      } else { showError('Error al registrar la nota aclaratoria') }
     } catch { showError('Error al conectar con el servidor') }
     finally { setLoading(false) }
   }
@@ -297,14 +446,10 @@ function MedicoPrincipal() {
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
   })
 
-  /* ════════════════════════════════════════
-     RENDER
-  ════════════════════════════════════════ */
   return (
     <div className="medico-container">
       <ToastContainer toasts={toasts} />
 
-      {/* HEADER — mismo diseño que secretaria */}
       <header className="main-header">
         <div className="header-left">
           <div className="logo-icon">+</div>
@@ -328,30 +473,26 @@ function MedicoPrincipal() {
         </div>
       </header>
 
-      {/* LAYOUT */}
       <div className="main-content">
         <aside className="sidebar">
-          <h3>MÓDULOS</h3>
+          <h3 style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', marginBottom: '12px', paddingLeft: '8px' }}>MÓDULOS</h3>
           <nav className="modules-nav">
             <button
-              className={`module-item ${(vista === 'pacientes') ? 'active' : ''}`}
+              className={`module-item ${vista === 'pacientes' ? 'active' : ''}`}
               onClick={() => setVista('pacientes')}>
               <span className="module-icon"><FiUsers /></span>
               <span className="module-name">Pacientes</span>
               <span className="module-count">{todosPacientes.length}</span>
             </button>
             <button
-              className={`module-item ${(vista === 'historial' || vista === 'nueva-anotacion' || vista === 'aclaratoria') ? 'active' : ''}`}
+              className={`module-item ${['historial','nueva-anotacion','aclaratoria'].includes(vista) ? 'active' : ''}`}
               onClick={() => pacienteSeleccionado && setVista('historial')}>
               <span className="module-icon"><FiFileText /></span>
               <span className="module-name">Historia Clínica</span>
               <span className="module-count">{historial.length}</span>
             </button>
           </nav>
-          <div className="med-sidebar-info">
-            <FaStethoscope size={13} />
-            <span>{usuario.nombre?.split(' ').slice(0, 3).join(' ') || 'Médico'}</span>
-          </div>
+          
         </aside>
 
         <main className="content-area">
@@ -364,81 +505,154 @@ function MedicoPrincipal() {
                 <p>Seleccione un paciente para consultar su historial o registrar una nueva anotación médica</p>
               </div>
 
-              {/* Stats */}
-              <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
-                <div className="stat-card">
-                  <div className="stat-icon-box blue"><FiUsers size={22} /></div>
-                  <div className="stat-value">{todosPacientes.length}</div>
-                  <div className="stat-label">TOTAL PACIENTES</div>
-                  <div className="stat-subtext"><span className="stat-dot" style={{ background: '#3b82f6' }} />Registrados en sistema</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-icon-box green"><FiFileText size={22} /></div>
-                  <div className="stat-value">{historial.length}</div>
-                  <div className="stat-label">ANOTACIONES</div>
-                  <div className="stat-subtext"><span className="stat-dot" style={{ background: '#10b981' }} />Del paciente actual</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-icon-box orange"><FaStethoscope size={22} /></div>
-                  <div className="stat-value" style={{ fontSize: '15px', paddingTop: '5px' }}>
-                    {usuario.nombre?.split(' ').slice(0,3).join(' ') || 'Médico'}
-                  </div>
-                  <div className="stat-label">SESIÓN ACTIVA</div>
-                  <div className="stat-subtext"><span className="stat-dot" style={{ background: '#f97316' }} />Doctor en turno</div>
-                </div>
-              </div>
+ {/* ── 4 stat cards arriba ── */}
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginBottom: '20px' }}>
+  <div className="stat-card">
+    <div className="stat-icon-box blue"><FiUsers size={22} /></div>
+    <div className="stat-value">{todosPacientes.length}</div>
+    <div className="stat-label">TOTAL PACIENTES</div>
+    <div className="stat-subtext">
+      <span className="stat-dot" style={{ background: '#3b82f6' }} />
+      Registrados en sistema
+    </div>
+  </div>
 
-              {/* Tabla pacientes */}
-              <div className="directory-section">
-                <h3><FiUsers className="section-icon" /> Todos los pacientes</h3>
-                <div className="search-box">
-                  <FiSearch className="search-icon" />
-                  <input type="text" placeholder="Búsqueda por nombre o identificación..."
-                    value={busqueda} onChange={e => setBusqueda(e.target.value)} />
+  <div className="stat-card">
+    <div className="stat-icon-box green"><FiCalendar size={22} /></div>
+    <div className="stat-value">{citasHoy.length}</div>
+    <div className="stat-label">CITAS HOY</div>
+    <div className="stat-subtext">
+      <span className="stat-dot" style={{ background: '#10b981' }} />
+      {citasAtendidas} atendidas · {citasSinAtender} pendientes
+    </div>
+  </div>
+
+  <div className="stat-card">
+    <div className="stat-icon-box orange"><FiAlertCircle size={22} /></div>
+    <div className="stat-value">{citasSinAtender}</div>
+    <div className="stat-label">SIN ATENDER HOY</div>
+    <div className="stat-subtext">
+      <span className="stat-dot" style={{ background: '#f97316' }} />
+      {citasHoy.filter(c => c.estado === 'EN_ESPERA').length} en espera · {citasHoy.filter(c => c.estado === 'PROGRAMADA').length} pendientes
+    </div>
+  </div>
+
+  <div className="stat-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center' }}>
+      <div style={{
+        width: '36px', height: '36px',
+        background: '#fff7ed', color: '#f97316',
+        borderRadius: '50%', display: 'flex',
+        alignItems: 'center', justifyContent: 'center', flexShrink: 0
+      }}>
+        <FaStethoscope size={18} />
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <strong style={{ fontSize: '13px', color: '#1e293b', fontWeight: 700, whiteSpace: 'nowrap' }}>
+          {usuario.nombre?.split(' ').slice(0, 3).join(' ') || 'Médico'}
+        </strong>
+        <span style={{ fontSize: '10px', color: '#94a3b8', letterSpacing: '0.5px', fontWeight: 500 }}>
+          DOCTOR EN TURNO
+        </span>
+      </div>
+      <div style={{
+        width: '8px', height: '8px',
+        background: '#10b981', borderRadius: '50%',
+        flexShrink: 0, boxShadow: '0 0 0 2px #d1fae5'
+      }} />
+    </div>
+    <div style={{
+      marginTop: '10px', fontSize: '11px', color: '#10b981',
+      display: 'flex', alignItems: 'center', gap: '5px'
+    }}>
+      <span style={{
+        width: '6px', height: '6px', background: '#10b981',
+        borderRadius: '50%', display: 'inline-block'
+      }} />
+      Sesión activa
+    </div>
+  </div>
+</div>
+
+              {/* ── Layout: pacientes del día (izq) + tabla todos (der) ── */}
+              <div style={{ display: 'grid', gridTemplateColumns: '420px 1fr', gap: '20px', alignItems: 'start' }}>
+
+                {/* COLUMNA IZQUIERDA: pacientes del día */}
+                <div className="directory-section" style={{ margin: 0, background: 'white', borderRadius: '12px', padding: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+                  <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: 700, color: '#1e293b' }}>
+                    <FiCalendar className="section-icon" /> Pacientes del día
+                    <span style={{
+                      marginLeft: '8px', fontSize: '12px', fontWeight: 700,
+                      background: '#eff6ff', color: '#2563eb',
+                      padding: '3px 10px', borderRadius: '12px'
+                    }}>{citasHoy.length}</span>
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '650px', overflowY: 'auto', paddingRight: '4px' }}>
+                    {citasHoy.length === 0 ? (
+                      <p style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0', fontSize: '13px' }}>
+                        No hay citas programadas para hoy
+                      </p>
+                    ) : citasHoy.map(c => (
+                      <CitaCard key={c.citId} cita={c} onEstadoChange={handleEstadoChange} medId={usuario.medId || usuario.id} />
+                    ))}
+                  </div>
                 </div>
-                <div className="patient-table">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>IDENTIFICACIÓN</th>
-                        <th>NOMBRE COMPLETO</th>
-                        <th>GÉNERO</th>
-                        <th>TIPO SANGRE</th>
-                        <th>CIUDAD</th>
-                        <th>ACCIÓN</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pacFiltrados.map(p => (
-                        <tr key={p.documento}>
-                          <td>{p.documento}</td>
-                          <td>{p.nombre}</td>
-                          <td>{p.genero === 'M' ? 'Masculino' : p.genero === 'F' ? 'Femenino' : 'Otro'}</td>
-                          <td><span className="badge-sangre">{p.tipoSangre}</span></td>
-                          <td>{p.ciudad}</td>
-                          <td>
-                            <div className="action-btns">
-                              <button className="btn-eye" title="Ver historial" onClick={() => verHistorial(p)}>
-                                <FiEye size={13} />
-                              </button>
-                              <button className="btn-anotar"
-                                onClick={() => {
-                                  setPaciente(p)
-                                  setFormAnot({ tipoConsulta: '', diagnostico: '', tratamiento: '', observaciones: '', proximaCita: '' })
-                                  setErrAnot({}); setIntentoAnot(false)
-                                  setVista('nueva-anotacion')
-                                }}>
-                                <FiPlusCircle size={12} /> Anotar
-                              </button>
-                            </div>
-                          </td>
+
+                {/* COLUMNA DERECHA: tabla todos los pacientes */}
+                <div className="directory-section" style={{ margin: 0, minWidth: 0, overflow: 'hidden', background: 'white', borderRadius: '12px', padding: '18px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+                  <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: 700, color: '#1e293b' }}>
+                    <FiUsers className="section-icon" /> Todos los pacientes
+                  </h3>
+                  <div className="search-box" style={{ marginBottom: '16px' }}>
+                    <FiSearch className="search-icon" />
+                    <input type="text" placeholder="Búsqueda por nombre o identificación..."
+                      value={busqueda} onChange={e => setBusqueda(e.target.value)} 
+                      style={{ width: '100%', paddingLeft: '36px' }}/>
+                  </div>
+                  <div className="patient-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>IDENTIFICACIÓN</th>
+                          <th>NOMBRE COMPLETO</th>
+                          <th>GÉNERO</th>
+                          <th>TIPO SANGRE</th>
+                          <th>CIUDAD</th>
+                          <th>ACCIÓN</th>
                         </tr>
-                      ))}
-                      {pacFiltrados.length === 0 && (
-                        <tr><td colSpan="6" className="no-results">No se encontraron pacientes</td></tr>
-                      )}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {pacFiltrados.map(p => (
+                          <tr key={p.documento}>
+                            <td>{p.documento}</td>
+                            <td>{p.nombre}</td>
+                            <td>{p.genero === 'M' ? 'Masculino' : p.genero === 'F' ? 'Femenino' : 'Otro'}</td>
+                            <td><span className="badge-sangre">{p.tipoSangre}</span></td>
+                            <td>{p.ciudad}</td>
+                            <td>
+                              <div className="action-btns">
+                                <button className="btn-eye" title="Ver historial" onClick={() => verHistorial(p)}>
+                                  <FiEye size={13} />
+                                </button>
+                                <button className="btn-anotar"
+                                  onClick={() => {
+                                    setPaciente(p)
+                                    setFormAnot({ tipoConsulta: '', diagnostico: '', tratamiento: '', observaciones: '', proximaCita: '' })
+                                    setErrAnot({}); setIntentoAnot(false)
+                                    setVista('nueva-anotacion')
+                                  }}>
+                                  <FiPlusCircle size={12} /> Anotar
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {pacFiltrados.length === 0 && (
+                          <tr><td colSpan="6" className="no-results">No se encontraron pacientes</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </>
@@ -465,7 +679,6 @@ function MedicoPrincipal() {
                 </button>
               </div>
 
-              {/* Ficha paciente */}
               <div className="pac-info-bar">
                 <div className="pac-avatar">{initiales(pacienteSeleccionado.nombre)}</div>
                 <div className="pac-datos">
@@ -477,7 +690,6 @@ function MedicoPrincipal() {
                 </div>
               </div>
 
-              {/* Barra de filtros */}
               <div className="filtros-bar">
                 <FiFilter size={13} style={{ color: '#64748b', flexShrink: 0 }} />
                 <select value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}>
@@ -494,7 +706,6 @@ function MedicoPrincipal() {
                 <span className="filtro-count">{histFiltrado.length} resultado(s)</span>
               </div>
 
-              {/* Anotaciones */}
               {histFiltrado.length === 0 ? (
                 <div className="empty-state">
                   <FiFileText size={32} />
@@ -685,7 +896,6 @@ function MedicoPrincipal() {
                 </div>
               </div>
 
-              {/* Anotación original */}
               <div className="original-card">
                 <div className="original-header">
                   <span className="original-lbl">ANOTACIÓN ORIGINAL — SOLO LECTURA</span>
@@ -707,12 +917,10 @@ function MedicoPrincipal() {
                 ))}
               </div>
 
-              {/* Form aclaratoria */}
               <div className="form-section" style={{ maxWidth: '680px' }}>
                 <h3><FiAlertCircle className="section-icon" style={{ color: '#7c3aed' }} /> Nota aclaratoria</h3>
                 <div className="patient-form">
                   <div className="form-section-label">DESCRIPCIÓN DE LA CORRECCIÓN</div>
-
                   <div className="form-group">
                     <label>CORRECCIÓN * <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 400 }}>(mín. 10 · máx. 500 caracteres)</span></label>
                     <CampoRequerido error={errAcl}>
@@ -727,15 +935,14 @@ function MedicoPrincipal() {
                     </CampoRequerido>
                     <span style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'right' }}>{descAcl.length}/500</span>
                   </div>
-
                   <div className="inmutabilidad-aviso">
                     <FiAlertCircle size={14} style={{ flexShrink: 0, marginTop: '1px' }} />
                     <span>La anotación original permanecerá <strong>inalterada</strong>. Esta nota aclaratoria también será inmutable una vez creada.</span>
                   </div>
-
                   <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px' }}>
                     <button className="btn-cancelar" onClick={() => setVista('historial')}>Cancelar</button>
-                    <button className="btn-register" style={{ width: 'auto', padding: '10px 22px', marginTop: 0, background: 'linear-gradient(135deg,#7c3aed,#6d28d9)' }}
+                    <button className="btn-register"
+                      style={{ width: 'auto', padding: '10px 22px', marginTop: 0, background: 'linear-gradient(135deg,#7c3aed,#6d28d9)' }}
                       onClick={handleGuardarAclaratoria} disabled={loading}>
                       {loading ? 'Registrando...' : <><FiCheckCircle size={14} /> Registrar aclaratoria</>}
                     </button>
@@ -747,7 +954,6 @@ function MedicoPrincipal() {
         </main>
       </div>
 
-      {/* FOOTER */}
       <footer className="main-footer">
         <span>CMQ — Módulo Médico</span>
         <span className="session-info">
@@ -756,7 +962,7 @@ function MedicoPrincipal() {
         </span>
       </footer>
 
-      {/* ══ MODAL: DETALLE ANOTACIÓN ══ */}
+      {/* MODAL: DETALLE ANOTACIÓN */}
       {modalDetalle && (
         <div className="modal-overlay" onClick={() => setModalDetalle(null)}>
           <div className="modal modal-perfil" onClick={e => e.stopPropagation()}>
@@ -808,7 +1014,7 @@ function MedicoPrincipal() {
         </div>
       )}
 
-      {/* ══ MODAL: VER ACLARATORIAS ══ */}
+      {/* MODAL: VER ACLARATORIAS */}
       {modalAcl && (
         <div className="modal-overlay" onClick={() => setModalAcl(null)}>
           <div className="modal modal-perfil" onClick={e => e.stopPropagation()}>

@@ -1,5 +1,6 @@
-//Local
 /*
+//Local
+
 const express = require('express');
 const oracledb = require('oracledb');
 const cors = require('cors');
@@ -196,6 +197,40 @@ app.get('/api/medicos', async (req, res) => {
 // ══════════════════════════════════════════════════════════════
 // CITAS
 // ══════════════════════════════════════════════════════════════
+
+
+
+//prueba
+
+app.get('/api/citas/hoy/:medId', async (req, res) => {
+  let conn;
+  try {
+    conn = await oracledb.getConnection(dbConfig);
+    const result = await conn.execute(
+      `SELECT c.CIT_ID, c.PAC_DOCUMENTO, p.PAC_NOMBRE,
+        c.CIT_FECHA_HORA, c.CIT_MOTIVO_CONSULTA, c.CIT_ESTADO
+ FROM TBL_CITA c
+ JOIN TBL_PACIENTE p ON c.PAC_DOCUMENTO = p.PAC_DOCUMENTO
+ WHERE c.MED_ID = :medId
+ ORDER BY c.CIT_FECHA_HORA ASC`,
+      { medId: Number(req.params.medId) }
+    );
+    res.json(result.rows.map(r => ({
+      citId:    r[0],
+      pacDoc:   r[1],
+      pacNombre: r[2],
+      fechaHora: r[3],
+      motivo:   r[4],
+      estado:   r[5]
+    })));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) await conn.close();
+  }
+});
+//aqui termina la prueba
+
 app.get('/api/citas', async (req, res) => {
   let conn;
   try {
@@ -216,6 +251,9 @@ app.get('/api/citas', async (req, res) => {
   }
 });
 
+
+
+//termina esto 
 app.post('/api/citas', async (req, res) => {
   const { pacDocumento, medId, usuId, fechaHora, motivo, nivelPaciente } = req.body;
   let conn;
@@ -249,7 +287,7 @@ app.post('/api/citas', async (req, res) => {
 });
 
 app.put('/api/citas/:id', async (req, res) => {
-  const { medId, fechaHora, estado, nivelPaciente } = req.body;
+  const { medId, fechaHora, estado } = req.body;
   let conn;
   try {
     conn = await oracledb.getConnection(dbConfig);
@@ -257,10 +295,9 @@ app.put('/api/citas/:id', async (req, res) => {
       `UPDATE TBL_CITA SET
          MED_ID         = :medId,
          CIT_FECHA_HORA = TO_TIMESTAMP(:fechaHora,'YYYY-MM-DD"T"HH24:MI'),
-         CIT_ESTADO     = :estado,
-         CIT_NIVEL_PACIENTE = :nivelPaciente
+         CIT_ESTADO     = :estado
        WHERE CIT_ID = :id`,
-      { medId, fechaHora, estado, nivelPaciente, id: req.params.id },
+      { medId, fechaHora, estado, id: req.params.id },
       { autoCommit: true }
     );
     res.json({ success: true });
@@ -543,13 +580,27 @@ app.get('/api/medico/:medId/pacientes', async (req, res) => {
 
 // ══════════════════════════════════════════════════════════════
 app.listen(3001, () => console.log('Backend CMQ corriendo en puerto 3001'));
+
 */
+
+// ======================================================================================================================
+// ======================================================================================================================
+// ======================================================================================================================
+// ======================================================================================================================
+// ======================================================================================================================
+// ======================================================================================================================
+
+
+//API 
 // ============================================================
 // HOSPITAL CMQ — Backend API
 // Base de datos: Supabase (PostgreSQL)
 // Framework: Express.js + pg (node-postgres)
 // ============================================================
 
+/*
+
+//API
 const express = require('express');
 const { Pool } = require('pg');
 const cors    = require('cors');
@@ -1140,3 +1191,583 @@ app.get('/api/medico/:medId/pacientes', async (req, res) => {
 
 // ============================================================
 app.listen(3001, () => console.log('✅ Backend CMQ corriendo en puerto 3001'));
+*/
+
+// ======================================================================================================================
+// ======================================================================================================================
+// ======================================================================================================================
+// ======================================================================================================================
+// ======================================================================================================================
+// ======================================================================================================================
+// ============================================================
+// HOSPITAL CMQ — Backend API
+// Base de datos: Supabase (PostgreSQL)
+// Framework:     Express.js + pg (node-postgres)
+// Despliegue:    Render
+// ============================================================
+
+const express = require('express');
+const { Pool } = require('pg');
+const cors    = require('cors');
+
+const app = express();
+
+app.use(cors({ origin: '*' }));
+app.use(express.json());
+
+// ============================================================
+// CONEXIÓN A SUPABASE
+// Session Pooler — compatible con IPv4 (funciona en Render)
+// ============================================================
+const pool = new Pool({
+  connectionString: 'postgresql://postgres.zwxzkbzuuriigrxhewnu:Cmq2026*cxz@aws-1-us-east-2.pooler.supabase.com:5432/postgres',
+  ssl: { rejectUnauthorized: false }
+});
+
+// ============================================================
+// TEST
+// GET /api/test
+// ============================================================
+app.get('/api/test', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW() AS hora');
+    res.json({ mensaje: 'Conectado a Supabase!', hora: result.rows[0].hora });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// LOGIN
+// POST /api/login
+// Body: { email, password }
+// ============================================================
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const result = await pool.query(
+      `SELECT usu_id, usu_email, usu_nombre, usu_rol
+       FROM tbl_usuario
+       WHERE usu_email      = $1
+         AND usu_contrasena = $2
+         AND usu_activo     = 1`,
+      [email, password]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ success: false, mensaje: 'Credenciales incorrectas' });
+    }
+
+    const u = result.rows[0];
+
+    let medId = null;
+    if (u.usu_rol === 'MEDICO') {
+      const med = await pool.query(
+        'SELECT med_id FROM tbl_medico WHERE med_id = $1',
+        [u.usu_id]
+      );
+      if (med.rows.length > 0) medId = med.rows[0].med_id;
+    }
+
+    await pool.query(
+      'UPDATE tbl_usuario SET usu_ultimo_acceso = NOW() WHERE usu_id = $1',
+      [u.usu_id]
+    );
+
+    res.json({
+      success: true,
+      usuario: {
+        id:     u.usu_id,
+        email:  u.usu_email,
+        nombre: u.usu_nombre,
+        rol:    u.usu_rol,
+        medId
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// PACIENTES
+// ============================================================
+
+// GET /api/pacientes
+app.get('/api/pacientes', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM tbl_paciente ORDER BY pac_nombre ASC'
+    );
+    const rows = result.rows.map(r => [
+      r.pac_documento,
+      r.pac_nombre,
+      r.pac_telefono,
+      r.pac_fecha_nacimiento,
+      r.pac_genero,
+      r.pac_tipo_sangre,
+      r.pac_email,
+      r.pac_direccion,
+      r.pac_ciudad,
+      r.pac_emergencia_nombre,
+      r.pac_emergencia_telefono,
+      r.pac_registro
+    ]);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/pacientes
+app.post('/api/pacientes', async (req, res) => {
+  const {
+    id, nombre, telefono, fechaNacimiento, genero, tipoSangre,
+    email, direccion, ciudad, contactoEmergenciaNombre, contactoEmergenciaTel
+  } = req.body;
+  try {
+    await pool.query(
+      `INSERT INTO tbl_paciente (
+         pac_documento, pac_nombre, pac_telefono, pac_fecha_nacimiento,
+         pac_genero, pac_tipo_sangre, pac_email, pac_direccion,
+         pac_ciudad, pac_emergencia_nombre, pac_emergencia_telefono, pac_registro
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, NOW())`,
+      [
+        String(id).trim(),
+        nombre,
+        telefono,
+        fechaNacimiento,
+        genero,
+        tipoSangre,
+        email                    || '',
+        direccion,
+        ciudad,
+        contactoEmergenciaNombre || '',
+        contactoEmergenciaTel    || ''
+      ]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ ERROR POST /api/pacientes:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/pacientes/:id
+app.put('/api/pacientes/:id', async (req, res) => {
+  const {
+    nombre, telefono, email, direccion, ciudad,
+    contactoEmergenciaNombre, contactoEmergenciaTel
+  } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE tbl_paciente SET
+         pac_nombre              = $1,
+         pac_telefono            = $2,
+         pac_email               = $3,
+         pac_direccion           = $4,
+         pac_ciudad              = $5,
+         pac_emergencia_nombre   = $6,
+         pac_emergencia_telefono = $7
+       WHERE pac_documento = $8`,
+      [
+        nombre,
+        telefono,
+        email                    || '',
+        direccion,
+        ciudad,
+        contactoEmergenciaNombre || '',
+        contactoEmergenciaTel    || '',
+        req.params.id
+      ]
+    );
+    res.json({ success: result.rowCount > 0 });
+  } catch (err) {
+    console.error('❌ ERROR PUT /api/pacientes:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// MÉDICOS
+// ============================================================
+
+// GET /api/medicos
+app.get('/api/medicos', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT med_id, med_nombre, med_especialidad
+       FROM tbl_medico
+       WHERE med_activo = 1
+       ORDER BY med_nombre ASC`
+    );
+    const rows = result.rows.map(r => [r.med_id, r.med_nombre, r.med_especialidad]);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// CITAS
+// ⚠️  /api/citas/hoy/:medId debe ir ANTES de /api/citas
+// ============================================================
+
+// GET /api/citas/hoy/:medId
+app.get('/api/citas/hoy/:medId', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT c.cit_id, c.pac_documento, p.pac_nombre,
+              c.cit_fecha_hora, c.cit_motivo_consulta, c.cit_estado
+       FROM tbl_cita c
+       JOIN tbl_paciente p ON c.pac_documento = p.pac_documento
+       WHERE c.med_id = $1
+       ORDER BY c.cit_fecha_hora ASC`,
+      [Number(req.params.medId)]
+    );
+    res.json(result.rows.map(r => ({
+      citId:     r.cit_id,
+      pacDoc:    r.pac_documento,
+      pacNombre: r.pac_nombre,
+      fechaHora: r.cit_fecha_hora,
+      motivo:    r.cit_motivo_consulta,
+      estado:    r.cit_estado
+    })));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/citas
+app.get('/api/citas', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT c.cit_id, c.pac_documento, p.pac_nombre,
+              c.med_id, m.med_nombre,
+              c.cit_fecha_hora, c.cit_motivo_consulta,
+              c.cit_estado, c.cit_nivel_paciente
+       FROM tbl_cita c
+       JOIN tbl_paciente p ON c.pac_documento = p.pac_documento
+       JOIN tbl_medico   m ON c.med_id        = m.med_id
+       ORDER BY c.cit_fecha_hora DESC`
+    );
+    const rows = result.rows.map(r => [
+      r.cit_id, r.pac_documento, r.pac_nombre,
+      r.med_id, r.med_nombre,
+      r.cit_fecha_hora, r.cit_motivo_consulta,
+      r.cit_estado, r.cit_nivel_paciente
+    ]);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/citas
+app.post('/api/citas', async (req, res) => {
+  const { pacDocumento, medId, usuId, fechaHora, motivo, nivelPaciente } = req.body;
+  try {
+    await pool.query(
+      `INSERT INTO tbl_cita (
+         pac_documento, med_id, usu_id,
+         cit_fecha_hora, cit_motivo_consulta,
+         cit_estado, cit_observaciones, cit_fecha_creacion, cit_nivel_paciente
+       ) VALUES ($1,$2,$3,$4,$5,'PROGRAMADA',' ', NOW(),$6)`,
+      [
+        pacDocumento,
+        medId,
+        usuId         || 1,
+        fechaHora,
+        motivo        || 'Sin motivo',
+        nivelPaciente || 'ESTABLE'
+      ]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ ERROR POST /api/citas:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/citas/:id  — igual que local: solo medId, fechaHora, estado
+app.put('/api/citas/:id', async (req, res) => {
+  const { medId, fechaHora, estado } = req.body;
+  try {
+    await pool.query(
+      `UPDATE tbl_cita SET
+         med_id         = $1,
+         cit_fecha_hora = $2,
+         cit_estado     = $3
+       WHERE cit_id = $4`,
+      [medId, fechaHora, estado, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// USUARIOS
+// ============================================================
+
+// GET /api/usuarios
+app.get('/api/usuarios', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM tbl_usuario');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// HISTORIA CLÍNICA
+// ============================================================
+
+// GET /api/historias  — igual que local: solo his_id y pac_documento
+app.get('/api/historias', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT his_id, pac_documento FROM tbl_historia_clinica'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/historias/:pacDocumento
+app.get('/api/historias/:pacDocumento', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT
+         hc.his_id,
+         hc.pac_documento,
+         a.ano_id,
+         a.ano_tipo_consulta,
+         a.ano_fecha_consulta,
+         a.ano_diagnostico,
+         a.ano_tratamiento,
+         a.ano_observaciones,
+         a.ano_proxima_cita,
+         a.ano_fecha_creacion,
+         m.med_nombre,
+         m.med_especialidad,
+         EXISTS (
+           SELECT 1 FROM tbl_nota_aclaratoria na WHERE na.ano_id = a.ano_id
+         ) AS tiene_aclaratoria
+       FROM tbl_historia_clinica hc
+       JOIN tbl_anotacion a ON a.his_id = hc.his_id
+       JOIN tbl_medico    m ON m.med_id = a.med_id
+       WHERE hc.pac_documento = $1
+       ORDER BY a.ano_fecha_consulta DESC`,
+      [req.params.pacDocumento]
+    );
+
+    res.json(result.rows.map(r => ({
+      hisId:              r.his_id,
+      pacDocumento:       r.pac_documento,
+      anoId:              r.ano_id,
+      tipoConsulta:       r.ano_tipo_consulta,
+      fechaConsulta:      r.ano_fecha_consulta,
+      diagnostico:        r.ano_diagnostico,
+      tratamiento:        r.ano_tratamiento,
+      observaciones:      r.ano_observaciones,
+      proximaCita:        r.ano_proxima_cita,
+      fechaCreacion:      r.ano_fecha_creacion,
+      medicoNombre:       r.med_nombre,
+      medicoEspecialidad: r.med_especialidad,
+      tieneAclaratoria:   r.tiene_aclaratoria
+    })));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/anotaciones/:anoId/aclaratorias
+app.get('/api/anotaciones/:anoId/aclaratorias', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT na.nac_id, na.ano_id, na.med_id, m.med_nombre,
+              na.nac_descripcion, na.nac_fecha_creacion
+       FROM tbl_nota_aclaratoria na
+       JOIN tbl_medico m ON m.med_id = na.med_id
+       WHERE na.ano_id = $1
+       ORDER BY na.nac_fecha_creacion ASC`,
+      [Number(req.params.anoId)]
+    );
+
+    res.json(result.rows.map(r => ({
+      nacId:         r.nac_id,
+      anoId:         r.ano_id,
+      medId:         r.med_id,
+      medicoNombre:  r.med_nombre,
+      descripcion:   r.nac_descripcion,
+      fechaCreacion: r.nac_fecha_creacion
+    })));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/anotaciones
+app.post('/api/anotaciones', async (req, res) => {
+  const {
+    pacDocumento, medId, usuId,
+    tipoConsulta, diagnostico, tratamiento, observaciones, proximaCita
+  } = req.body;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // 1 — Buscar o crear historia clínica
+    let hisId;
+    const hisResult = await client.query(
+      'SELECT his_id FROM tbl_historia_clinica WHERE pac_documento = $1',
+      [pacDocumento]
+    );
+
+    if (hisResult.rows.length > 0) {
+      hisId = hisResult.rows[0].his_id;
+    } else {
+      const newHisId = (await client.query(
+        'SELECT COALESCE(MAX(his_id), 0) + 1 AS nuevo_id FROM tbl_historia_clinica'
+      )).rows[0].nuevo_id;
+      hisId = newHisId;
+      await client.query(
+        `INSERT INTO tbl_historia_clinica (his_id, pac_documento, his_fecha_apertura)
+         VALUES ($1, $2, NOW())`,
+        [hisId, pacDocumento]
+      );
+    }
+
+    // 2 — Crear la anotación médica
+    const anoId = (await client.query(
+      'SELECT COALESCE(MAX(ano_id), 0) + 1 AS nuevo_id FROM tbl_anotacion'
+    )).rows[0].nuevo_id;
+
+    await client.query(
+      `INSERT INTO tbl_anotacion (
+         ano_id, his_id, med_id, ano_tipo_consulta, ano_fecha_consulta,
+         ano_diagnostico, ano_tratamiento, ano_observaciones,
+         ano_proxima_cita, ano_fecha_creacion
+       ) VALUES ($1,$2,$3,$4, NOW(),$5,$6,$7,$8, NOW())`,
+      [
+        anoId, hisId, medId, tipoConsulta,
+        diagnostico, tratamiento, observaciones,
+        proximaCita ? new Date(proximaCita) : null
+      ]
+    );
+
+    // 3 — Auditoría (no bloquea si falla)
+    try {
+      const audId = (await client.query(
+        'SELECT COALESCE(MAX(aud_id), 0) + 1 AS nuevo_id FROM tbl_auditoria'
+      )).rows[0].nuevo_id;
+      await client.query(
+        `INSERT INTO tbl_auditoria (
+           aud_id, usu_id, aud_accion, aud_entidad, aud_registro_id,
+           aud_detalles, aud_fecha_hora, aud_id_address
+         ) VALUES ($1,$2,'INSERT','tbl_anotacion',$3,'Nueva anotacion medica', NOW(),'127.0.0.1')`,
+        [audId, usuId || 1, String(anoId)]
+      );
+    } catch (audErr) {
+      console.warn('⚠️ Auditoría falló (no crítico):', audErr.message);
+    }
+
+    await client.query('COMMIT');
+    res.json({ success: true, anoId, hisId });
+
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('❌ ERROR POST /api/anotaciones:', err.message);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// POST /api/aclaratorias
+app.post('/api/aclaratorias', async (req, res) => {
+  const { anoId, medId, usuId, descripcion } = req.body;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const nacId = (await client.query(
+      'SELECT COALESCE(MAX(nac_id), 0) + 1 AS nuevo_id FROM tbl_nota_aclaratoria'
+    )).rows[0].nuevo_id;
+
+    await client.query(
+      `INSERT INTO tbl_nota_aclaratoria (nac_id, ano_id, med_id, nac_descripcion, nac_fecha_creacion)
+       VALUES ($1,$2,$3,$4, NOW())`,
+      [nacId, anoId, medId, descripcion]
+    );
+
+    try {
+      const audId = (await client.query(
+        'SELECT COALESCE(MAX(aud_id), 0) + 1 AS nuevo_id FROM tbl_auditoria'
+      )).rows[0].nuevo_id;
+      await client.query(
+        `INSERT INTO tbl_auditoria (
+           aud_id, usu_id, aud_accion, aud_entidad, aud_registro_id,
+           aud_detalles, aud_fecha_hora, aud_id_address
+         ) VALUES ($1,$2,'INSERT','tbl_nota_aclaratoria',$3,'Nota aclaratoria creada', NOW(),'127.0.0.1')`,
+        [audId, usuId || 1, String(nacId)]
+      );
+    } catch (audErr) {
+      console.warn('⚠️ Auditoría falló (no crítico):', audErr.message);
+    }
+
+    await client.query('COMMIT');
+    res.json({ success: true, nacId });
+
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('❌ ERROR POST /api/aclaratorias:', err.message);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// GET /api/medico/:medId/pacientes
+app.get('/api/medico/:medId/pacientes', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT DISTINCT
+         p.pac_documento, p.pac_nombre, p.pac_telefono,
+         p.pac_genero, p.pac_tipo_sangre,
+         p.pac_fecha_nacimiento, p.pac_email
+       FROM tbl_paciente p
+       JOIN tbl_historia_clinica hc ON hc.pac_documento = p.pac_documento
+       JOIN tbl_anotacion        a  ON a.his_id          = hc.his_id
+       WHERE a.med_id = $1
+       ORDER BY p.pac_nombre ASC`,
+      [Number(req.params.medId)]
+    );
+
+    res.json(result.rows.map(r => ({
+      documento:       r.pac_documento,
+      nombre:          r.pac_nombre,
+      telefono:        String(r.pac_telefono || ''),
+      genero:          r.pac_genero,
+      tipoSangre:      r.pac_tipo_sangre,
+      fechaNacimiento: r.pac_fecha_nacimiento
+        ? new Date(r.pac_fecha_nacimiento).toISOString().split('T')[0]
+        : '',
+      email: r.pac_email || ''
+    })));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// ✅ Puerto dinámico — requerido por Render
+// ============================================================
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log(`✅ Backend CMQ corriendo en puerto ${PORT}`));
