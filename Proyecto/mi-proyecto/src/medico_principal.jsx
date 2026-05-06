@@ -609,18 +609,18 @@ function MedicoPrincipal() {
                       value={busqueda} onChange={e => setBusqueda(e.target.value)} 
                       style={{ width: '100%', paddingLeft: '36px' }}/>
                   </div>
-                  <div className="patient-table">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>IDENTIFICACIÓN</th>
-                          <th>NOMBRE COMPLETO</th>
-                          <th>GÉNERO</th>
-                          <th>TIPO SANGRE</th>
-                          <th>CIUDAD</th>
-                          <th>ACCIÓN</th>
-                        </tr>
-                      </thead>
+                  <div className="patient-table" style={{ overflow: 'hidden' }}>
+  <table style={{ tableLayout: 'fixed', width: '100%' }}>
+    <thead>
+      <tr>
+        <th style={{ width: '18%' }}>IDENTIFICACIÓN</th>
+        <th style={{ width: '28%' }}>NOMBRE COMPLETO</th>
+        <th style={{ width: '13%' }}>GÉNERO</th>
+        <th style={{ width: '12%' }}>TIPO SANGRE</th>
+        <th style={{ width: '13%' }}>CIUDAD</th>
+        <th style={{ width: '16%' }}>ACCIÓN</th>
+      </tr>
+    </thead>
                       <tbody>
                         {pacFiltrados.map(p => (
                           <tr key={p.documento}>
