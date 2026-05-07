@@ -149,14 +149,19 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
   const formatTime = (date) => date.toLocaleTimeString('es-CO', {
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
   })
+
   const formatFecha = (fechaStr) => {
-    if (!fechaStr) return '-'
-    const d = new Date(fechaStr)
-    return d.toLocaleString('es-CO', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', hour12: true
-    })
-  }
+  if (!fechaStr) return '-'
+  const limpia = fechaStr.replace('T', ' ').split('.')[0]
+  const [fecha, hora] = limpia.split(' ')
+  const [anio, mes, dia] = fecha.split('-')
+  const [hh, mm] = hora.split(':')
+  const d = new Date(anio, mes - 1, dia, hh, mm)
+  return d.toLocaleString('es-CO', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: true
+  })
+}
 
   const handleInputCita = (e) => {
     const { name, value } = e.target
