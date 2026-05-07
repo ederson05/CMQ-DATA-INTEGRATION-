@@ -785,6 +785,8 @@ app.get('/api/citas/hoy/:medId', async (req, res) => {
        FROM tbl_cita c
        JOIN tbl_paciente p ON c.pac_documento = p.pac_documento
        WHERE c.med_id = $1
+         AND DATE(c.cit_fecha_hora AT TIME ZONE 'America/Bogota') 
+             = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::date
        ORDER BY c.cit_fecha_hora ASC`,
       [Number(req.params.medId)]
     );
