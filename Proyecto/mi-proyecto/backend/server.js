@@ -607,6 +607,15 @@ const app = express();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
+const toUTC = (fechaLocal) => {
+  if (!fechaLocal) return fechaLocal
+  const d = new Date(fechaLocal)
+  return new Date(d.getTime() + 5 * 60 * 60 * 1000).toISOString()
+}
+
+// ============================================================
+// CONEXIÓN A SUPABASE
+
 // ============================================================
 // CONEXIÓN A SUPABASE
 // Session Pooler — compatible con IPv4 (funciona en Render)
@@ -901,12 +910,12 @@ app.post('/api/citas', async (req, res) => {
        ) VALUES ($1,$2,$3,$4,$5,$6,'PROGRAMADA',' ', NOW(),$7)`,
       [
         citId,
-        pacDocumento,
-        medId,
-        usuId         || 1,
-        fechaHora,
-        motivo        || 'Sin motivo',
-        nivelPaciente || 'ESTABLE'
+  pacDocumento,
+  medId,
+  usuId         || 1,
+  toUTC(fechaHora),
+  motivo        || 'Sin motivo',
+  nivelPaciente || 'ESTABLE'
       ]
     );
     res.json({ success: true });
@@ -927,7 +936,7 @@ app.put('/api/citas/:id', async (req, res) => {
          cit_fecha_hora = $2,
          cit_estado     = $3
        WHERE cit_id = $4`,
-      [medId, fechaHora, estado, req.params.id]
+      [medId, toUTC(fechaHora), estado, req.params.id]
     );
     res.json({ success: true });
   } catch (err) {
