@@ -607,27 +607,20 @@ const app = express();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-const toUTC = (fechaLocal) => {
-  if (!fechaLocal) return fechaLocal
-  const d = new Date(fechaLocal)
-  return new Date(d.getTime() + 5 * 60 * 60 * 1000).toISOString()
-}
-
 // ============================================================
 // CONEXIÓN A SUPABASE
-
-// ============================================================
-// CONEXIÓN A SUPABASE
-// Session Pooler — compatible con IPv4 (funciona en Render)
 // ============================================================
 const pool = new Pool({
   connectionString: 'postgresql://postgres.zwxzkbzuuriigrxhewnu:Cmq2026*cxz@aws-1-us-east-2.pooler.supabase.com:5432/postgres',
   ssl: { rejectUnauthorized: false }
 });
 
+pool.on('connect', client => {
+  client.query("SET timezone = 'America/Bogota'")
+})
+
 // ============================================================
 // TEST
-// GET /api/test
 // ============================================================
 app.get('/api/test', async (req, res) => {
   try {
@@ -640,8 +633,6 @@ app.get('/api/test', async (req, res) => {
 
 // ============================================================
 // LOGIN
-// POST /api/login
-// Body: { email, password }
 // ============================================================
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
@@ -693,26 +684,16 @@ app.post('/api/login', async (req, res) => {
 // ============================================================
 // PACIENTES
 // ============================================================
-
-// GET /api/pacientes
 app.get('/api/pacientes', async (req, res) => {
   try {
     const result = await pool.query(
       'SELECT * FROM tbl_paciente ORDER BY pac_nombre ASC'
     );
     const rows = result.rows.map(r => [
-      r.pac_documento,
-      r.pac_nombre,
-      r.pac_telefono,
-      r.pac_fecha_nacimiento,
-      r.pac_genero,
-      r.pac_tipo_sangre,
-      r.pac_email,
-      r.pac_direccion,
-      r.pac_ciudad,
-      r.pac_emergencia_nombre,
-      r.pac_emergencia_telefono,
-      r.pac_registro
+      r.pac_documento, r.pac_nombre, r.pac_telefono,
+      r.pac_fecha_nacimiento, r.pac_genero, r.pac_tipo_sangre,
+      r.pac_email, r.pac_direccion, r.pac_ciudad,
+      r.pac_emergencia_nombre, r.pac_emergencia_telefono, r.pac_registro
     ]);
     res.json(rows);
   } catch (err) {
@@ -720,7 +701,6 @@ app.get('/api/pacientes', async (req, res) => {
   }
 });
 
-// POST /api/pacientes
 app.post('/api/pacientes', async (req, res) => {
   const {
     id, nombre, telefono, fechaNacimiento, genero, tipoSangre,
@@ -734,17 +714,9 @@ app.post('/api/pacientes', async (req, res) => {
          pac_ciudad, pac_emergencia_nombre, pac_emergencia_telefono, pac_registro
        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, NOW())`,
       [
-        String(id).trim(),
-        nombre,
-        telefono,
-        fechaNacimiento,
-        genero,
-        tipoSangre,
-        email                    || '',
-        direccion,
-        ciudad,
-        contactoEmergenciaNombre || '',
-        contactoEmergenciaTel    || ''
+        String(id).trim(), nombre, telefono, fechaNacimiento, genero, tipoSangre,
+        email || '', direccion, ciudad,
+        contactoEmergenciaNombre || '', contactoEmergenciaTel || ''
       ]
     );
     res.json({ success: true });
@@ -754,7 +726,6 @@ app.post('/api/pacientes', async (req, res) => {
   }
 });
 
-// PUT /api/pacientes/:id
 app.put('/api/pacientes/:id', async (req, res) => {
   const {
     nombre, telefono, email, direccion, ciudad,
@@ -772,13 +743,8 @@ app.put('/api/pacientes/:id', async (req, res) => {
          pac_emergencia_telefono = $7
        WHERE pac_documento = $8`,
       [
-        nombre,
-        telefono,
-        email                    || '',
-        direccion,
-        ciudad,
-        contactoEmergenciaNombre || '',
-        contactoEmergenciaTel    || '',
+        nombre, telefono, email || '', direccion, ciudad,
+        contactoEmergenciaNombre || '', contactoEmergenciaTel || '',
         req.params.id
       ]
     );
@@ -792,8 +758,6 @@ app.put('/api/pacientes/:id', async (req, res) => {
 // ============================================================
 // MÉDICOS
 // ============================================================
-
-// GET /api/medicos
 app.get('/api/medicos', async (req, res) => {
   try {
     const result = await pool.query(
@@ -813,8 +777,6 @@ app.get('/api/medicos', async (req, res) => {
 // CITAS
 // ⚠️  /api/citas/hoy/:medId debe ir ANTES de /api/citas
 // ============================================================
-
-// GET /api/citas/hoy/:medId
 app.get('/api/citas/hoy/:medId', async (req, res) => {
   try {
     const result = await pool.query(
@@ -839,7 +801,6 @@ app.get('/api/citas/hoy/:medId', async (req, res) => {
   }
 });
 
-// GET /api/citas
 app.get('/api/citas', async (req, res) => {
   try {
     const result = await pool.query(
@@ -864,36 +825,6 @@ app.get('/api/citas', async (req, res) => {
   }
 });
 
-
-/*
-// POST /api/citas
-app.post('/api/citas', async (req, res) => {
-  const { pacDocumento, medId, usuId, fechaHora, motivo, nivelPaciente } = req.body;
-  try {
-    await pool.query(
-      `INSERT INTO tbl_cita (
-         pac_documento, med_id, usu_id,
-         cit_fecha_hora, cit_motivo_consulta,
-         cit_estado, cit_observaciones, cit_fecha_creacion, cit_nivel_paciente
-       ) VALUES ($1,$2,$3,$4,$5,'PROGRAMADA',' ', NOW(),$6)`,
-      [
-        pacDocumento,
-        medId,
-        usuId         || 1,
-        fechaHora,
-        motivo        || 'Sin motivo',
-        nivelPaciente || 'ESTABLE'
-      ]
-    );
-    res.json({ success: true });
-  } catch (err) {
-    console.error('❌ ERROR POST /api/citas:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-*/
-
-// POST /api/citas
 app.post('/api/citas', async (req, res) => {
   const { pacDocumento, medId, usuId, fechaHora, motivo, nivelPaciente } = req.body;
   try {
@@ -909,13 +840,8 @@ app.post('/api/citas', async (req, res) => {
          cit_estado, cit_observaciones, cit_fecha_creacion, cit_nivel_paciente
        ) VALUES ($1,$2,$3,$4,$5,$6,'PROGRAMADA',' ', NOW(),$7)`,
       [
-        citId,
-  pacDocumento,
-  medId,
-  usuId         || 1,
-  toUTC(fechaHora),
-  motivo        || 'Sin motivo',
-  nivelPaciente || 'ESTABLE'
+        citId, pacDocumento, medId, usuId || 1,
+        fechaHora, motivo || 'Sin motivo', nivelPaciente || 'ESTABLE'
       ]
     );
     res.json({ success: true });
@@ -925,8 +851,6 @@ app.post('/api/citas', async (req, res) => {
   }
 });
 
-
-// PUT /api/citas/:id  — igual que local: solo medId, fechaHora, estado
 app.put('/api/citas/:id', async (req, res) => {
   const { medId, fechaHora, estado } = req.body;
   try {
@@ -936,7 +860,7 @@ app.put('/api/citas/:id', async (req, res) => {
          cit_fecha_hora = $2,
          cit_estado     = $3
        WHERE cit_id = $4`,
-      [medId, toUTC(fechaHora), estado, req.params.id]
+      [medId, fechaHora, estado, req.params.id]
     );
     res.json({ success: true });
   } catch (err) {
@@ -947,8 +871,6 @@ app.put('/api/citas/:id', async (req, res) => {
 // ============================================================
 // USUARIOS
 // ============================================================
-
-// GET /api/usuarios
 app.get('/api/usuarios', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM tbl_usuario');
@@ -961,8 +883,6 @@ app.get('/api/usuarios', async (req, res) => {
 // ============================================================
 // HISTORIA CLÍNICA
 // ============================================================
-
-// GET /api/historias  — igual que local: solo his_id y pac_documento
 app.get('/api/historias', async (req, res) => {
   try {
     const result = await pool.query(
@@ -974,23 +894,15 @@ app.get('/api/historias', async (req, res) => {
   }
 });
 
-// GET /api/historias/:pacDocumento
 app.get('/api/historias/:pacDocumento', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT
-         hc.his_id,
-         hc.pac_documento,
-         a.ano_id,
-         a.ano_tipo_consulta,
-         a.ano_fecha_consulta,
-         a.ano_diagnostico,
-         a.ano_tratamiento,
-         a.ano_observaciones,
-         a.ano_proxima_cita,
-         a.ano_fecha_creacion,
-         m.med_nombre,
-         m.med_especialidad,
+         hc.his_id, hc.pac_documento,
+         a.ano_id, a.ano_tipo_consulta, a.ano_fecha_consulta,
+         a.ano_diagnostico, a.ano_tratamiento, a.ano_observaciones,
+         a.ano_proxima_cita, a.ano_fecha_creacion,
+         m.med_nombre, m.med_especialidad,
          EXISTS (
            SELECT 1 FROM tbl_nota_aclaratoria na WHERE na.ano_id = a.ano_id
          ) AS tiene_aclaratoria
@@ -1022,7 +934,6 @@ app.get('/api/historias/:pacDocumento', async (req, res) => {
   }
 });
 
-// GET /api/anotaciones/:anoId/aclaratorias
 app.get('/api/anotaciones/:anoId/aclaratorias', async (req, res) => {
   try {
     const result = await pool.query(
@@ -1048,7 +959,6 @@ app.get('/api/anotaciones/:anoId/aclaratorias', async (req, res) => {
   }
 });
 
-// POST /api/anotaciones
 app.post('/api/anotaciones', async (req, res) => {
   const {
     pacDocumento, medId, usuId,
@@ -1059,7 +969,6 @@ app.post('/api/anotaciones', async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // 1 — Buscar o crear historia clínica
     let hisId;
     const hisResult = await client.query(
       'SELECT his_id FROM tbl_historia_clinica WHERE pac_documento = $1',
@@ -1080,7 +989,6 @@ app.post('/api/anotaciones', async (req, res) => {
       );
     }
 
-    // 2 — Crear la anotación médica
     const anoId = (await client.query(
       'SELECT COALESCE(MAX(ano_id), 0) + 1 AS nuevo_id FROM tbl_anotacion'
     )).rows[0].nuevo_id;
@@ -1098,7 +1006,6 @@ app.post('/api/anotaciones', async (req, res) => {
       ]
     );
 
-    // 3 — Auditoría (no bloquea si falla)
     try {
       const audId = (await client.query(
         'SELECT COALESCE(MAX(aud_id), 0) + 1 AS nuevo_id FROM tbl_auditoria'
@@ -1126,7 +1033,6 @@ app.post('/api/anotaciones', async (req, res) => {
   }
 });
 
-// POST /api/aclaratorias
 app.post('/api/aclaratorias', async (req, res) => {
   const { anoId, medId, usuId, descripcion } = req.body;
 
@@ -1171,7 +1077,6 @@ app.post('/api/aclaratorias', async (req, res) => {
   }
 });
 
-// GET /api/medico/:medId/pacientes
 app.get('/api/medico/:medId/pacientes', async (req, res) => {
   try {
     const result = await pool.query(
