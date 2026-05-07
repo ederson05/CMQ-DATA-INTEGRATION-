@@ -594,14 +594,23 @@ function MedicoPrincipal() {
                     }}>{citasHoy.length}</span>
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '650px', overflowY: 'auto', paddingRight: '4px' }}>
-                    {citasHoy.length === 0 ? (
-                      <p style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0', fontSize: '13px' }}>
-                        No hay citas programadas para hoy
-                      </p>
-                    ) : citasHoy.map(c => (
-                      <CitaCard key={c.citId} cita={c} onEstadoChange={handleEstadoChange} medId={usuario.medId || usuario.id} />
-                    ))}
-                  </div>
+  {citasHoy.length === 0 ? (
+    <p style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0', fontSize: '13px' }}>
+      No hay citas programadas para hoy
+    </p>
+  ) : [...citasHoy]
+      .sort((a, b) => {
+        const atendidoA = a.estado === 'ATENDIDO' ? 1 : 0
+        const atendidoB = b.estado === 'ATENDIDO' ? 1 : 0
+        if (atendidoA !== atendidoB) return atendidoA - atendidoB
+        const horaA = String(a.fechaHora).replace('T', ' ').split('.')[0]
+        const horaB = String(b.fechaHora).replace('T', ' ').split('.')[0]
+        return horaA.localeCompare(horaB)
+      })
+      .map(c => (
+        <CitaCard key={c.citId} cita={c} onEstadoChange={handleEstadoChange} medId={usuario.medId || usuario.id} />
+      ))}
+</div>
                 </div>
 
                 {/* COLUMNA DERECHA: tabla todos los pacientes */}
