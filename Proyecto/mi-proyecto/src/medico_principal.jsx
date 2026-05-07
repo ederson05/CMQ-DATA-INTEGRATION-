@@ -88,7 +88,12 @@ const calcEdad = (fn) => {
 
 const fmtFecha = (ts) => {
   if (!ts) return '-'
-  return new Date(ts).toLocaleString('es-CO', {
+  const limpia = String(ts).replace('T', ' ').split('.')[0]
+  const [fecha, hora] = limpia.split(' ')
+  const [anio, mes, dia] = fecha.split('-')
+  const [hh, mm] = hora.split(':')
+  const d = new Date(anio, mes - 1, dia, hh, mm)
+  return d.toLocaleString('es-CO', {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit', hour12: false
   })
