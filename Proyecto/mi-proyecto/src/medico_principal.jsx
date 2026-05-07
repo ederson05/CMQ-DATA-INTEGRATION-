@@ -112,9 +112,15 @@ function CitaCard({ cita, onEstadoChange, medId }) {
   const [nuevoEstado, setNuevoEstado] = useState(cita.estado)
   const [guardando, setGuardando]     = useState(false)
 
-  const fmtHora = (ts) => new Date(ts).toLocaleTimeString('es-CO', {
-    hour: '2-digit', minute: '2-digit', hour12: false
-  })
+const fmtHora = (ts) => {
+  if (!ts) return '-'
+  const limpia = String(ts).replace('T', ' ').split('.')[0]
+  const [fecha, hora] = limpia.split(' ')
+  const [anio, mes, dia] = fecha.split('-')
+  const [hh, mm] = hora.split(':')
+  const d = new Date(anio, mes - 1, dia, hh, mm)
+  return d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false })
+}
 
   const handleAceptar = async () => {
     if (nuevoEstado === cita.estado) { 
@@ -128,7 +134,7 @@ function CitaCard({ cita, onEstadoChange, medId }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
   medId:     medId,
-  fechaHora: new Date(cita.fechaHora).toISOString().slice(0, 16),
+  fechaHora: String(cita.fechaHora).replace(' ', 'T').split('.')[0].slice(0, 16),
   estado:    nuevoEstado
 })
       })
