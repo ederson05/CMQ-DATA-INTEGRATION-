@@ -606,11 +606,9 @@ function MedicoPrincipal() {
   ) : [...citasHoy]
       .sort((a, b) => {
         const atendidoA = a.estado === 'ATENDIDO' ? 1 : 0
-        const atendidoB = b.estado === 'ATENDIDO' ? 1 : 0
-        if (atendidoA !== atendidoB) return atendidoA - atendidoB
-        const horaA = String(a.fechaHora).replace('T', ' ').split('.')[0]
-        const horaB = String(b.fechaHora).replace('T', ' ').split('.')[0]
-        return horaA.localeCompare(horaB)
+const atendidoB = b.estado === 'ATENDIDO' ? 1 : 0
+if (atendidoA !== atendidoB) return atendidoA - atendidoB
+return new Date(a.fechaHora) - new Date(b.fechaHora)
       })
       .map(c => (
         <CitaCard key={c.citId} cita={c} onEstadoChange={handleEstadoChange} medId={usuario.medId || usuario.id} />
