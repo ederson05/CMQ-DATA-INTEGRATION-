@@ -982,6 +982,12 @@ function MedicoPrincipal() {
                     ) : (
                       [...citasHoy]
                         .sort((a, b) => {
+                          console.log(
+                            "fechaHora a:",
+                            a.fechaHora,
+                            "| fechaHora b:",
+                            b.fechaHora,
+                          );
                           const atendidoA = a.estado === "ATENDIDO" ? 1 : 0;
                           const atendidoB = b.estado === "ATENDIDO" ? 1 : 0;
                           if (atendidoA !== atendidoB)
@@ -992,6 +998,7 @@ function MedicoPrincipal() {
                           const fechaB = new Date(
                             String(b.fechaHora).replace(" ", "T"),
                           );
+                          console.log("fechaA:", fechaA, "| fechaB:", fechaB);
                           return fechaA - fechaB;
                         })
                         .map((c) => (
