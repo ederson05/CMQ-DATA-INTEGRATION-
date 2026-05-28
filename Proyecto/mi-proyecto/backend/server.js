@@ -683,6 +683,92 @@ app.get('/api/triage/hoy/:usuId', async (req, res) => {
   }
 });
 
+
+
+
+
+
+
+
+
+
+
+
+
+// ============================================================
+// ENFERMERÍA - REGISTRO URGENCIA (paciente nuevo + cita automática)
+// ============================================================
+app.post('/api/enfermero/urgencia', async (req, res) => {
+  const { documento, nombre, genero, tipoSangre, usuId } = req.body
+
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+
+    // 1. Verificar si el paciente ya existe
+    const pacExiste = await client.query(
+      'SELECT pac_documento FROM tbl_paciente WHERE pac_documento = $1',
+      [documento]
+    )
+
+    // 2. Si no existe, crearlo con defaults
+    if (pacExiste.rows.length === 0) {
+      await client.query(
+        `INSERT INTO tbl_paciente (
+           pac_documento, pac_nombre, pac_telefono, pac_fecha_nacimiento,
+           pac_genero, pac_tipo_sangre, pac_email, pac_direccion,
+           pac_ciudad, pac_emergencia_nombre, pac_emergencia_telefono, pac_registro
+         ) VALUES ($1,$2,0,'1900-01-01',$3,$4,'','DESCONOCIDO','DESCONOCIDO','DESCONOCIDO','0', NOW())`,
+        [
+          documento,
+          nombre,
+          genero     || 'DESCONOCIDO',
+          tipoSangre || 'DESCONOCIDO'
+        ]
+      )
+    }
+
+    // 3. Tomar el primer médico activo disponible
+    const medResult = await client.query(
+      'SELECT med_id FROM tbl_medico WHERE med_activo = 1 ORDER BY med_id ASC LIMIT 1'
+    )
+    if (medResult.rows.length === 0) {
+      await client.query('ROLLBACK')
+      return res.status(404).json({ success: false, error: 'No hay médicos activos disponibles' })
+    }
+    const medId = medResult.rows[0].med_id
+
+    // 4. Crear cita de urgencia
+    const citId = (await client.query(
+      'SELECT COALESCE(MAX(cit_id), 0) + 1 AS nuevo_id FROM tbl_cita'
+    )).rows[0].nuevo_id
+
+    await client.query(
+      `INSERT INTO tbl_cita (
+         cit_id, pac_documento, med_id, usu_id,
+         cit_fecha_hora, cit_motivo_consulta,
+         cit_estado, cit_observaciones, cit_fecha_creacion, cit_nivel_paciente
+       ) VALUES ($1,$2,$3,$4, NOW(),'URGENCIA','PROGRAMADA','', NOW(),'CRITICO')`,
+      [citId, documento, medId, usuId || 1]
+    )
+
+    await client.query('COMMIT')
+    res.json({
+      success:  true,
+      citId,
+      medId,
+      nombre:   pacExiste.rows.length > 0 ? pacExiste.rows[0].pac_nombre : nombre,
+      documento
+    })
+
+  } catch (err) {
+    await client.query('ROLLBACK')
+    console.error('❌ ERROR POST /api/enfermero/urgencia:', err.message)
+    res.status(500).json({ error: err.message })
+  } finally {
+    client.release()
+  }
+})
 // ============================================================
 // ✅ Puerto dinámico — requerido por Render
 // ============================================================

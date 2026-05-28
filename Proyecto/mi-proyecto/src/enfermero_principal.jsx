@@ -76,14 +76,21 @@ function VistaTriage({ onSubmit, success, error: showError }) {
   const [noEncontrado, setNoEncontrado] = useState(false)
 
   // --- formulario clínico ---
-  const [formData, setFormData] = useState({
-    presionArterial: '',
-    frecuenciaCardiaca: '',
-    temperatura: '',
-    saturacion: '',
-    sintomas: '',
-    triage: 'III'
-  })
+const [formData, setFormData] = useState({
+  presionArterial: '',
+  frecuenciaCardiaca: '',
+  temperatura: '',
+  saturacion: '',
+  sintomas: '',
+  triage: 'III',
+  urgNombre: '',
+  urgGenero: 'DESCONOCIDO',
+  urgTipoSangre: 'DESCONOCIDO'
+})
+
+
+
+
   const [errors, setErrors]         = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -166,6 +173,48 @@ function VistaTriage({ onSubmit, success, error: showError }) {
     if (!validar()) { showError('Por favor corrija los campos indicados.'); return }
 
     setIsSubmitting(true)
+
+    // reemplaza la llamada al fetch de triage por esto
+if (paciente.esPNI) {
+  // PNI: solo registrar localmente, notificar a secretaría después
+  onSubmit({
+    id: Date.now(),
+    documento: `PNI-${Date.now().toString().slice(-4)}`,
+    nombre: paciente.nombre,
+    triage: formData.triage,
+    fechaHora: new Date().toISOString(),
+    esPNI: true
+  })
+  success(`PNI registrado: ${paciente.nombre} — notifique a secretaría`)
+  setDocumento(''); setPaciente(null); setNoEncontrado(false)
+setFormData({
+  presionArterial: '', frecuenciaCardiaca: '', temperatura: '',
+  saturacion: '', sintomas: '', triage: 'III',
+  urgNombre: '', urgGenero: 'DESCONOCIDO', urgTipoSangre: 'DESCONOCIDO'
+})
+
+
+  setErrors({})
+  setIsSubmitting(false)
+  return
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     try {
       const usuario = JSON.parse(localStorage.getItem('usuario'))
       const res  = await fetch(`${API}/triage`, {
@@ -238,10 +287,38 @@ function VistaTriage({ onSubmit, success, error: showError }) {
 
           <form onSubmit={handleSubmit} className="patient-form" noValidate>
 
-            {/* ── BÚSQUEDA ── */}
-            <div className="form-section-label">Identificación del Paciente</div>
-            <div className="form-row">
-              <div className="form-group" style={{ flex: 2 }}>
+            <div className="form-section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+  <span>Identificación del Paciente</span>
+  <button
+    type="button"
+    onClick={() => {
+      const contador = Date.now().toString().slice(-4)
+      setPaciente({
+        citId: null,
+        esPNI: true,
+        nombre: `PNI-${contador}`,
+        motivo: 'Urgencia sin registro'
+      })
+      setNoEncontrado(false)
+      setDocumento('')
+    }}
+    style={{ background: '#dc2626', color: 'white', border: 'none',
+      borderRadius: '6px', padding: '6px 14px', fontWeight: 700,
+      cursor: 'pointer', fontSize: '13px' }}
+  >
+    🚨 PNI
+  </button>
+</div>
+<div className="form-row">
+  <div className="form-group" style={{ flex: 2 }}>
+
+
+
+
+
+
+
+
                 <label>Documento *</label>
                 <CampoRequerido error={errors.documento}>
                   <input
@@ -281,18 +358,104 @@ function VistaTriage({ onSubmit, success, error: showError }) {
               </div>
             )}
 
-            {noEncontrado && (
-              <div style={{ background: '#fff7ed', border: '1px solid #fdba74', borderRadius: '8px',
-                padding: '12px 16px', marginBottom: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <FiAlertTriangle size={20} color="#ea580c" />
-                <div>
-                  <div style={{ fontWeight: 600, color: '#9a3412' }}>Paciente sin cita programada hoy</div>
-                  <div style={{ fontSize: '12px', color: '#c2410c' }}>
-                    Avise a secretaría para registrar al paciente y crear la cita de urgencias.
-                  </div>
-                </div>
-              </div>
-            )}
+
+
+        {noEncontrado && (
+  <div style={{ background: '#fff7ed', border: '1px solid #fdba74',
+    borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
+    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
+      <FiAlertTriangle size={20} color="#ea580c" />
+      <div style={{ fontWeight: 600, color: '#9a3412' }}>
+        Paciente no encontrado — Registrar como Urgencia
+      </div>
+    </div>
+
+    <div className="form-row">
+      <div className="form-group">
+        <label>Nombre completo *</label>
+        <input type="text" name="urgNombre" value={formData.urgNombre || ''}
+          onChange={handleChange} placeholder="Nombre del paciente" />
+      </div>
+      <div className="form-group">
+        <label>Género</label>
+        <select name="urgGenero" value={formData.urgGenero || 'DESCONOCIDO'} onChange={handleChange}>
+          <option value="DESCONOCIDO">Desconocido</option>
+          <option value="MASCULINO">Masculino</option>
+          <option value="FEMENINO">Femenino</option>
+        </select>
+      </div>
+    </div>
+
+    <div className="form-row">
+      <div className="form-group">
+        <label>Tipo de sangre</label>
+        <select name="urgTipoSangre" value={formData.urgTipoSangre || 'DESCONOCIDO'} onChange={handleChange}>
+          <option value="DESCONOCIDO">Desconocido</option>
+          <option value="A+">A+</option>
+          <option value="A-">A-</option>
+          <option value="B+">B+</option>
+          <option value="B-">B-</option>
+          <option value="AB+">AB+</option>
+          <option value="AB-">AB-</option>
+          <option value="O+">O+</option>
+          <option value="O-">O-</option>
+        </select>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      disabled={!formData.urgNombre?.trim()}
+      onClick={async () => {
+        try {
+          const usuario = JSON.parse(localStorage.getItem('usuario'))
+          const res = await fetch(`${API}/enfermero/urgencia`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              documento:  documento.trim(),
+              nombre:     formData.urgNombre,
+              genero:     formData.urgGenero     || 'DESCONOCIDO',
+              tipoSangre: formData.urgTipoSangre || 'DESCONOCIDO',
+              usuId:      usuario?.id || 1
+            })
+          })
+          const data = await res.json()
+          if (data.success) {
+            setPaciente({
+              citId:  data.citId,
+              nombre: data.nombre,
+              motivo: 'URGENCIA',
+              esPNI:  false
+            })
+            setNoEncontrado(false)
+          } else {
+            showError(data.error || 'Error al registrar urgencia')
+          }
+        } catch (err) {
+          showError('Error: ' + err.message)
+        }
+      }}
+      style={{
+        background: !formData.urgNombre?.trim() ? '#9ca3af' : '#dc2626',
+        color: 'white', border: 'none', borderRadius: '6px',
+        padding: '10px 20px', fontWeight: 700, cursor: !formData.urgNombre?.trim() ? 'not-allowed' : 'pointer',
+        width: '100%', marginTop: '8px'
+      }}
+    >
+      🚨 Registrar como Urgencia y Continuar
+    </button>
+  </div>
+)}
+
+
+
+
+
+
+
+
+
 
             {/* ── SIGNOS VITALES (solo si hay paciente) ── */}
             {paciente && (
