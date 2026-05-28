@@ -180,8 +180,10 @@ const validarAnotacion = (f) => {
   return e;
 };
 
-// ── Tarjeta de cita con estado editable ──────────────────────
-function CitaCard({ cita, onEstadoChange, medId }) {
+
+
+
+function CitaCard({ cita, onEstadoChange, medId, onVerHistorial }) {
   const [editando, setEditando] = useState(false);
   const [nuevoEstado, setNuevoEstado] = useState(cita.estado);
   const [guardando, setGuardando] = useState(false);
@@ -193,43 +195,25 @@ function CitaCard({ cita, onEstadoChange, medId }) {
     const [anio, mes, dia] = fecha.split("-");
     const [hh, mm] = hora.split(":");
     const d = new Date(anio, mes - 1, dia, hh, mm);
-    return d.toLocaleTimeString("es-CO", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
+    return d.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", hour12: false });
   };
 
   const handleAceptar = async () => {
-    if (nuevoEstado === cita.estado) {
-      setEditando(false);
-      return;
-    }
+    if (nuevoEstado === cita.estado) { setEditando(false); return; }
     setGuardando(true);
     try {
       const res = await fetch(`${API}/citas/${cita.citId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          medId: medId,
-          fechaHora: String(cita.fechaHora)
-            .replace(" ", "T")
-            .split(".")[0]
-            .slice(0, 16),
+          medId,
+          fechaHora: String(cita.fechaHora).replace(" ", "T").split(".")[0].slice(0, 16),
           estado: nuevoEstado,
         }),
       });
       const data = await res.json();
-      if (data.success) {
-        onEstadoChange(cita.citId, nuevoEstado);
-        setEditando(false);
-      } else {
-        alert(
-          "Error al actualizar el estado: " +
-            (data.error || "Error desconocido"),
-        );
-        setEditando(false);
-      }
+      if (data.success) { onEstadoChange(cita.citId, nuevoEstado); setEditando(false); }
+      else { alert("Error al actualizar el estado: " + (data.error || "Error desconocido")); setEditando(false); }
     } catch (e) {
       console.error(e);
       alert("Error de conexión al actualizar el estado");
@@ -239,182 +223,100 @@ function CitaCard({ cita, onEstadoChange, medId }) {
     }
   };
 
-  const handleCancelar = () => {
-    setNuevoEstado(cita.estado);
-    setEditando(false);
-  };
+  const handleCancelar = () => { setNuevoEstado(cita.estado); setEditando(false); };
+
+  const esTriage = cita.estado === "EN_TRIAGE";
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "8px",
-        padding: "12px 14px",
-        background: "white",
-        borderRadius: "10px",
-        border: "1px solid #e2e8f0",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-        transition: "all .2s",
-      }}
-    >
-      {/* Fila superior: avatar + nombre + hora */}
+    <div style={{
+      display: "flex", flexDirection: "column", gap: "8px",
+      padding: "12px 14px",
+      background: esTriage ? "#fff1f1" : "white",
+      borderRadius: "10px",
+      border: esTriage ? "1.5px solid #ef4444" : "1px solid #e2e8f0",
+      boxShadow: esTriage ? "0 0 0 3px #fee2e2" : "0 1px 3px rgba(0,0,0,0.05)",
+      transition: "all .2s",
+    }}>
+      {/* Fila superior */}
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "50%",
-            background: "linear-gradient(135deg,#3b82f6,#1d4ed8)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "white",
-            fontWeight: 700,
-            fontSize: "13px",
-            flexShrink: 0,
-          }}
-        >
+        <div style={{
+          width: "40px", height: "40px", borderRadius: "50%",
+          background: esTriage ? "linear-gradient(135deg,#ef4444,#b91c1c)" : "linear-gradient(135deg,#3b82f6,#1d4ed8)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "white", fontWeight: 700, fontSize: "13px", flexShrink: 0,
+        }}>
           {initiales(cita.pacNombre)}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontWeight: 600,
-              fontSize: "14px",
-              color: "#1e293b",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
+          <div style={{ fontWeight: 600, fontSize: "14px", color: "#1e293b",
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {cita.pacNombre}
           </div>
           <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>
             {cita.motivo}
           </div>
         </div>
-        <div
-          style={{
-            fontSize: "14px",
-            fontWeight: 700,
-            color: "#475569",
-            flexShrink: 0,
-          }}
-        >
+        <div style={{ fontSize: "14px", fontWeight: 700, color: "#475569", flexShrink: 0 }}>
           {fmtHora(cita.fechaHora)}
         </div>
       </div>
 
-      {/* Fila inferior: estado + edición */}
+      {/* Fila inferior */}
       {!editando ? (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <span
-            style={{
-              fontSize: "11px",
-              fontWeight: 700,
-              padding: "4px 12px",
-              borderRadius: "12px",
-              ...ESTADO_STYLE[cita.estado],
-            }}
-          >
-            {ESTADO_LABEL[cita.estado] || cita.estado}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
+          <span style={{
+            fontSize: "11px", fontWeight: 700, padding: "4px 12px", borderRadius: "12px",
+            ...(esTriage
+              ? { background: "#fee2e2", color: "#b91c1c", border: "1px solid #fca5a5" }
+              : ESTADO_STYLE[cita.estado])
+          }}>
+            {esTriage ? "🔴 EN TRIAGE" : (ESTADO_LABEL[cita.estado] || cita.estado)}
           </span>
-          <button
-            onClick={() => {
-              setNuevoEstado(cita.estado);
-              setEditando(true);
-            }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              background: "none",
-              border: "1px solid #e2e8f0",
-              borderRadius: "6px",
-              padding: "4px 10px",
-              fontSize: "12px",
-              color: "#64748b",
-              cursor: "pointer",
-              fontWeight: 500,
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = "#f8fafc";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = "none";
-            }}
-          >
-            <FiEdit2 size={12} /> Cambiar
-          </button>
+          <div style={{ display: "flex", gap: "6px" }}>
+            {esTriage && (
+              <button
+                onClick={() => onVerHistorial(cita.pacDoc)}
+                style={{
+                  display: "flex", alignItems: "center", gap: "4px",
+                  background: "#dc2626", color: "white", border: "none",
+                  borderRadius: "6px", padding: "4px 10px", fontSize: "12px",
+                  fontWeight: 700, cursor: "pointer",
+                }}
+              >
+                <FiEye size={12} /> Ver paciente
+              </button>
+            )}
+            <button
+              onClick={() => { setNuevoEstado(cita.estado); setEditando(true); }}
+              style={{
+                display: "flex", alignItems: "center", gap: "4px", background: "none",
+                border: "1px solid #e2e8f0", borderRadius: "6px", padding: "4px 10px",
+                fontSize: "12px", color: "#64748b", cursor: "pointer", fontWeight: 500,
+              }}
+            >
+              <FiEdit2 size={12} /> Cambiar
+            </button>
+          </div>
         </div>
       ) : (
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <select
-            value={nuevoEstado}
-            onChange={(e) => setNuevoEstado(e.target.value)}
-            style={{
-              flex: 1,
-              fontSize: "12px",
-              padding: "6px 10px",
-              border: "1px solid #93c5fd",
-              borderRadius: "6px",
-              background: "#eff6ff",
-              color: "#1d4ed8",
-              fontWeight: 600,
-              cursor: "pointer",
-              outline: "none",
-            }}
-          >
+          <select value={nuevoEstado} onChange={(e) => setNuevoEstado(e.target.value)}
+            style={{ flex: 1, fontSize: "12px", padding: "6px 10px", border: "1px solid #93c5fd",
+              borderRadius: "6px", background: "#eff6ff", color: "#1d4ed8", fontWeight: 600, outline: "none" }}>
             {ESTADOS_CITA.map((e) => (
-              <option key={e} value={e}>
-                {ESTADO_LABEL[e] || e}
-              </option>
+              <option key={e} value={e}>{ESTADO_LABEL[e] || e}</option>
             ))}
           </select>
-          <button
-            onClick={handleAceptar}
-            disabled={guardando}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              background: "#2563eb",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              padding: "6px 12px",
-              fontSize: "12px",
-              fontWeight: 600,
-              cursor: guardando ? "not-allowed" : "pointer",
-              opacity: guardando ? 0.7 : 1,
-              transition: "all 0.2s",
-            }}
-          >
+          <button onClick={handleAceptar} disabled={guardando}
+            style={{ display: "flex", alignItems: "center", gap: "4px", background: "#2563eb",
+              color: "white", border: "none", borderRadius: "6px", padding: "6px 12px",
+              fontSize: "12px", fontWeight: 600, cursor: guardando ? "not-allowed" : "pointer", opacity: guardando ? 0.7 : 1 }}>
             <FiCheckCircle size={12} /> {guardando ? "..." : "Aceptar"}
           </button>
-          <button
-            onClick={handleCancelar}
-            disabled={guardando}
-            style={{
-              background: "white",
-              border: "1px solid #e2e8f0",
-              borderRadius: "6px",
-              padding: "6px 10px",
-              fontSize: "12px",
-              color: "#94a3b8",
-              cursor: guardando ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
+          <button onClick={handleCancelar} disabled={guardando}
+            style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: "6px",
+              padding: "6px 10px", fontSize: "12px", color: "#94a3b8",
+              cursor: guardando ? "not-allowed" : "pointer", display: "flex", alignItems: "center" }}>
             <FiX size={12} />
           </button>
         </div>
@@ -422,6 +324,17 @@ function CitaCard({ cita, onEstadoChange, medId }) {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
 
 // ════════════════════════════════════════════════════════════
 function MedicoPrincipal() {
@@ -1002,12 +915,23 @@ function MedicoPrincipal() {
                           return fechaA - fechaB;
                         })
                         .map((c) => (
-                          <CitaCard
-                            key={c.citId}
-                            cita={c}
-                            onEstadoChange={handleEstadoChange}
-                            medId={usuario.medId || usuario.id}
-                          />
+
+
+
+                         <CitaCard
+  key={c.citId}
+  cita={c}
+  onEstadoChange={handleEstadoChange}
+  medId={usuario.medId || usuario.id}
+  onVerHistorial={(doc) => {
+    const pac = todosPacientes.find(p => p.documento === doc)
+    if (pac) verHistorial(pac)
+    else setBusqueda(doc)
+  }}
+/>
+
+
+
                         ))
                     )}
                   </div>
