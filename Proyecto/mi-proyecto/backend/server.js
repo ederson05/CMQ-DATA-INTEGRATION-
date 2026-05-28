@@ -520,12 +520,24 @@ app.get('/api/medico/:medId/pacientes', async (req, res) => {
 // ENFERMERÍA - TRIAGE Y SIGNOS VITALES
 // ============================================================
 
-// Buscar paciente por documento — busca cita programada hoy
+
+
+
+
+
+
+
+
+
+
+
+
 app.get('/api/enfermero/paciente/:documento', async (req, res) => {
   try {
-    const { documento } = req.params;
+    const { documento } = req.params
 
-    const result = await pool.query(
+    // Primero buscar cita programada hoy
+    const citaResult = await pool.query(
       `SELECT c.cit_id, c.pac_documento, p.pac_nombre,
               c.cit_fecha_hora, c.cit_motivo_consulta, c.cit_estado
        FROM tbl_cita c
@@ -537,26 +549,85 @@ app.get('/api/enfermero/paciente/:documento', async (req, res) => {
        ORDER BY c.cit_fecha_hora ASC
        LIMIT 1`,
       [documento]
-    );
+    )
 
-    if (result.rows.length === 0) {
-      return res.json({ encontrado: false });
+    if (citaResult.rows.length > 0) {
+      const r = citaResult.rows[0]
+      return res.json({
+        encontrado: true,
+        citId: r.cit_id,
+        documento: r.pac_documento,
+        nombre: r.pac_nombre,
+        fechaHora: r.cit_fecha_hora,
+        motivo: r.cit_motivo_consulta,
+        estado: r.cit_estado
+      })
     }
 
-    const r = result.rows[0];
-    res.json({
-      encontrado: true,
-      citId:     r.cit_id,
-      documento: r.pac_documento,
-      nombre:    r.pac_nombre,
-      fechaHora: r.cit_fecha_hora,
-      motivo:    r.cit_motivo_consulta,
-      estado:    r.cit_estado
-    });
+    // Si no tiene cita hoy, buscar solo en pacientes
+    const pacResult = await pool.query(
+      `SELECT pac_documento, pac_nombre FROM tbl_paciente WHERE pac_documento = $1`,
+      [documento]
+    )
+
+    if (pacResult.rows.length > 0) {
+      const p = pacResult.rows[0]
+      // Crear cita de urgencia automática
+      const medResult = await pool.query(
+        'SELECT med_id FROM tbl_medico WHERE med_activo = 1 ORDER BY med_id ASC LIMIT 1'
+      )
+      const medId = medResult.rows[0]?.med_id || 1
+
+      const citId = (await pool.query(
+        'SELECT COALESCE(MAX(cit_id), 0) + 1 AS nuevo_id FROM tbl_cita'
+      )).rows[0].nuevo_id
+
+      await pool.query(
+        `INSERT INTO tbl_cita (
+           cit_id, pac_documento, med_id, usu_id,
+           cit_fecha_hora, cit_motivo_consulta,
+           cit_estado, cit_observaciones, cit_fecha_creacion, cit_nivel_paciente
+         ) VALUES ($1,$2,$3,1, NOW(),'URGENCIA','PROGRAMADA','', NOW(),'CRITICO')`,
+        [citId, documento, medId]
+      )
+
+      return res.json({
+        encontrado: true,
+        citId,
+        documento: p.pac_documento,
+        nombre: p.pac_nombre,
+        motivo: 'URGENCIA',
+        estado: 'PROGRAMADA'
+      })
+    }
+
+    res.json({ encontrado: false })
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message })
   }
-});
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Registrar triage + signos vitales
 app.post('/api/triage', async (req, res) => {
@@ -649,6 +720,18 @@ app.post('/api/triage', async (req, res) => {
     client.release();
   }
 });
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Triages del día registrados por el enfermero logueado
 app.get('/api/triage/hoy/:usuId', async (req, res) => {
