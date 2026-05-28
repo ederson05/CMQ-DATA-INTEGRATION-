@@ -5,7 +5,7 @@ import SecretariaPrincipal from './secretaria_principal'
 import CitasMedicas      from './citas_medicas'
 import MedicoPrincipal   from './medico_principal'
 import RutaProtegida     from './RutaProtegida'
-
+import EnfermeroPrincipal from './enfermero_principal'
 function App() {
   return (
     <BrowserRouter>
@@ -29,6 +29,12 @@ function App() {
         <Route path="/medico" element={
           <RutaProtegida rol="MEDICO">
             <MedicoPrincipal />
+          </RutaProtegida>
+        } />
+
+        <Route path="/enfermero" element={
+          <RutaProtegida rol="ENFERMERO">
+            <EnfermeroPrincipal />
           </RutaProtegida>
         } />
       </Routes>

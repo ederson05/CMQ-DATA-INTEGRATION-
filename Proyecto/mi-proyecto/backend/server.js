@@ -1109,7 +1109,118 @@ app.get('/api/medico/:medId/pacientes', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+// ============================================================
+// ENFERMERÍA - TRIAGE Y SIGNOS VITALES
+// ============================================================
 
+// Registrar triage + signos vitales
+app.post('/api/triage', async (req, res) => {
+  const { 
+    documento, nombre, 
+    presionArterial, frecuenciaCardiaca, temperatura, saturacion,
+    sintomas, nivel, usuId 
+  } = req.body;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Verificar que el paciente existe
+    const pacResult = await client.query(
+      'SELECT pac_documento FROM tbl_paciente WHERE pac_documento = $1',
+      [documento]
+    );
+    if (pacResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, error: 'Paciente no encontrado' });
+    }
+
+    // Insertar signos vitales
+    const sivId = (await client.query(
+      'SELECT COALESCE(MAX(siv_id), 0) + 1 AS nuevo_id FROM tbl_signos_vitales'
+    )).rows[0].nuevo_id;
+
+    await client.query(
+      `INSERT INTO tbl_signos_vitales (
+         siv_id, cit_id, pac_documento, siv_presion_arterial, siv_frecuencia_cardiaca,
+         siv_temperatura, siv_saturacion_o2, siv_fecha_registro
+       ) VALUES ($1, NULL, $2, $3, $4, $5, $6, NOW())`,
+      [sivId, documento, presionArterial || null, 
+       frecuenciaCardiaca || null, temperatura || null, saturacion || null]
+    );
+
+    // Insertar triage
+    const triId = (await client.query(
+      'SELECT COALESCE(MAX(tri_id), 0) + 1 AS nuevo_id FROM tbl_triage'
+    )).rows[0].nuevo_id;
+
+    await client.query(
+      `INSERT INTO tbl_triage (tri_id, cit_id, pac_documento, tri_nivel, tri_sintomas, tri_fecha_creacion)
+       VALUES ($1, NULL, $2, $3, $4, NOW())`,
+      [triId, documento, nivel, sintomas]
+    );
+
+    // Auditoría
+    try {
+      const audId = (await client.query(
+        'SELECT COALESCE(MAX(aud_id), 0) + 1 AS nuevo_id FROM tbl_auditoria'
+      )).rows[0].nuevo_id;
+      await client.query(
+        `INSERT INTO tbl_auditoria (
+           aud_id, usu_id, aud_accion, aud_entidad, aud_registro_id,
+           aud_detalles, aud_fecha_hora, aud_id_address
+         ) VALUES ($1,$2,'INSERT','tbl_triage',$3,'Triage urgencias registrado', NOW(),'127.0.0.1')`,
+        [audId, usuId || 1, String(triId)]
+      );
+    } catch (audErr) {
+      console.warn('⚠️ Auditoría falló:', audErr.message);
+    }
+
+    await client.query('COMMIT');
+    res.json({ success: true, triId, sivId });
+
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('❌ ERROR POST /api/triage:', err.message);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+
+
+
+
+
+
+// Obtener triages del día
+app.get('/api/triage/hoy', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT t.tri_id, c.cit_id, p.pac_documento, p.pac_nombre,
+              t.tri_nivel, s.siv_presion_arterial, s.siv_temperatura,
+              t.tri_fecha_creacion
+       FROM tbl_triage t
+       JOIN tbl_cita c ON c.cit_id = t.cit_id
+       JOIN tbl_paciente p ON p.pac_documento = c.pac_documento
+       LEFT JOIN tbl_signos_vitales s ON s.cit_id = c.cit_id
+       WHERE DATE(t.tri_fecha_creacion AT TIME ZONE 'America/Bogota')
+             = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::date
+       ORDER BY t.tri_fecha_creacion DESC`
+    );
+    res.json(result.rows.map(r => ({
+      triId: r.tri_id,
+      citId: r.cit_id,
+      documento: r.pac_documento,
+      nombre: r.pac_nombre,
+      nivel: r.tri_nivel,
+      fechaHora: r.tri_fecha_creacion
+    })));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 // ============================================================
 // ✅ Puerto dinámico — requerido por Render
 // ============================================================
