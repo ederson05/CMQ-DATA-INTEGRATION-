@@ -287,27 +287,8 @@ setFormData({
 
           <form onSubmit={handleSubmit} className="patient-form" noValidate>
 
-            <div className="form-section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-  <span>Identificación del Paciente</span>
-  <button
-    type="button"
-    onClick={() => {
-      const contador = Date.now().toString().slice(-4)
-      setPaciente({
-        citId: null,
-        esPNI: true,
-        nombre: `PNI-${contador}`,
-        motivo: 'Urgencia sin registro'
-      })
-      setNoEncontrado(false)
-      setDocumento('')
-    }}
-    style={{ background: '#dc2626', color: 'white', border: 'none',
-      borderRadius: '6px', padding: '6px 14px', fontWeight: 700,
-      cursor: 'pointer', fontSize: '13px' }}
-  >
-    🚨 PNI
-  </button>
+            <div className="form-section-label">
+  Identificación del Paciente
 </div>
 <div className="form-row">
   <div className="form-group" style={{ flex: 2 }}>
@@ -378,11 +359,11 @@ setFormData({
       </div>
       <div className="form-group">
         <label>Género</label>
-        <select name="urgGenero" value={formData.urgGenero || 'DESCONOCIDO'} onChange={handleChange}>
-          <option value="DESCONOCIDO">Desconocido</option>
-          <option value="MASCULINO">Masculino</option>
-          <option value="FEMENINO">Femenino</option>
-        </select>
+        <select name="urgGenero" value={formData.urgGenero || 'D'} onChange={handleChange}>
+  <option value="D">Desconocido</option>
+  <option value="M">Masculino</option>
+  <option value="F">Femenino</option>
+</select>
       </div>
     </div>
 
