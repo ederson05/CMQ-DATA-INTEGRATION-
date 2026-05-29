@@ -18,7 +18,7 @@ import {
 import { FaStethoscope } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import "./medico_principal.css";
-
+import DoctorUrgencias from "./DoctorUrgencias";
 //local
 //const API = 'http://localhost:3001/api'
 //API
@@ -289,18 +289,18 @@ boxShadow: esTriage ? `0 0 0 3px ${colores.shadow}` : "0 1px 3px rgba(0,0,0,0.05
           </span>
           <div style={{ display: "flex", gap: "6px" }}>
             {esTriage && (
-              <button
-                onClick={() => onVerHistorial(cita.pacDoc)}
-                style={{
-                  display: "flex", alignItems: "center", gap: "4px",
-                  background: "#dc2626", color: "white", border: "none",
-                  borderRadius: "6px", padding: "4px 10px", fontSize: "12px",
-                  fontWeight: 700, cursor: "pointer",
-                }}
-              >
-                <FiEye size={12} /> Ver paciente
-              </button>
-            )}
+  <button
+    onClick={() => onVerHistorial(cita)}
+    style={{
+      display: "flex", alignItems: "center", gap: "4px",
+      background: "#dc2626", color: "white", border: "none",
+      borderRadius: "6px", padding: "4px 10px", fontSize: "12px",
+      fontWeight: 700, cursor: "pointer",
+    }}
+  >
+    <FiEye size={12} /> Ver paciente
+  </button>
+)}
 
 {cita.estado !== "ATENDIDO" && (
   <button
@@ -403,7 +403,7 @@ function MedicoPrincipal() {
 
   const [modalDetalle, setModalDetalle] = useState(null);
   const [modalAcl, setModalAcl] = useState(null);
-
+const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
   useEffect(() => {
     const t = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(t);
@@ -946,11 +946,7 @@ function MedicoPrincipal() {
   cita={c}
   onEstadoChange={handleEstadoChange}
   medId={usuario.medId || usuario.id}
-  onVerHistorial={(doc) => {
-    const pac = todosPacientes.find(p => p.documento === doc)
-    if (pac) verHistorial(pac)
-    else setBusqueda(doc)
-  }}
+  onVerHistorial={(cita) => setUrgenciaPaciente(cita)}
 />
 
 
@@ -1859,9 +1855,17 @@ function MedicoPrincipal() {
             </div>
           </div>
         </div>
+
+
+
+) }
+
+      {urgenciaPaciente && (
+        <DoctorUrgencias
+          paciente={urgenciaPaciente}
+          onClose={() => setUrgenciaPaciente(null)}
+        />
       )}
     </div>
-  );
-}
-
-export default MedicoPrincipal;
+    );
+  }

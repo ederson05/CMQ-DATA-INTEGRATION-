@@ -1,0 +1,302 @@
+/* ══════════════════════════════════════════════
+   DoctorUrgencias.css — Panel urgencias CMQ
+   ══════════════════════════════════════════════ */
+
+/* ── OVERLAY ── */
+.urg-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: urg-fade-in 0.2s ease;
+}
+
+@keyframes urg-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── PANEL ── */
+.urg-panel {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.1);
+  animation: urg-slide-up 0.25s cubic-bezier(.16,1,.3,1);
+  overflow: hidden;
+}
+
+@keyframes urg-slide-up {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── HEADER ── */
+.urg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.urg-header-critico { background: linear-gradient(135deg, #fef2f2 0%, #fff 60%); }
+.urg-header-estable { background: linear-gradient(135deg, #fffbeb 0%, #fff 60%); }
+.urg-header-leve    { background: linear-gradient(135deg, #f0fdf4 0%, #fff 60%); }
+
+.urg-header-left  { display: flex; align-items: center; gap: 14px; }
+.urg-header-right { display: flex; align-items: center; gap: 10px; }
+
+.urg-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Avatar pulsante para CRÍTICO */
+.urg-pulse {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  animation: urg-pulse-anim 1.4s ease-in-out infinite;
+}
+
+@keyframes urg-pulse-anim {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
+  50%       { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+}
+
+.urg-nombre { font-weight: 700; font-size: 16px; color: #0f172a; }
+.urg-sub    {
+  font-size: 12px; color: #64748b; margin-top: 2px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+
+.urg-sangre {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: #fef2f2; color: #dc2626;
+  padding: 1px 7px; border-radius: 10px;
+  font-weight: 700; font-size: 11px;
+}
+
+/* ── TAGS ── */
+.urg-tag {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.5px;
+  padding: 5px 12px; border-radius: 20px;
+}
+.urg-tag-critico { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+.urg-tag-estable { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+.urg-tag-leve    { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+
+.urg-close {
+  background: none; border: 1px solid #e2e8f0;
+  border-radius: 8px; padding: 6px; cursor: pointer;
+  color: #94a3b8; display: flex; align-items: center;
+  transition: all 0.15s;
+}
+.urg-close:hover { background: #f8fafc; color: #374151; }
+
+/* ── BARRA CRITICIDAD ── */
+.urg-criticidad-bar-wrap {
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.urg-criticidad-label {
+  display: flex; justify-content: space-between;
+  font-size: 11px; font-weight: 600; color: #64748b;
+  margin-bottom: 6px;
+}
+
+.urg-criticidad-pct { font-weight: 700; color: #1e293b; }
+
+.urg-criticidad-track {
+  height: 8px; background: #f1f5f9;
+  border-radius: 99px; overflow: hidden;
+}
+
+.urg-criticidad-fill {
+  height: 100%; border-radius: 99px;
+  transition: width 0.6s cubic-bezier(.4,0,.2,1);
+}
+
+.urg-fill-critico { background: linear-gradient(90deg, #ef4444, #b91c1c); }
+.urg-fill-estable { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.urg-fill-leve    { background: linear-gradient(90deg, #22c55e, #16a34a); }
+
+.urg-criticidad-steps {
+  display: flex; justify-content: space-between;
+  font-size: 10px; color: #cbd5e1; font-weight: 600;
+  margin-top: 5px; letter-spacing: 0.3px;
+}
+
+.urg-criticidad-steps span.active { color: #1e293b; font-weight: 800; }
+
+/* ── BODY ── */
+.urg-body {
+  flex: 1; overflow-y: auto; padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+.urg-body::-webkit-scrollbar { width: 4px; }
+.urg-body::-webkit-scrollbar-track { background: transparent; }
+.urg-body::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
+
+/* ── SECCIONES ── */
+.urg-section { margin-bottom: 16px; }
+
+.urg-section-title {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700; color: #94a3b8;
+  letter-spacing: 0.6px; text-transform: uppercase;
+  margin-bottom: 10px; padding-bottom: 6px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* ── GRIDS ── */
+.urg-grid2 {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.urg-dato {
+  display: flex; flex-direction: column; gap: 2px;
+  background: #f8fafc; padding: 10px 12px; border-radius: 8px;
+}
+
+.urg-dato-lbl {
+  font-size: 10px; font-weight: 700; color: #94a3b8;
+  text-transform: uppercase; letter-spacing: 0.4px;
+  display: flex; align-items: center; gap: 4px;
+}
+
+.urg-dato-val {
+  font-size: 13px; font-weight: 600; color: #1e293b;
+}
+
+/* ── SÍNTOMAS ── */
+.urg-sintomas {
+  margin-top: 8px; background: #f8fafc;
+  border-radius: 8px; padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+.urg-sintomas p {
+  margin: 0; font-size: 13px; color: #374151; line-height: 1.5;
+}
+
+/* ── NO TRIAGE ── */
+.urg-no-triage {
+  display: flex; align-items: center; gap: 8px;
+  background: #fffbeb; border: 1px solid #fcd34d;
+  border-radius: 8px; padding: 12px 14px;
+  font-size: 13px; color: #92400e; font-weight: 500;
+  margin-bottom: 12px;
+}
+
+/* ── SIGNOS VITALES ── */
+.urg-signos-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.urg-signo-card {
+  background: #f8fafc; border-radius: 10px;
+  padding: 12px 8px; text-align: center;
+  border: 1px solid #e2e8f0; position: relative;
+  transition: border-color 0.15s;
+}
+
+.urg-signo-card.urg-signo-alerta {
+  background: #fef2f2; border-color: #fca5a5;
+}
+
+.urg-signo-icon {
+  color: #94a3b8; margin-bottom: 6px;
+  display: flex; justify-content: center;
+}
+
+.urg-signo-alerta .urg-signo-icon { color: #dc2626; }
+
+.urg-signo-valor {
+  font-size: 18px; font-weight: 800; color: #1e293b;
+  line-height: 1;
+}
+
+.urg-signo-alerta .urg-signo-valor { color: #b91c1c; }
+
+.urg-signo-unit { font-size: 10px; font-weight: 600; color: #94a3b8; }
+
+.urg-signo-label {
+  font-size: 10px; color: #94a3b8; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.3px;
+  margin-top: 4px;
+}
+
+.urg-signo-warn {
+  position: absolute; top: 4px; right: 4px; font-size: 11px;
+}
+
+/* ── LOADING ── */
+.urg-loading {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 12px; padding: 40px 0; color: #94a3b8; font-size: 13px;
+}
+
+.urg-spinner {
+  width: 28px; height: 28px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: urg-spin 0.7s linear infinite;
+}
+
+@keyframes urg-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── FOOTER ── */
+.urg-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px;
+  border-top: 1px solid #f1f5f9;
+  background: #fafafa;
+}
+
+.urg-footer-note {
+  font-size: 11px; color: #94a3b8; font-style: italic;
+}
+
+.urg-btn-cerrar {
+  background: #1e293b; color: #fff;
+  border: none; border-radius: 8px;
+  padding: 8px 20px; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background 0.15s;
+}
+.urg-btn-cerrar:hover { background: #334155; }
+
+/* ── BOTÓN DISPARADOR (usado en medico_principal.jsx) ── */
+.btn-ver-urgencia {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: #dc2626; color: #fff;
+  border: none; border-radius: 7px;
+  padding: 5px 11px; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: background 0.15s;
+  flex-shrink: 0;
+}
+.btn-ver-urgencia:hover { background: #b91c1c; }

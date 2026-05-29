@@ -857,6 +857,57 @@ app.post('/api/enfermero/urgencia', async (req, res) => {
     client.release()
   }
 })
+
+
+
+//nuevo 
+
+
+
+app.get('/api/triage/cita/:citId', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT t.tri_nivel, t.tri_sintomas, t.tri_fecha,
+              s.siv_presion_arterial, s.siv_frecuencia_cardiaca,
+              s.siv_temperatura, s.siv_saturacion_o2
+       FROM tbl_triage t
+       LEFT JOIN tbl_signos_vitales s ON s.cit_id = t.cit_id
+       WHERE t.cit_id = $1`,
+      [Number(req.params.citId)]
+    );
+    if (result.rows.length === 0) return res.json(null);
+    const r = result.rows[0];
+    res.json({
+      nivel: r.tri_nivel, sintomas: r.tri_sintomas, fechaHora: r.tri_fecha,
+      signosVitales: {
+        presionArterial: r.siv_presion_arterial,
+        frecuenciaCardiaca: r.siv_frecuencia_cardiaca,
+        temperatura: r.siv_temperatura,
+        saturacion: r.siv_saturacion_o2
+      }
+    });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+
+//no se si se necesita
+
+app.get('/api/pacientes/:doc', async (req, res) => {
+  try {
+    const r = await pool.query(
+      'SELECT * FROM tbl_paciente WHERE pac_documento = $1',
+      [req.params.doc]
+    );
+    if (!r.rows[0]) return res.json(null);
+    const p = r.rows[0];
+    res.json({
+      nombre: p.pac_nombre, genero: p.pac_genero, tipoSangre: p.pac_tipo_sangre,
+      ciudad: p.pac_ciudad, telefono: String(p.pac_telefono),
+      fechaNacimiento: p.pac_fecha_nacimiento,
+      emergenciaNombre: p.pac_emergencia_nombre, emergenciaTel: p.pac_emergencia_telefono
+    });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
 // ============================================================
 // ✅ Puerto dinámico — requerido por Render
 // ============================================================
