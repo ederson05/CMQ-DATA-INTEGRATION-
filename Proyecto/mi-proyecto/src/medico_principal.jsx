@@ -1102,36 +1102,47 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
                             </td>
                             <td>{p.ciudad}</td>
                             <td>
-                              <div className="action-btns">
-                                <button
-                                  className="btn-eye"
-                                  title="Ver historial"
-                                  onClick={() => verHistorial(p)}
-                                >
-                                  <FiEye size={13} />
-                                </button>
-                                <button
-                                  className="btn-anotar"
-                                  onClick={() => {
-                                    setPaciente(p);
-                                    const citaUrgencia = citasHoy.find(c => c.pacDoc === p.documento && c.motivo === "URGENCIA" && c.estado !== "ATENDIDO");
-                                    const citaActiva = citasHoy.find(c => c.pacDoc === p.documento && c.estado !== "ATENDIDO");
-                                    setFormAnot({
-                                      citId: citaActiva?.citId || null,
-                                      tipoConsulta: citaUrgencia ? "URGENCIA" : "",
-                                      diagnostico: "",
-                                      tratamiento: "",
-                                      observaciones: "",
-                                      proximaCita: "",
-                                    });
-                                    setErrAnot({});
-                                    setIntentoAnot(false);
-                                    setVista("nueva-anotacion");
-                                  }}
-                                >
-                                  <FiPlusCircle size={12} /> Anotar
-                                </button>
-                              </div>
+
+
+
+
+                             <div className="action-btns">
+  <button
+    className="btn-eye"
+    title="Ver historial"
+    onClick={() => verHistorial(p)}
+  >
+    <FiEye size={13} />
+  </button>
+  {citasHoy.some(c => c.pacDoc === p.documento && c.estado !== "ATENDIDO") && (
+    <button
+      className="btn-anotar"
+      onClick={() => {
+        setPaciente(p);
+        const citaUrgencia = citasHoy.find(c => c.pacDoc === p.documento && c.motivo === "URGENCIA" && c.estado !== "ATENDIDO");
+        const citaActiva = citasHoy.find(c => c.pacDoc === p.documento && c.estado !== "ATENDIDO");
+        setFormAnot({
+          citId: citaActiva?.citId || null,
+          tipoConsulta: citaUrgencia ? "URGENCIA" : "",
+          diagnostico: "",
+          tratamiento: "",
+          observaciones: "",
+          proximaCita: "",
+        });
+        setErrAnot({});
+        setIntentoAnot(false);
+        setVista("nueva-anotacion");
+      }}
+    >
+      <FiPlusCircle size={12} /> Anotar
+    </button>
+  )}
+</div>
+
+
+
+
+
                             </td>
                           </tr>
                         ))}
@@ -1171,7 +1182,10 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
 
 
 
-                {citasHoy.find(c => c.pacDoc === pacienteSeleccionado?.documento && c.motivo === "URGENCIA" && c.estado !== "ATENDIDO") && (
+
+
+
+{citasHoy.find(c => c.pacDoc === pacienteSeleccionado?.documento && c.motivo === "URGENCIA" && c.estado !== "ATENDIDO") && (
   <button
     className="btn-ver-urgencia"
     onClick={() => setUrgenciaPaciente(
@@ -1181,38 +1195,30 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
     🚨 Ver urgencia activa
   </button>
 )}
-<button
-  className="btn-register"
-  style={{ width: "auto", padding: "9px 18px", marginTop: 0 }}
+{citasHoy.some(c => c.pacDoc === pacienteSeleccionado?.documento && c.estado !== "ATENDIDO") && (
+  <button
+    className="btn-register"
+    style={{ width: "auto", padding: "9px 18px", marginTop: 0 }}
+    onClick={() => {
+      const citaUrgencia = citasHoy.find(c => c.pacDoc === pacienteSeleccionado?.documento && c.motivo === "URGENCIA" && c.estado !== "ATENDIDO");
+      const citaActiva = citasHoy.find(c => c.pacDoc === pacienteSeleccionado?.documento && c.estado !== "ATENDIDO");
+      setFormAnot({
+        citId: citaActiva?.citId || null,
+        tipoConsulta: citaUrgencia ? "URGENCIA" : "",
+        diagnostico: "",
+        tratamiento: "",
+        observaciones: "",
+        proximaCita: "",
+      });
+      setErrAnot({});
+      setIntentoAnot(false);
+      setVista("nueva-anotacion");
+    }}
+  >
+    <FiPlusCircle /> Nueva anotación
+  </button>
+)}
 
-
-
-
-
-  onClick={() => {
-    const citaUrgencia = citasHoy.find(c => c.pacDoc === pacienteSeleccionado?.documento && c.motivo === "URGENCIA" && c.estado !== "ATENDIDO");
-    const citaActiva = citasHoy.find(c => c.pacDoc === pacienteSeleccionado?.documento && c.estado !== "ATENDIDO");
-    setFormAnot({
-      citId: citaActiva?.citId || null,
-      tipoConsulta: citaUrgencia ? "URGENCIA" : "",
-      diagnostico: "",
-      tratamiento: "",
-      observaciones: "",
-      proximaCita: "",
-    });
-    setErrAnot({});
-    setIntentoAnot(false);
-    setVista("nueva-anotacion");
-  }}
->
-
-
-
-
-
-  
-  <FiPlusCircle /> Nueva anotación
-</button>
 
 
 
