@@ -170,13 +170,32 @@ const initiales = (nombre) =>
         .toUpperCase()
     : "DR";
 
+const getMinFecha = () => {
+  const manana = new Date();
+  manana.setDate(manana.getDate() + 1);
+  manana.setHours(0, 0, 0, 0);
+  return manana.toISOString().slice(0, 16);
+};
+
+const getMaxFecha = () => {
+  const max = new Date();
+  max.setMonth(max.getMonth() + 4);
+  return max.toISOString().slice(0, 16);
+};
+
 const validarAnotacion = (f) => {
   const e = {};
   if (!f.tipoConsulta) e.tipoConsulta = "Seleccione el tipo de consulta";
   if (!f.diagnostico?.trim()) e.diagnostico = "El diagnóstico es requerido";
   if (!f.tratamiento?.trim()) e.tratamiento = "El tratamiento es requerido";
-  if (!f.observaciones?.trim())
-    e.observaciones = "Las observaciones son requeridas";
+  if (!f.observaciones?.trim()) e.observaciones = "Las observaciones son requeridas";
+  if (f.proximaCita) {
+    const sel = new Date(f.proximaCita);
+    const manana = new Date(); manana.setDate(manana.getDate() + 1); manana.setHours(0,0,0,0);
+    const max = new Date(); max.setMonth(max.getMonth() + 4);
+    if (sel < manana) e.proximaCita = "La próxima cita debe ser mínimo mañana";
+    else if (sel > max) e.proximaCita = "No puede agendarse más de 4 meses adelante";
+  }
   return e;
 };
 
@@ -1102,19 +1121,32 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
 <button
   className="btn-register"
   style={{ width: "auto", padding: "9px 18px", marginTop: 0 }}
+
+
+
+
+
   onClick={() => {
-    setFormAnot({
-      tipoConsulta: "",
-      diagnostico: "",
-      tratamiento: "",
-      observaciones: "",
-      proximaCita: "",
-    });
-    setErrAnot({});
-    setIntentoAnot(false);
-    setVista("nueva-anotacion");
-  }}
+                    setPaciente(p);
+                    const citaUrgencia = citasHoy.find(c => c.pacDoc === p.documento && c.motivo === "URGENCIA" && c.estado !== "ATENDIDO");
+                    setFormAnot({
+                      tipoConsulta: citaUrgencia ? "URGENCIA" : "",
+                      diagnostico: "",
+                      tratamiento: "",
+                      observaciones: "",
+                      proximaCita: "",
+                    });
+                    setErrAnot({});
+                    setIntentoAnot(false);
+                    setVista("nueva-anotacion");
+                  }}
 >
+
+
+
+
+
+  
   <FiPlusCircle /> Nueva anotación
 </button>
 
@@ -1469,20 +1501,39 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
                     PRÓXIMA CITA (OPCIONAL)
                   </div>
 
+
+
+
+
+
                   <div className="form-group">
                     <label>FECHA Y HORA</label>
-                    <input
-                      type="datetime-local"
-                      value={formAnot.proximaCita}
-                      min={new Date().toISOString().slice(0, 16)}
-                      onChange={(e) =>
-                        setFormAnot((p) => ({
-                          ...p,
-                          proximaCita: e.target.value,
-                        }))
-                      }
-                    />
+                    <CampoRequerido error={errAnot.proximaCita}>
+                      <input
+                        type="datetime-local"
+                        value={formAnot.proximaCita}
+                        min={getMinFecha()}
+                        max={getMaxFecha()}
+                        onChange={(e) => {
+                          setFormAnot((p) => ({ ...p, proximaCita: e.target.value }));
+                          if (intentoAnot) {
+                            const sel = new Date(e.target.value);
+                            const manana = new Date(); manana.setDate(manana.getDate() + 1); manana.setHours(0,0,0,0);
+                            const max = new Date(); max.setMonth(max.getMonth() + 4);
+                            if (e.target.value && sel < manana) setErrAnot(p => ({ ...p, proximaCita: "La próxima cita debe ser mínimo mañana" }));
+                            else if (e.target.value && sel > max) setErrAnot(p => ({ ...p, proximaCita: "No puede agendarse más de 4 meses adelante" }));
+                            else setErrAnot(p => ({ ...p, proximaCita: "" }));
+                          }
+                        }}
+                      />
+                    </CampoRequerido>
                   </div>
+
+
+
+
+
+
 
                   <div className="inmutabilidad-aviso">
                     <FiAlertCircle
@@ -1760,22 +1811,32 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
                 {triagePaciente && modalDetalle?.tipoConsulta === 'URGENCIA' && (
   <div className="perfil-seccion-titulo" style={{ color: '#b91c1c' }}>INGRESO POR URGENCIA</div>
 )}
-{triagePaciente && modalDetalle?.tipoConsulta === 'URGENCIA' && (
+
+
+
+
+{modalDetalle?.triage && modalDetalle?.tipoConsulta === 'URGENCIA' && (
+  <div className="perfil-seccion-titulo" style={{ color: '#b91c1c' }}>INGRESO POR URGENCIA</div>
+)}
+{modalDetalle?.triage && modalDetalle?.tipoConsulta === 'URGENCIA' && (
   <>
     <div className="perfil-fila">
       <span>Nivel</span>
-      <span style={{ fontWeight: 700, color: triagePaciente.nivelPaciente === 'CRITICO' ? '#b91c1c' : triagePaciente.nivelPaciente === 'LEVE' ? '#166534' : '#92400e' }}>
-        {triagePaciente.nivelPaciente === 'CRITICO' ? '🔴' : triagePaciente.nivelPaciente === 'LEVE' ? '🟢' : '🟡'} {triagePaciente.nivelPaciente}
+      <span style={{ fontWeight: 700, color: modalDetalle.triage.nivelPaciente === 'CRITICO' ? '#b91c1c' : modalDetalle.triage.nivelPaciente === 'LEVE' ? '#166534' : '#92400e' }}>
+        {modalDetalle.triage.nivelPaciente === 'CRITICO' ? '🔴' : modalDetalle.triage.nivelPaciente === 'LEVE' ? '🟢' : '🟡'} {modalDetalle.triage.nivelPaciente}
       </span>
     </div>
-    <div className="perfil-fila"><span>Triage</span><span>{triagePaciente.nivel && `Triage ${triagePaciente.nivel}`}</span></div>
-    <div className="perfil-fila"><span>F. Cardíaca</span><span>{triagePaciente.signosVitales.frecuenciaCardiaca ?? '—'} LPM</span></div>
-    <div className="perfil-fila"><span>Presión</span><span>{triagePaciente.signosVitales.presionArterial ?? '—'} mmHg</span></div>
-    <div className="perfil-fila"><span>Temperatura</span><span>{triagePaciente.signosVitales.temperatura ?? '—'} °C</span></div>
-    <div className="perfil-fila"><span>Saturación O₂</span><span>{triagePaciente.signosVitales.saturacion ?? '—'} %</span></div>
-    {triagePaciente.sintomas && <div className="perfil-fila"><span>Síntomas</span><span>{triagePaciente.sintomas}</span></div>}
+    <div className="perfil-fila"><span>Triage</span><span>{modalDetalle.triage.nivel && `Triage ${modalDetalle.triage.nivel}`}</span></div>
+    <div className="perfil-fila"><span>F. Cardíaca</span><span>{modalDetalle.triage.signosVitales.frecuenciaCardiaca ?? '—'} LPM</span></div>
+    <div className="perfil-fila"><span>Presión</span><span>{modalDetalle.triage.signosVitales.presionArterial ?? '—'} mmHg</span></div>
+    <div className="perfil-fila"><span>Temperatura</span><span>{modalDetalle.triage.signosVitales.temperatura ?? '—'} °C</span></div>
+    <div className="perfil-fila"><span>Saturación O₂</span><span>{modalDetalle.triage.signosVitales.saturacion ?? '—'} %</span></div>
+    {modalDetalle.triage.sintomas && <div className="perfil-fila"><span>Síntomas</span><span>{modalDetalle.triage.sintomas}</span></div>}
   </>
 )}
+
+ 
+
 
 
               <div className="perfil-seccion-titulo">NOTAS CLÍNICAS</div>

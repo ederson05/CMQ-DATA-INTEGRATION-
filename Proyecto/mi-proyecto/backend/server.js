@@ -309,6 +309,8 @@ app.get('/api/historias', async (req, res) => {
   }
 });
 
+
+
 app.get('/api/historias/:pacDocumento', async (req, res) => {
   try {
     const result = await pool.query(
@@ -320,10 +322,25 @@ app.get('/api/historias/:pacDocumento', async (req, res) => {
          m.med_nombre, m.med_especialidad,
          EXISTS (
            SELECT 1 FROM tbl_nota_aclaratoria na WHERE na.ano_id = a.ano_id
-         ) AS tiene_aclaratoria
+         ) AS tiene_aclaratoria,
+         t.tri_nivel, t.tri_sintomas, t.tri_fecha,
+         t.tri_id,
+         s.siv_presion_arterial, s.siv_frecuencia_cardiaca,
+         s.siv_temperatura, s.siv_saturacion_o2,
+         c_match.cit_nivel_paciente
        FROM tbl_historia_clinica hc
        JOIN tbl_anotacion a ON a.his_id = hc.his_id
        JOIN tbl_medico    m ON m.med_id = a.med_id
+       LEFT JOIN LATERAL (
+         SELECT c.cit_id, c.cit_nivel_paciente
+         FROM tbl_cita c
+         WHERE c.pac_documento = hc.pac_documento
+           AND ABS(EXTRACT(EPOCH FROM (c.cit_fecha_hora - a.ano_fecha_consulta))) < 300
+         ORDER BY ABS(EXTRACT(EPOCH FROM (c.cit_fecha_hora - a.ano_fecha_consulta))) ASC
+         LIMIT 1
+       ) c_match ON true
+       LEFT JOIN tbl_triage t ON t.cit_id = c_match.cit_id
+       LEFT JOIN tbl_signos_vitales s ON s.cit_id = c_match.cit_id
        WHERE hc.pac_documento = $1
        ORDER BY a.ano_fecha_consulta DESC`,
       [req.params.pacDocumento]
@@ -342,12 +359,29 @@ app.get('/api/historias/:pacDocumento', async (req, res) => {
       fechaCreacion:      r.ano_fecha_creacion,
       medicoNombre:       r.med_nombre,
       medicoEspecialidad: r.med_especialidad,
-      tieneAclaratoria:   r.tiene_aclaratoria
+      tieneAclaratoria:   r.tiene_aclaratoria,
+      triage: r.tri_id ? {
+        nivel:         r.tri_nivel,
+        sintomas:      r.tri_sintomas,
+        fechaHora:     r.tri_fecha,
+        nivelPaciente: r.cit_nivel_paciente,
+        signosVitales: {
+          presionArterial:    r.siv_presion_arterial,
+          frecuenciaCardiaca: r.siv_frecuencia_cardiaca,
+          temperatura:        r.siv_temperatura,
+          saturacion:         r.siv_saturacion_o2
+        }
+      } : null
     })));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+
+
+
+
 
 app.get('/api/anotaciones/:anoId/aclaratorias', async (req, res) => {
   try {
