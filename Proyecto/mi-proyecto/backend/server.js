@@ -988,6 +988,9 @@ app.get('/api/triage/paciente/:doc', async (req, res) => {
 })
 //nuevo emergencia
 
+
+
+
 app.get('/api/urgencias/hoy', async (req, res) => {
   try {
     const result = await pool.query(
@@ -995,15 +998,15 @@ app.get('/api/urgencias/hoy', async (req, res) => {
          c.cit_id, c.pac_documento, p.pac_nombre, p.pac_telefono,
          c.cit_estado, c.cit_nivel_paciente, c.cit_fecha_hora,
          m.med_nombre,
-         u.usu_nombre AS enfermero_nombre,
+         u_triage.usu_nombre AS enfermero_nombre,
          t.tri_nivel, t.tri_sintomas, t.tri_fecha,
          s.siv_presion_arterial, s.siv_frecuencia_cardiaca,
          s.siv_temperatura, s.siv_saturacion_o2
        FROM tbl_cita c
        LEFT JOIN tbl_paciente p       ON p.pac_documento = c.pac_documento
        LEFT JOIN tbl_medico m         ON m.med_id        = c.med_id
-       LEFT JOIN tbl_usuario u        ON u.usu_id        = c.usu_id
        LEFT JOIN tbl_triage t         ON t.cit_id        = c.cit_id
+       LEFT JOIN tbl_usuario u_triage ON u_triage.usu_id = t.usu_id
        LEFT JOIN tbl_signos_vitales s ON s.cit_id        = c.cit_id
        WHERE c.cit_motivo_consulta = 'URGENCIA'
          AND DATE(c.cit_fecha_hora AT TIME ZONE 'America/Bogota')
@@ -1033,6 +1036,10 @@ app.get('/api/urgencias/hoy', async (req, res) => {
     res.status(500).json({ error: err.message })
   }
 })
+
+
+
+
 // ============================================================
 // ✅ Puerto dinámico — requerido por Render
 // ============================================================

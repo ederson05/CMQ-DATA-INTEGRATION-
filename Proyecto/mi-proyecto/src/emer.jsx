@@ -124,21 +124,23 @@ export default function Urgencias() {
     setModalAbierto(true)
   }
 
-  const validar = () => {
-    const e = {}
-    if (!form.nombre.trim())         e.nombre          = 'El nombre es obligatorio'
-    if (!form.telefono.trim() || form.telefono.length < 7)
-                                      e.telefono        = 'Teléfono inválido'
-    if (!form.fechaNacimiento)        e.fechaNacimiento = 'La fecha de nacimiento es obligatoria'
-    if (!form.genero)                 e.genero          = 'Seleccione un género'
-    if (!form.tipoSangre)             e.tipoSangre      = 'Seleccione el tipo de sangre'
-    if (!form.direccion.trim())       e.direccion       = 'La dirección es obligatoria'
-    if (!form.ciudad.trim())          e.ciudad          = 'La ciudad es obligatoria'
-    if (!form.emergenciaNombre.trim()) e.emergenciaNombre = 'Contacto de emergencia obligatorio'
-    if (!form.emergenciaTel.trim())   e.emergenciaTel   = 'Teléfono de emergencia obligatorio'
-    setErrores(e)
-    return Object.keys(e).length === 0
-  }
+
+
+
+const validar = () => {
+  const e = {}
+  if (!form.nombre.trim())         e.nombre          = 'El nombre es obligatorio'
+  if (!form.telefono.trim() || form.telefono.length < 7)
+                                    e.telefono        = 'Teléfono inválido'
+  if (!form.fechaNacimiento)        e.fechaNacimiento = 'La fecha de nacimiento es obligatoria'
+  if (!form.genero)                 e.genero          = 'Seleccione un género'
+  if (!form.tipoSangre)             e.tipoSangre      = 'Seleccione el tipo de sangre'
+  setErrores(e)
+  return Object.keys(e).length === 0
+}
+
+
+
 
   const handleRegistrar = async () => {
     if (!validar()) return
