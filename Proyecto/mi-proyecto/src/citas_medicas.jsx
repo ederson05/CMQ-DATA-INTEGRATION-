@@ -417,10 +417,17 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
               <h3><FiCalendar className="section-icon" /> Programar Cita</h3>
 
               {exitoMsg && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px',
-                  padding: '12px 16px', background: '#f0fdf4', border: '1px solid #86efac',
-                  borderRadius: '8px', marginBottom: '16px' }}>
-                  <span style={{ fontSize: '18px' }}>✅</span>
+                <div style={{
+                  position: 'fixed', top: '24px', right: '24px', zIndex: 9999,
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '12px 18px', background: '#f0fdf4',
+                  border: '1px solid #86efac', borderRadius: '10px',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
+                  animation: 'fadeInDown .3s ease'
+                }}>
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: '24px', height: '24px', background: '#22c55e',
+                    borderRadius: '50%', color: 'white', fontSize: '13px', flexShrink: 0 }}>✓</span>
                   <span style={{ fontSize: '13px', color: '#166534', fontWeight: 600 }}>{exitoMsg}</span>
                 </div>
               )}
