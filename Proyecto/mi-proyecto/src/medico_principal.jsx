@@ -918,25 +918,17 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
                     ) : (
                       [...citasHoy]
                         .sort((a, b) => {
-                          console.log(
-                            "fechaHora a:",
-                            a.fechaHora,
-                            "| fechaHora b:",
-                            b.fechaHora,
-                          );
-                          const atendidoA = a.estado === "ATENDIDO" ? 1 : 0;
-                          const atendidoB = b.estado === "ATENDIDO" ? 1 : 0;
-                          if (atendidoA !== atendidoB)
-                            return atendidoA - atendidoB;
-                          const fechaA = new Date(
-                            String(a.fechaHora).replace(" ", "T"),
-                          );
-                          const fechaB = new Date(
-                            String(b.fechaHora).replace(" ", "T"),
-                          );
-                          console.log("fechaA:", fechaA, "| fechaB:", fechaB);
-                          return fechaA - fechaB;
-                        })
+  const atendidoA = a.estado === "ATENDIDO" ? 1 : 0;
+  const atendidoB = b.estado === "ATENDIDO" ? 1 : 0;
+  if (atendidoA !== atendidoB) return atendidoA - atendidoB;
+
+  const prioridad = { CRITICO: 0, ESTABLE: 1, LEVE: 2 };
+  const pA = prioridad[a.nivelPaciente] ?? 3;
+  const pB = prioridad[b.nivelPaciente] ?? 3;
+  if (pA !== pB) return pA - pB;
+
+  return new Date(String(a.fechaHora).replace(" ", "T")) - new Date(String(b.fechaHora).replace(" ", "T"));
+})
                         .map((c) => (
 
 
