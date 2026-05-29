@@ -105,6 +105,10 @@ const [formData, setFormData] = useState({
       const res  = await fetch(`${API}/enfermero/paciente/${documento.trim()}`)
       const data = await res.json()
       if (data.encontrado) {
+        if (data.estado === 'YA_REGISTRADO') {
+          showError('Este paciente ya tiene una urgencia activa. Debe ser atendido primero.')
+          return
+        }
         setPaciente(data)
       } else {
         setNoEncontrado(true)
