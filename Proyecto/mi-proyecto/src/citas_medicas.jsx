@@ -16,11 +16,11 @@ const API = 'https://cmq-backend.onrender.com/api'
 const ahora = () => new Date().toISOString().slice(0, 16)
 
 const ESTADOS = [
-  { valor: 'PROGRAMADA',  label: 'Programada',  bg: '#eff6ff', color: '#3b82f6' },
-  { valor: 'CONFIRMADA',  label: 'Confirmada',  bg: '#f0fdf4', color: '#22c55e' },
-  { valor: 'EN_ATENCION', label: 'En Atención', bg: '#fff7ed', color: '#f97316' },
-  { valor: 'COMPLETADA',  label: 'Completada',  bg: '#f5f3ff', color: '#8b5cf6' },
-  { valor: 'CANCELADA',   label: 'Cancelada',   bg: '#fef2f2', color: '#ef4444' },
+  { valor: 'PROGRAMADA', label: 'Programada',  bg: '#eff6ff', color: '#3b82f6' },
+  { valor: 'EN_ESPERA',  label: 'En espera',   bg: '#fff7ed', color: '#f97316' },
+  { valor: 'EN_TRIAGE',  label: 'En triage',   bg: '#fdf4ff', color: '#9333ea' },
+  { valor: 'ATENDIDO',   label: 'Atendido',    bg: '#f0fdf4', color: '#059669' },
+  { valor: 'CANCELADA',  label: 'Cancelada',   bg: '#fef2f2', color: '#ef4444' },
 ]
 
 const NIVELES = [
@@ -450,7 +450,7 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
                 <label>ESTADO DE LA CITA</label>
                 <select value={citaEditando.estado}
                   onChange={(e) => setCitaEditando(prev => ({ ...prev, estado: e.target.value }))}>
-                  {ESTADOS.map(e => (
+                  {ESTADOS.filter(e => e.valor !== 'ATENDIDO' && e.valor !== 'EN_TRIAGE').map(e => (
                     <option key={e.valor} value={e.valor}>{e.label}</option>
                   ))}
                 </select>
