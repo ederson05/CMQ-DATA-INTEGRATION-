@@ -132,7 +132,11 @@ const validar = () => {
   if (!form.nombre.trim())         e.nombre          = 'El nombre es obligatorio'
   if (!form.telefono.trim() || form.telefono.length < 7)
                                     e.telefono        = 'Teléfono inválido'
-  if (!form.fechaNacimiento)        e.fechaNacimiento = 'La fecha de nacimiento es obligatoria'
+  if (!form.fechaNacimiento) {
+    e.fechaNacimiento = 'La fecha de nacimiento es obligatoria'
+  } else if (new Date(form.fechaNacimiento) > new Date()) {
+    e.fechaNacimiento = 'La fecha de nacimiento no puede ser futura'
+  }
   if (!form.genero)                 e.genero          = 'Seleccione un género'
   if (!form.tipoSangre)             e.tipoSangre      = 'Seleccione el tipo de sangre'
   setErrores(e)
