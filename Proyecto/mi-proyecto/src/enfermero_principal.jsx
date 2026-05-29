@@ -82,7 +82,7 @@ const [formData, setFormData] = useState({
   temperatura: '',
   saturacion: '',
   sintomas: '',
-  triage: 'III',
+  triage: '',
   urgNombre: '',
   urgGenero: 'DESCONOCIDO',
   urgTipoSangre: 'DESCONOCIDO'
@@ -204,7 +204,7 @@ if (paciente.esPNI) {
   setDocumento(''); setPaciente(null); setNoEncontrado(false)
 setFormData({
   presionArterial: '', frecuenciaCardiaca: '', temperatura: '',
-  saturacion: '', sintomas: '', triage: 'III',
+  saturacion: '', sintomas: '', triage: '',
   urgNombre: '', urgGenero: 'DESCONOCIDO', urgTipoSangre: 'DESCONOCIDO'
 })
 
@@ -554,14 +554,19 @@ padding: '10px 20px', fontWeight: 700, cursor: 'pointer',
                 <div className="form-group">
                   <label>Nivel de Triage *</label>
                   <CampoRequerido error={errors.triage}>
+
                     <select name="triage" value={formData.triage} onChange={handleChange}
-                      style={errors.triage ? { borderColor: '#ef4444', background: '#fff5f5' } : {}}>
-                      <option value="I">Triage I — Resucitación</option>
-                      <option value="II">Triage II — Emergencia</option>
-                      <option value="III">Triage III — Urgencia</option>
-                      <option value="IV">Triage IV — Menor Urgencia</option>
-                      <option value="V">Triage V — No Urgente</option>
-                    </select>
+  style={errors.triage ? { borderColor: '#ef4444', background: '#fff5f5' } : {}}>
+  <option value="">-- Seleccione un nivel --</option>
+  <option value="I">Triage I — Resucitación</option>
+  <option value="II">Triage II — Emergencia</option>
+  <option value="III">Triage III — Urgencia</option>
+  <option value="IV">Triage IV — Menor Urgencia</option>
+  <option value="V">Triage V — No Urgente</option>
+</select>
+
+
+
                   </CampoRequerido>
                 </div>
 
@@ -795,7 +800,24 @@ function EnfermeroPrincipal() {
     try {
       const user = JSON.parse(localStorage.getItem('usuario'))
       if (!user) navigate('/')
-      else setUsuario(user)
+      else {
+        setUsuario(user)
+        // Cargar triages del día desde la API al montar
+        fetch(`${API}/triage/hoy/${user.id}`)
+          .then(r => r.json())
+          .then(data => {
+            if (Array.isArray(data)) {
+              setPacientesHoy(data.map(t => ({
+                id:        t.triId,
+                documento: t.documento,
+                nombre:    t.nombre,
+                triage:    t.nivel,
+                fechaHora: t.fechaHora
+              })))
+            }
+          })
+          .catch(err => console.error('Error cargando triages:', err))
+      }
     } catch { navigate('/') }
   }, [navigate])
 
