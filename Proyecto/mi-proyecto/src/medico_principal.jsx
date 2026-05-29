@@ -225,7 +225,7 @@ function CitaCard({ cita, onEstadoChange, medId, onVerHistorial }) {
 
   const handleCancelar = () => { setNuevoEstado(cita.estado); setEditando(false); };
 
-  const esTriage = cita.estado === "EN_TRIAGE";
+  const esTriage = cita.estado === "EN_TRIAGE" || cita.motivo === "URGENCIA";
 
   return (
     <div style={{

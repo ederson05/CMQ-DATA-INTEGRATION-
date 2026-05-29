@@ -587,7 +587,7 @@ app.get('/api/enfermero/paciente/:documento', async (req, res) => {
            cit_id, pac_documento, med_id, usu_id,
            cit_fecha_hora, cit_motivo_consulta,
            cit_estado, cit_observaciones, cit_fecha_creacion, cit_nivel_paciente
-         ) VALUES ($1,$2,$3,1, NOW(),'URGENCIA','PROGRAMADA','', NOW(),'CRITICO')`,
+         ) VALUES ($1,$2,$3,1, (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota'),'URGENCIA','PROGRAMADA','', NOW(),'CRITICO')`,
         [citId, documento, medId]
       )
 
