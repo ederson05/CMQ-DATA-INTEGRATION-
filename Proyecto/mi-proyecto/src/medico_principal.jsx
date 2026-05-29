@@ -1054,8 +1054,9 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
                                   className="btn-anotar"
                                   onClick={() => {
                                     setPaciente(p);
+                                    const citaUrgencia = citasHoy.find(c => c.pacDoc === p.documento && c.motivo === "URGENCIA" && c.estado !== "ATENDIDO");
                                     setFormAnot({
-                                      tipoConsulta: "",
+                                      tipoConsulta: citaUrgencia ? "URGENCIA" : "",
                                       diagnostico: "",
                                       tratamiento: "",
                                       observaciones: "",
@@ -1127,19 +1128,18 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
 
 
   onClick={() => {
-                    setPaciente(p);
-                    const citaUrgencia = citasHoy.find(c => c.pacDoc === p.documento && c.motivo === "URGENCIA" && c.estado !== "ATENDIDO");
-                    setFormAnot({
-                      tipoConsulta: citaUrgencia ? "URGENCIA" : "",
-                      diagnostico: "",
-                      tratamiento: "",
-                      observaciones: "",
-                      proximaCita: "",
-                    });
-                    setErrAnot({});
-                    setIntentoAnot(false);
-                    setVista("nueva-anotacion");
-                  }}
+    const citaUrgencia = citasHoy.find(c => c.pacDoc === pacienteSeleccionado?.documento && c.motivo === "URGENCIA" && c.estado !== "ATENDIDO");
+    setFormAnot({
+      tipoConsulta: citaUrgencia ? "URGENCIA" : "",
+      diagnostico: "",
+      tratamiento: "",
+      observaciones: "",
+      proximaCita: "",
+    });
+    setErrAnot({});
+    setIntentoAnot(false);
+    setVista("nueva-anotacion");
+  }}
 >
 
 
@@ -1807,17 +1807,11 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
                   <span>{fmtFecha(modalDetalle.proximaCita)}</span>
                 </div>
               )}
-
-                {triagePaciente && modalDetalle?.tipoConsulta === 'URGENCIA' && (
-  <div className="perfil-seccion-titulo" style={{ color: '#b91c1c' }}>INGRESO POR URGENCIA</div>
-)}
-
-
-
-
 {modalDetalle?.triage && modalDetalle?.tipoConsulta === 'URGENCIA' && (
   <div className="perfil-seccion-titulo" style={{ color: '#b91c1c' }}>INGRESO POR URGENCIA</div>
 )}
+
+
 {modalDetalle?.triage && modalDetalle?.tipoConsulta === 'URGENCIA' && (
   <>
     <div className="perfil-fila">
