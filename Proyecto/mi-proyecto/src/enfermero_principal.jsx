@@ -412,7 +412,7 @@ setFormData({
         } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(formData.urgNombre.trim())) {
           errsUrg.urgNombre = 'Solo se permiten letras'
         }
-        if (!formData.urgGenero || formData.urgGenero === 'D') {
+        if (!formData.urgGenero || formData.urgGenero === 'D' || formData.urgGenero === 'DESCONOCIDO') {
           errsUrg.urgGenero = 'Seleccione un género'
         }
         if (!formData.urgTipoSangre || formData.urgTipoSangre === 'DESCONOCIDO') {
