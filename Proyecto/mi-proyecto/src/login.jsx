@@ -60,11 +60,11 @@ function Login() {
         <div className="login-header">
           <div className="logo">
             <svg viewBox="0 0 24 24" fill="white" width="48" height="48">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
             </svg>
           </div>
-          <h1>Hospital CMQ</h1>
-          <p>Sistema de Información Clínica</p>
+          <h1>Centro Médico</h1>
+          <p>Ingresa a tu cuenta</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -108,17 +108,17 @@ function Login() {
         <div className="login-hints">
           <p className="hints-title">CREDENCIALES DE PRUEBA</p>
           <div className="hint-item">
-            <span className="hint-role hint-secretaria">Secretaria</span>
+            <span className="hint-label">Secretaria:</span>
             <code>laura.garcia@cmq.com</code>
             <code>secretaria123</code>
           </div>
           <div className="hint-item">
-            <span className="hint-role hint-medico">Médico</span>
+            <span className="hint-label">Médico:</span>
             <code>c.mendoza@cmq.com</code>
             <code>medico123</code>
           </div>
           <div className="hint-item">
-            <span className="hint-role hint-enfermero">Enfermero</span>
+            <span className="hint-label">Enfermero:</span>
             <code>camilo@gmail.com</code>
             <code>enfermero123</code>
           </div>
