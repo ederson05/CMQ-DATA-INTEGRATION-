@@ -67,7 +67,7 @@ function CitasMedicas() {
   const [pacientes, setPacientes] = useState([])
   const [errores, setErrores] = useState({})
   const [nuevaCita, setNuevaCita] = useState({
-    identificacion: '', medico: '', fecha: '', motivo: '', nivelPaciente: 'ESTABLE'
+    identificacion: '', medico: '', fecha: '', motivo: ''
   })
 
   useEffect(() => {
@@ -203,7 +203,7 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
           medId:         parseInt(nuevaCita.medico),
           fechaHora:     nuevaCita.fecha,
           motivo:        nuevaCita.motivo,
-          nivelPaciente: nuevaCita.nivelPaciente
+          nivelPaciente: 'ESTABLE'
         })
       })
       const data = await res.json()
@@ -211,7 +211,7 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
         await cargarDatos()
         setNuevaCita({ identificacion: '', medico: '', fecha: '', motivo: '', nivelPaciente: 'ESTABLE' })
         setErrores({})
-        alert(`✅ Cita generada\n\n👤 ${paciente.nombre}\n👨‍⚕️ ${medico?.nombre}\n📅 ${formatFecha(nuevaCita.fecha)}\n🏥 Nivel: ${nuevaCita.nivelPaciente}`)
+        alert(`✅ Cita generada\n\n👤 ${paciente.nombre}\n👨‍⚕️ ${medico?.nombre}\n📅 ${formatFecha(nuevaCita.fecha)}`)
       } else {
         alert('❌ Error: ' + data.error)
       }
@@ -352,15 +352,6 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
                     value={nuevaCita.motivo} onChange={handleInputCita} />
                 </div>
 
-                <div className="form-group">
-                  <label>NIVEL DEL PACIENTE</label>
-                  <select name="nivelPaciente" value={nuevaCita.nivelPaciente} onChange={handleInputCita}>
-                    {NIVELES.map(n => (
-                      <option key={n.valor} value={n.valor}>{n.label}</option>
-                    ))}
-                  </select>
-                </div>
-
                 <button type="submit" className="btn-confirmar">
                   <FiCalendar /> Confirmar Cita
                 </button>
@@ -382,7 +373,7 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
                   <thead>
                     <tr>
                       <th>ID</th><th>PACIENTE</th><th>MÉDICO</th>
-                      <th>FECHA</th><th>ESTADO</th><th>NIVEL</th><th>ACCIÓN</th>
+                      <th>FECHA</th><th>ESTADO</th><th>ACCIÓN</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -393,7 +384,6 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
                         <td>{c.medico}</td>
                         <td>{formatFecha(c.fecha)}</td>
                         <td>{getBadgeEstado(c.estado)}</td>
-                        <td>{getBadgeNivel(c.nivelPaciente)}</td>
                         <td>
                           <button className="btn-edit" onClick={() => handleEditarCita(c)}>
                             <FiEdit2 size={12} /> Editar
@@ -402,7 +392,7 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
                       </tr>
                     ))}
                     {citasFiltradas.length === 0 && (
-                      <tr><td colSpan="7" className="no-results">No se encontraron citas</td></tr>
+                      <tr><td colSpan="6" className="no-results">No se encontraron citas</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -465,24 +455,9 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
                   ))}
                 </select>
               </div>
-              <div className="form-group">
-                <label>NIVEL DEL PACIENTE</label>
-                <select value={citaEditando.nivelPaciente}
-                  onChange={(e) => setCitaEditando(prev => ({ ...prev, nivelPaciente: e.target.value }))}>
-                  {NIVELES.map(n => (
-                    <option key={n.valor} value={n.valor}>{n.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: '12px', color: '#64748b' }}>Estado:</span>
-                  {getBadgeEstado(citaEditando.estado)}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: '12px', color: '#64748b' }}>Nivel:</span>
-                  {getBadgeNivel(citaEditando.nivelPaciente)}
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Estado:</span>
+                {getBadgeEstado(citaEditando.estado)}
               </div>
             </div>
             <div className="modal-footer">
