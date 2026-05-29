@@ -130,8 +130,8 @@ export default function Urgencias() {
 const validar = () => {
   const e = {}
   if (!form.nombre.trim())         e.nombre          = 'El nombre es obligatorio'
-  if (!form.telefono.trim() || form.telefono.length < 7)
-                                    e.telefono        = 'Teléfono inválido'
+   if (!form.telefono.trim() || form.telefono.length !== 10 || !/^\d+$/.test(form.telefono))
+    e.telefono = 'Teléfono inválido (solo números, máximo 10 dígitos)'
   if (!form.fechaNacimiento) {
     e.fechaNacimiento = 'La fecha de nacimiento es obligatoria'
   } else if (new Date(form.fechaNacimiento) > new Date()) {
@@ -189,142 +189,8 @@ const validar = () => {
   })
 
   const usuario = (() => { try { return JSON.parse(localStorage.getItem('usuario')) || {} } catch { return {} } })()
-/*
-  if (pniSeleccionado) return (
-    <div className="citas-container">
-      <Toast msg={toast.msg} type={toast.type} />
-      <header className="main-header">
-        <div className="header-left">
-          <div className="logo-icon">+</div>
-          <div className="hospital-info">
-            <h1>Hospital CMQ</h1>
-            <p>SISTEMA DE INFORMACIÓN CLÍNICA</p>
-            <span className="version">v2.41 - Grace OS</span>
-          </div>
-        </div>
-        <div className="header-right">
-          <button className="btn-logout" onClick={() => navigate('/')}><FiLogOut /> Cerrar sesión</button>
-          <div className="datetime-box">
-            <span className="current-date">{fmtDateTime(currentTime)}</span>
-          </div>
-        </div>
-      </header>
 
-      <div className="main-content">
-        <main className="content-area">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-            <button className="btn-cancelar" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-              onClick={() => setPni(null)}>
-              <FiChevronLeft /> Volver
-            </button>
-            <div>
-              <h2 style={{ fontSize: '20px', color: '#1e293b' }}>Registrar Paciente PNI</h2>
-              <p style={{ fontSize: '13px', color: '#64748b' }}>
-                Documento: {pniSeleccionado.documento} — Cita #{pniSeleccionado.citId}
-              </p>
-            </div>
-          </div>
 
-          <div className="form-pni">
-            <h3><FiUserPlus style={{ color: '#2563eb' }} /> Datos del paciente</h3>
-
-            <div className="form-section-label">IDENTIFICACIÓN</div>
-            <div className="form-row" style={{ marginBottom: '10px' }}>
-              <div className="form-group">
-                <label>NOMBRE COMPLETO *</label>
-                <input name="nombre" value={form.nombre} onChange={handleChange} placeholder="Nombre completo"
-                  style={{ borderColor: errores.nombre ? '#ef4444' : '', background: errores.nombre ? '#fff5f5' : '' }} />
-                <ErrorField msg={errores.nombre} />
-              </div>
-              <div className="form-group">
-                <label>TELÉFONO *</label>
-                <input name="telefono" value={form.telefono} onChange={handleChange} placeholder="Ej. 3214556879"
-                  style={{ borderColor: errores.telefono ? '#ef4444' : '', background: errores.telefono ? '#fff5f5' : '' }} />
-                <ErrorField msg={errores.telefono} />
-              </div>
-            </div>
-
-            <div className="form-row" style={{ marginBottom: '10px' }}>
-              <div className="form-group">
-                <label>FECHA DE NACIMIENTO *</label>
-                <input type="date" name="fechaNacimiento" value={form.fechaNacimiento} onChange={handleChange}
-                  style={{ borderColor: errores.fechaNacimiento ? '#ef4444' : '', background: errores.fechaNacimiento ? '#fff5f5' : '' }} />
-                <ErrorField msg={errores.fechaNacimiento} />
-              </div>
-              <div className="form-group">
-                <label>GÉNERO *</label>
-                <select name="genero" value={form.genero} onChange={handleChange}
-                  style={{ borderColor: errores.genero ? '#ef4444' : '', background: errores.genero ? '#fff5f5' : '' }}>
-                  <option value="">Seleccione</option>
-                  <option value="M">Masculino</option>
-                  <option value="F">Femenino</option>
-                  <option value="O">Otro</option>
-                </select>
-                <ErrorField msg={errores.genero} />
-              </div>
-            </div>
-
-            <div className="form-row" style={{ marginBottom: '10px' }}>
-              <div className="form-group">
-                <label>TIPO DE SANGRE *</label>
-                <select name="tipoSangre" value={form.tipoSangre} onChange={handleChange}
-                  style={{ borderColor: errores.tipoSangre ? '#ef4444' : '', background: errores.tipoSangre ? '#fff5f5' : '' }}>
-                  <option value="">Seleccione</option>
-                  {['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-                <ErrorField msg={errores.tipoSangre} />
-              </div>
-              <div className="form-group">
-                <label>EMAIL (OPCIONAL)</label>
-                <input name="email" value={form.email} onChange={handleChange} placeholder="correo@email.com" />
-              </div>
-            </div>
-
-            <div className="form-section-label" style={{ marginTop: '8px' }}>CONTACTO</div>
-            <div className="form-row" style={{ marginBottom: '10px' }}>
-              <div className="form-group">
-                <label>DIRECCIÓN *</label>
-                <input name="direccion" value={form.direccion} onChange={handleChange} placeholder="Calle, carrera..."
-                  style={{ borderColor: errores.direccion ? '#ef4444' : '', background: errores.direccion ? '#fff5f5' : '' }} />
-                <ErrorField msg={errores.direccion} />
-              </div>
-              <div className="form-group">
-                <label>CIUDAD *</label>
-                <input name="ciudad" value={form.ciudad} onChange={handleChange} placeholder="Ej. Bogotá"
-                  style={{ borderColor: errores.ciudad ? '#ef4444' : '', background: errores.ciudad ? '#fff5f5' : '' }} />
-                <ErrorField msg={errores.ciudad} />
-              </div>
-            </div>
-
-            <div className="form-section-label" style={{ marginTop: '8px' }}>EMERGENCIA</div>
-            <div className="form-row" style={{ marginBottom: '16px' }}>
-              <div className="form-group">
-                <label>NOMBRE CONTACTO *</label>
-                <input name="emergenciaNombre" value={form.emergenciaNombre} onChange={handleChange} placeholder="Nombre"
-                  style={{ borderColor: errores.emergenciaNombre ? '#ef4444' : '', background: errores.emergenciaNombre ? '#fff5f5' : '' }} />
-                <ErrorField msg={errores.emergenciaNombre} />
-              </div>
-              <div className="form-group">
-                <label>TELÉFONO EMERGENCIA *</label>
-                <input name="emergenciaTel" value={form.emergenciaTel} onChange={handleChange} placeholder="Teléfono"
-                  style={{ borderColor: errores.emergenciaTel ? '#ef4444' : '', background: errores.emergenciaTel ? '#fff5f5' : '' }} />
-                <ErrorField msg={errores.emergenciaTel} />
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button className="btn-cancelar" onClick={() => setPni(null)}>Cancelar</button>
-              <button className="btn-guardar" onClick={handleRegistrar} disabled={guardando}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                {guardando ? 'Registrando...' : <><FiCheckCircle size={14} /> Registrar paciente</>}
-              </button>
-            </div>
-          </div>
-        </main>
-      </div>
-    </div>
-  )
-*/
   return (
     <div className="citas-container">
       <Toast msg={toast.msg} type={toast.type} />
@@ -491,6 +357,7 @@ const validar = () => {
                 <div className="form-group">
                   <label>FECHA DE NACIMIENTO *</label>
                   <input type="date" name="fechaNacimiento" value={form.fechaNacimiento} onChange={handleChange}
+  max={new Date().toISOString().split('T')[0]}
                     style={{ borderColor: errores.fechaNacimiento ? '#ef4444' : '', background: errores.fechaNacimiento ? '#fff5f5' : '' }} />
                   <ErrorField msg={errores.fechaNacimiento} />
                 </div>
