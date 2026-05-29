@@ -13,7 +13,54 @@ import './citas_medicas.css'
 const API = 'https://cmq-backend.onrender.com/api'
 
 
-const ahora = () => new Date().toISOString().slice(0, 16)
+const pad = n => String(n).padStart(2, '0')
+
+const ahoraPlus3 = () => {
+  const d = new Date()
+  d.setHours(d.getHours() + 3)
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+const maxFecha = () => {
+  const d = new Date()
+  d.setMonth(d.getMonth() + 4)
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T17:00`
+}
+
+const validarDisponibilidad = (fechaSeleccionada, medicoId, citasExistentes) => {
+  const sel = new Date(fechaSeleccionada)
+  const hora = sel.getHours() + sel.getMinutes() / 60
+
+  if (hora < 7 || hora >= 17) {
+    return { disponible: false, mensaje: 'El médico solo atiende de 7:00am a 5:00pm' }
+  }
+
+  const citasDelMedico = citasExistentes.filter(c =>
+    String(c.medId) === String(medicoId) &&
+    c.fecha.split('T')[0] === fechaSeleccionada.split('T')[0] &&
+    c.estado !== 'CANCELADA'
+  )
+
+  const choque = citasDelMedico.find(c => {
+    const existente = new Date(c.fecha.replace(' ', 'T'))
+    const diff = Math.abs(sel - existente) / 60000
+    return diff < 30
+  })
+
+  if (choque) {
+    const ultimaCita = citasDelMedico
+      .map(c => new Date(c.fecha.replace(' ', 'T')))
+      .sort((a, b) => b - a)[0]
+    const hh = pad(ultimaCita.getHours())
+    const mm = pad(ultimaCita.getMinutes())
+    return {
+      disponible: false,
+      mensaje: `Horario ocupado. La última cita de ese médico ese día es a las ${hh}:${mm}. Elija 30 min después.`
+    }
+  }
+
+  return { disponible: true }
+}
 
 const ESTADOS = [
   { valor: 'PROGRAMADA', label: 'Programada',  bg: '#eff6ff', color: '#3b82f6' },
@@ -164,23 +211,40 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
 }
 
   const handleInputCita = (e) => {
-    const { name, value } = e.target
-    setNuevaCita(prev => ({ ...prev, [name]: value }))
-    let error = ''
-    if (name === 'fecha' && value && value < ahora())
-      error = 'La fecha no puede ser en el pasado'
-    setErrores(prev => ({ ...prev, [name]: error }))
+  const { name, value } = e.target
+  setNuevaCita(prev => ({ ...prev, [name]: value }))
+  let error = ''
+  if (name === 'fecha' && value) {
+    if (value < ahoraPlus3())
+      error = 'La fecha mínima es 3 horas desde ahora'
+    else if (nuevaCita.medico) {
+      const disp = validarDisponibilidad(value, nuevaCita.medico, citas)
+      if (!disp.disponible) error = disp.mensaje
+    }
   }
+  if (name === 'medico' && nuevaCita.fecha) {
+    const disp = validarDisponibilidad(nuevaCita.fecha, value, citas)
+    if (!disp.disponible) error = disp.mensaje
+    setErrores(prev => ({ ...prev, fecha: error }))
+    return
+  }
+  setErrores(prev => ({ ...prev, [name]: error }))
+}
 
   const handleConfirmarCita = async (e) => {
     e.preventDefault()
     if (!nuevaCita.identificacion.trim()) { alert('⚠️ Ingresa la identificación del paciente'); return }
     if (!nuevaCita.medico)                { alert('⚠️ Selecciona un médico'); return }
     if (!nuevaCita.fecha)                 { alert('⚠️ Selecciona la fecha y hora'); return }
-    if (nuevaCita.fecha < ahora()) {
-      setErrores(prev => ({ ...prev, fecha: 'La fecha no puede ser en el pasado' }))
-      return
-    }
+    if (nuevaCita.fecha < ahoraPlus3()) {
+  setErrores(prev => ({ ...prev, fecha: 'La fecha mínima es 3 horas desde ahora' }))
+  return
+}
+const dispFinal = validarDisponibilidad(nuevaCita.fecha, nuevaCita.medico, citas)
+if (!dispFinal.disponible) {
+  setErrores(prev => ({ ...prev, fecha: dispFinal.mensaje }))
+  return
+}
 
     const paciente = pacientes.find(p => p.id === nuevaCita.identificacion.trim())
     if (!paciente) { alert('⚠️ No se encontró ningún paciente con esa identificación'); return }
@@ -339,7 +403,7 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
                 <div className="form-group">
                   <label>FECHA Y HORA</label>
                   <input type="datetime-local" name="fecha"
-                    min={ahora()} max="2099-12-31T23:59"
+                    min={ahoraPlus3()} max={maxFecha()}
                     value={nuevaCita.fecha} onChange={handleInputCita}
                     style={{ borderColor: errores.fecha ? '#ef4444' : '', background: errores.fecha ? '#fff5f5' : '' }} />
                   {errores.fecha && <span style={{ color: '#ef4444', fontSize: '11px' }}>{errores.fecha}</span>}
