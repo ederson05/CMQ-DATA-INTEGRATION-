@@ -186,6 +186,10 @@ const validarAnotacion = (f) => {
 function CitaCard({ cita, onEstadoChange, medId, onVerHistorial }) {
   const [editando, setEditando] = useState(false);
   const [nuevoEstado, setNuevoEstado] = useState(cita.estado);
+
+useEffect(() => {
+  setNuevoEstado(cita.estado);
+}, [cita.estado]);
   const [guardando, setGuardando] = useState(false);
 
   const fmtHora = (ts) => {
@@ -286,16 +290,24 @@ function CitaCard({ cita, onEstadoChange, medId, onVerHistorial }) {
                 <FiEye size={12} /> Ver paciente
               </button>
             )}
-            <button
-              onClick={() => { setNuevoEstado(cita.estado); setEditando(true); }}
-              style={{
-                display: "flex", alignItems: "center", gap: "4px", background: "none",
-                border: "1px solid #e2e8f0", borderRadius: "6px", padding: "4px 10px",
-                fontSize: "12px", color: "#64748b", cursor: "pointer", fontWeight: 500,
-              }}
-            >
-              <FiEdit2 size={12} /> Cambiar
-            </button>
+
+{cita.estado !== "ATENDIDO" && (
+  <button
+    onClick={() => { setNuevoEstado(cita.estado); setEditando(true); }}
+    style={{
+      display: "flex", alignItems: "center", gap: "4px", background: "none",
+      border: "1px solid #e2e8f0", borderRadius: "6px", padding: "4px 10px",
+      fontSize: "12px", color: "#64748b", cursor: "pointer", fontWeight: 500,
+    }}
+  >
+    <FiEdit2 size={12} /> Cambiar
+  </button>
+)}
+
+
+
+
+
           </div>
         </div>
       ) : (
