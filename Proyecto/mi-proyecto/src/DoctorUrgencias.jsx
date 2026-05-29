@@ -274,16 +274,36 @@ export default function DoctorUrgencias({ paciente, onClose }) {
         </div>
 
         {/* ── FOOTER ── */}
+
+
         <div className="urg-footer">
-          <span className="urg-footer-note">
-            Vista de solo lectura — Módulo Urgencias CMQ
-          </span>
-          <button className="urg-btn-cerrar" onClick={onClose}>
-            Cerrar
-          </button>
-        </div>
+  <span className="urg-footer-note">
+    Vista de solo lectura — Módulo Urgencias CMQ
+  </span>
+  <div style={{ display: "flex", gap: "8px" }}>
+    {onVerHistorial && (
+      <button
+        className="urg-btn-cerrar"
+        style={{ background: "#2563eb" }}
+        onClick={() => { onClose(); onVerHistorial(); }}
+      >
+        Ver historial
+      </button>
+    )}
+    <button className="urg-btn-cerrar" onClick={onClose}>
+      Cerrar
+    </button>
+  </div>
+</div>
+
+
+
+
+        
       </div>
     </div>
+
+    
   );
 }
 

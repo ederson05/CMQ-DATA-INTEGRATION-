@@ -1861,11 +1861,19 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
 ) }
 
       {urgenciaPaciente && (
-        <DoctorUrgencias
-          paciente={urgenciaPaciente}
-          onClose={() => setUrgenciaPaciente(null)}
-        />
-      )}
+  <DoctorUrgencias
+    paciente={urgenciaPaciente}
+    onClose={() => setUrgenciaPaciente(null)}
+    onVerHistorial={() => {
+      const pac = todosPacientes.find(p => p.documento === urgenciaPaciente.pacDoc)
+      if (pac) { setUrgenciaPaciente(null); verHistorial(pac); }
+    }}
+  />
+)}
+
+
+
+
     </div>
     );
   }
