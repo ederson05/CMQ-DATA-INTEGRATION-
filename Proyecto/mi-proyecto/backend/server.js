@@ -643,6 +643,29 @@ app.get('/api/enfermero/paciente/:documento', async (req, res) => {
 
     if (pacResult.rows.length > 0) {
       const p = pacResult.rows[0]
+
+      // Verificar si ya tiene urgencia activa hoy
+      const urgActiva = await pool.query(
+        `SELECT cit_id FROM tbl_cita
+         WHERE pac_documento = $1
+           AND cit_motivo_consulta = 'URGENCIA'
+           AND cit_estado != 'ATENDIDO'
+           AND DATE(cit_fecha_hora AT TIME ZONE 'America/Bogota')
+               = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::date
+         LIMIT 1`,
+        [documento]
+      )
+      if (urgActiva.rows.length > 0) {
+        return res.json({
+          encontrado: true,
+          citId: urgActiva.rows[0].cit_id,
+          documento: p.pac_documento,
+          nombre: p.pac_nombre,
+          motivo: 'URGENCIA',
+          estado: 'YA_REGISTRADO'
+        })
+      }
+
       // Crear cita de urgencia automática
       const medResult = await pool.query(
         'SELECT med_id FROM tbl_medico WHERE med_activo = 1 ORDER BY med_id ASC LIMIT 1'
@@ -885,6 +908,25 @@ app.post('/api/enfermero/urgencia', async (req, res) => {
         ]
       )
     }
+    //esto 
+
+    // Verificar urgencia activa
+    const urgActiva = await client.query(
+      `SELECT cit_id FROM tbl_cita
+       WHERE pac_documento = $1
+         AND cit_motivo_consulta = 'URGENCIA'
+         AND cit_estado != 'ATENDIDO'
+         AND DATE(cit_fecha_hora AT TIME ZONE 'America/Bogota')
+             = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::date
+       LIMIT 1`,
+      [documento]
+    )
+    if (urgActiva.rows.length > 0) {
+      await client.query('ROLLBACK')
+      return res.status(409).json({ success: false, error: 'Este paciente ya tiene una urgencia activa hoy. Debe ser atendido primero.' })
+    }
+
+    // 3. Tomar el primer médico activo disponible
 
     // 3. Tomar el primer médico activo disponible
     const medResult = await client.query(
