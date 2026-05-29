@@ -174,13 +174,15 @@ const getMinFecha = () => {
   const manana = new Date();
   manana.setDate(manana.getDate() + 1);
   manana.setHours(0, 0, 0, 0);
-  return manana.toISOString().slice(0, 16);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${manana.getFullYear()}-${pad(manana.getMonth() + 1)}-${pad(manana.getDate())}T00:00`;
 };
 
 const getMaxFecha = () => {
   const max = new Date();
   max.setMonth(max.getMonth() + 4);
-  return max.toISOString().slice(0, 16);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${max.getFullYear()}-${pad(max.getMonth() + 1)}-${pad(max.getDate())}T${pad(max.getHours())}:${pad(max.getMinutes())}`;
 };
 
 const validarAnotacion = (f) => {
@@ -513,12 +515,14 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
 
   const histFiltrado = historial.filter((a) => {
     if (filtroTipo && a.tipoConsulta !== filtroTipo) return false;
-    if (filtroDesde && new Date(a.fechaConsulta) < new Date(filtroDesde))
-      return false;
+    const fechaAnot = new Date(String(a.fechaConsulta).replace(" ", "T"));
+    if (filtroDesde) {
+      const desde = new Date(filtroDesde + "T00:00:00");
+      if (fechaAnot < desde) return false;
+    }
     if (filtroHasta) {
-      const hasta = new Date(filtroHasta);
-      hasta.setHours(23, 59, 59);
-      if (new Date(a.fechaConsulta) > hasta) return false;
+      const hasta = new Date(filtroHasta + "T23:59:59");
+      if (fechaAnot > hasta) return false;
     }
     return true;
   });
