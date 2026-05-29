@@ -11,7 +11,6 @@ function Login() {
   const [errorMsg, setErrorMsg] = useState('')
   const navigate = useNavigate()
 
-  // ✅ Si ya hay sesión activa, redirige sin borrar nada
   useEffect(() => {
     try {
       const usuario = JSON.parse(localStorage.getItem('usuario'))
@@ -30,29 +29,20 @@ function Login() {
     e.preventDefault()
     setErrorMsg('')
     setLoading(true)
-
     try {
       const response = await fetch(`${API}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       })
-
       const data = await response.json()
-
       if (data.success && data.usuario) {
         localStorage.setItem('usuario', JSON.stringify(data.usuario))
         const rol = data.usuario.rol?.toUpperCase()
-
-        if (rol === 'MEDICO') {
-          navigate('/medico', { replace: true })
-        } else if (rol === 'ENFERMERO') {
-          navigate('/enfermero', { replace: true })
-        } else if (rol === 'SECRETARIA') {
-          navigate('/secretaria', { replace: true })
-        } else {
-          setErrorMsg('Rol no reconocido')
-        }
+        if (rol === 'MEDICO') navigate('/medico', { replace: true })
+        else if (rol === 'ENFERMERO') navigate('/enfermero', { replace: true })
+        else if (rol === 'SECRETARIA') navigate('/secretaria', { replace: true })
+        else setErrorMsg('Rol no reconocido')
       } else {
         setErrorMsg(data.mensaje || 'Email o contraseña incorrectos')
       }
@@ -85,15 +75,11 @@ function Login() {
               id="email"
               placeholder="tu@email.com"
               value={email}
-              onChange={(e) => {
-                setEmail(e.target.value)
-                setErrorMsg('')
-              }}
+              onChange={(e) => { setEmail(e.target.value); setErrorMsg('') }}
               disabled={loading}
               required
             />
           </div>
-
           <div className="form-group">
             <label htmlFor="password">Contraseña</label>
             <input
@@ -101,10 +87,7 @@ function Login() {
               id="password"
               placeholder="••••••••"
               value={password}
-              onChange={(e) => {
-                setPassword(e.target.value)
-                setErrorMsg('')
-              }}
+              onChange={(e) => { setPassword(e.target.value); setErrorMsg('') }}
               disabled={loading}
               required
             />
@@ -123,24 +106,21 @@ function Login() {
         </form>
 
         <div className="login-hints">
-          <h4 style={{ marginTop: '20px', marginBottom: '10px', fontSize: '12px', color: '#64748b' }}>CREDENCIALES DE PRUEBA</h4>
-          
+          <p className="hints-title">CREDENCIALES DE PRUEBA</p>
           <div className="hint-item">
-            <span className="hint-label">Secretaria:</span>
+            <span className="hint-role hint-secretaria">Secretaria</span>
             <code>laura.garcia@cmq.com</code>
-            <code style={{ marginLeft: '8px' }}>secretaria123</code>
+            <code>secretaria123</code>
           </div>
-
           <div className="hint-item">
-            <span className="hint-label">Médico:</span>
+            <span className="hint-role hint-medico">Médico</span>
             <code>c.mendoza@cmq.com</code>
-            <code style={{ marginLeft: '8px' }}>medico123</code>
+            <code>medico123</code>
           </div>
-
           <div className="hint-item">
-            <span className="hint-label">Enfermero:</span>
+            <span className="hint-role hint-enfermero">Enfermero</span>
             <code>camilo@gmail.com</code>
-            <code style={{ marginLeft: '8px' }}>enfermero123</code>
+            <code>enfermero123</code>
           </div>
         </div>
 
