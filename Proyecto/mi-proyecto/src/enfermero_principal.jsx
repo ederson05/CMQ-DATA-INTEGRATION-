@@ -351,46 +351,82 @@ setFormData({
       </div>
     </div>
 
+
+
+
+        
+
+
+
     <div className="form-row">
       <div className="form-group">
         <label>Nombre completo *</label>
-        <input type="text" name="urgNombre" value={formData.urgNombre || ''}
-          onChange={handleChange} placeholder="Nombre del paciente" />
+        <CampoRequerido error={errors.urgNombre}>
+          <input type="text" name="urgNombre" value={formData.urgNombre || ''}
+            onChange={handleChange} placeholder="Nombre del paciente"
+            style={errors.urgNombre ? { borderColor: '#ef4444', background: '#fff5f5' } : {}} />
+        </CampoRequerido>
       </div>
       <div className="form-group">
-        <label>Género</label>
-        <select name="urgGenero" value={formData.urgGenero || 'D'} onChange={handleChange}>
-  <option value="D">Desconocido</option>
-  <option value="M">Masculino</option>
-  <option value="F">Femenino</option>
-</select>
+        <label>Género *</label>
+        <CampoRequerido error={errors.urgGenero}>
+          <select name="urgGenero" value={formData.urgGenero || 'D'} onChange={handleChange}
+            style={errors.urgGenero ? { borderColor: '#ef4444', background: '#fff5f5' } : {}}>
+            <option value="D">Desconocido</option>
+            <option value="M">Masculino</option>
+            <option value="F">Femenino</option>
+          </select>
+        </CampoRequerido>
       </div>
     </div>
 
     <div className="form-row">
       <div className="form-group">
-        <label>Tipo de sangre</label>
-        <select name="urgTipoSangre" value={formData.urgTipoSangre || 'DESCONOCIDO'} onChange={handleChange}>
-          <option value="DESCONOCIDO">Desconocido</option>
-          <option value="A+">A+</option>
-          <option value="A-">A-</option>
-          <option value="B+">B+</option>
-          <option value="B-">B-</option>
-          <option value="AB+">AB+</option>
-          <option value="AB-">AB-</option>
-          <option value="O+">O+</option>
-          <option value="O-">O-</option>
-        </select>
+        <label>Tipo de sangre *</label>
+        <CampoRequerido error={errors.urgTipoSangre}>
+          <select name="urgTipoSangre" value={formData.urgTipoSangre || 'DESCONOCIDO'} onChange={handleChange}
+            style={errors.urgTipoSangre ? { borderColor: '#ef4444', background: '#fff5f5' } : {}}>
+            <option value="DESCONOCIDO">Desconocido</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+          </select>
+        </CampoRequerido>
       </div>
     </div>
 
     <button
       type="button"
-      disabled={!formData.urgNombre?.trim()}
+      disabled={false}
+
+
       onClick={async () => {
+        const errsUrg = {}
+        if (!formData.urgNombre?.trim()) {
+          errsUrg.urgNombre = 'El nombre es obligatorio'
+        } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(formData.urgNombre.trim())) {
+          errsUrg.urgNombre = 'Solo se permiten letras'
+        }
+        if (!formData.urgGenero || formData.urgGenero === 'D') {
+          errsUrg.urgGenero = 'Seleccione un género'
+        }
+        if (!formData.urgTipoSangre || formData.urgTipoSangre === 'DESCONOCIDO') {
+          errsUrg.urgTipoSangre = 'Seleccione el tipo de sangre'
+        }
+        if (Object.keys(errsUrg).length > 0) {
+          setErrors(prev => ({ ...prev, ...errsUrg }))
+          return
+        }
         try {
           const usuario = JSON.parse(localStorage.getItem('usuario'))
           const res = await fetch(`${API}/enfermero/urgencia`, {
+            
+            
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -418,10 +454,9 @@ setFormData({
         }
       }}
       style={{
-        background: !formData.urgNombre?.trim() ? '#9ca3af' : '#dc2626',
-        color: 'white', border: 'none', borderRadius: '6px',
-        padding: '10px 20px', fontWeight: 700, cursor: !formData.urgNombre?.trim() ? 'not-allowed' : 'pointer',
-        width: '100%', marginTop: '8px'
+        background: '#dc2626',
+color: 'white', border: 'none', borderRadius: '6px',
+padding: '10px 20px', fontWeight: 700, cursor: 'pointer',
       }}
     >
       🚨 Registrar como Urgencia y Continuar
