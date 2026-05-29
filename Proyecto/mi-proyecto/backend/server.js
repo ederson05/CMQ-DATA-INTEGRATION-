@@ -1006,7 +1006,7 @@ app.get('/api/urgencias/hoy', async (req, res) => {
        LEFT JOIN tbl_paciente p       ON p.pac_documento = c.pac_documento
        LEFT JOIN tbl_medico m         ON m.med_id        = c.med_id
        LEFT JOIN tbl_triage t         ON t.cit_id        = c.cit_id
-       LEFT JOIN tbl_usuario u_triage ON u_triage.usu_id = t.usu_id
+       LEFT JOIN tbl_usuario u_triage ON u_triage.usu_id = c.usu_id
        LEFT JOIN tbl_signos_vitales s ON s.cit_id        = c.cit_id
        WHERE c.cit_motivo_consulta = 'URGENCIA'
          AND DATE(c.cit_fecha_hora AT TIME ZONE 'America/Bogota')
