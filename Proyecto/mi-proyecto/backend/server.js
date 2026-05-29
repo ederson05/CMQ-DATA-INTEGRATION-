@@ -1026,7 +1026,11 @@ app.get('/api/urgencias/hoy', async (req, res) => {
       frecuenciaCardiaca: r.siv_frecuencia_cardiaca,
       temperatura:        r.siv_temperatura,
       saturacion:         r.siv_saturacion_o2,
-      esPNI:              !r.pac_nombre
+      esPNI: !r.pac_nombre ||
+             r.pac_direccion === 'DESCONOCIDO' ||
+             r.pac_ciudad    === 'DESCONOCIDO' ||
+             String(r.pac_telefono) === '0'    ||
+             (r.pac_fecha_nacimiento && new Date(r.pac_fecha_nacimiento).getFullYear() === 1900)
     })))
   } catch (err) {
     res.status(500).json({ error: err.message })
