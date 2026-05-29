@@ -1085,24 +1085,43 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
                     {pacienteSeleccionado.documento}
                   </p>
                 </div>
-                <button
-                  className="btn-register"
-                  style={{ width: "auto", padding: "9px 18px", marginTop: 0 }}
-                  onClick={() => {
-                    setFormAnot({
-                      tipoConsulta: "",
-                      diagnostico: "",
-                      tratamiento: "",
-                      observaciones: "",
-                      proximaCita: "",
-                    });
-                    setErrAnot({});
-                    setIntentoAnot(false);
-                    setVista("nueva-anotacion");
-                  }}
-                >
-                  <FiPlusCircle /> Nueva anotación
-                </button>
+
+
+
+
+                {citasHoy.find(c => c.pacDoc === pacienteSeleccionado?.documento && c.motivo === "URGENCIA" && c.estado !== "ATENDIDO") && (
+  <button
+    className="btn-ver-urgencia"
+    onClick={() => setUrgenciaPaciente(
+      citasHoy.find(c => c.pacDoc === pacienteSeleccionado?.documento && c.motivo === "URGENCIA" && c.estado !== "ATENDIDO")
+    )}
+  >
+    🚨 Ver urgencia activa
+  </button>
+)}
+<button
+  className="btn-register"
+  style={{ width: "auto", padding: "9px 18px", marginTop: 0 }}
+  onClick={() => {
+    setFormAnot({
+      tipoConsulta: "",
+      diagnostico: "",
+      tratamiento: "",
+      observaciones: "",
+      proximaCita: "",
+    });
+    setErrAnot({});
+    setIntentoAnot(false);
+    setVista("nueva-anotacion");
+  }}
+>
+  <FiPlusCircle /> Nueva anotación
+</button>
+
+
+
+
+
               </div>
 
               <div className="pac-info-bar">
