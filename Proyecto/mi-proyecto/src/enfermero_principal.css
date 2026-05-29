@@ -406,7 +406,15 @@
 /* ═══════════════════════════════════════════════════════════
    RESPONSIVE
 ═══════════════════════════════════════════════════════════ */
+@media print {
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  .main-header, .sidebar, .toast-wrapper { display: none !important; }
+}
 
+@media screen {
+  .print-only { display: none !important; }
+}
 @media (max-width: 768px) {
   .form-row {
     grid-template-columns: 1fr;

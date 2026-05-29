@@ -229,7 +229,7 @@ useEffect(() => {
 
   const handleCancelar = () => { setNuevoEstado(cita.estado); setEditando(false); };
 
-  const esTriage = cita.motivo === "URGENCIA";
+  const esTriage = cita.motivo === "URGENCIA" && cita.estado !== "ATENDIDO";
 
   return (
     <div style={{

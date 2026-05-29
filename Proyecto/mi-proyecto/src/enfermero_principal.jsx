@@ -531,107 +531,199 @@ setFormData({
 // VISTA: REPORTE
 // =========================================================
 function VistaReporte({ pacientes, usuarioId }) {
-  const [cargando, setCargando]           = useState(true)
-  const [listado, setListado]             = useState([])
+  const [cargando, setCargando] = useState(true)
+  const [listado, setListado]   = useState([])
+  const [usuario, setUsuario]   = useState({})
 
   useEffect(() => {
+    try { setUsuario(JSON.parse(localStorage.getItem('usuario')) || {}) } catch {}
     const cargar = async () => {
       try {
         const res  = await fetch(`${API}/triage/hoy/${usuarioId}`)
         const data = await res.json()
         setListado(data)
-      } catch (err) {
-        console.error('Error cargando reporte:', err)
-      } finally {
-        setCargando(false)
-      }
+      } catch (err) { console.error(err) }
+      finally { setCargando(false) }
     }
     cargar()
   }, [usuarioId])
 
-  // combinar BD + los registrados en sesión actual (pueden solaparse, deduplicar por triId)
   const todos = [...listado]
   pacientes.forEach(p => {
-    if (!todos.find(t => t.triId === p.id)) {
+    if (!todos.find(t => t.triId === p.id))
       todos.unshift({ triId: p.id, documento: p.documento, nombre: p.nombre, nivel: p.triage, fechaHora: p.fechaHora })
-    }
   })
 
   const stats = { I: 0, II: 0, III: 0, IV: 0, V: 0, total: todos.length }
   todos.forEach(p => { if (stats[p.nivel] !== undefined) stats[p.nivel]++ })
 
-  const getTriageClass = (n) => ({ I: 'triage-1', II: 'triage-2', III: 'triage-3', IV: 'triage-4', V: 'triage-5' }[n] || 'triage-5')
+  const hoy = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })
+
+  const nivelColor = { I: '#dc2626', II: '#ea580c', III: '#ca8a04', IV: '#16a34a', V: '#2563eb' }
+  const nivelBg    = { I: '#fef2f2', II: '#fff7ed', III: '#fefce8', IV: '#f0fdf4', V: '#eff6ff' }
 
   return (
     <>
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2>Reporte de Pacientes Atendidos</h2>
-          <p>Métricas de gestión diarias por nivel de riesgo.</p>
-        </div>
-        <button className="btn-logout btn-print" style={{ color: '#1e293b', borderColor: '#cbd5e1' }}
-          onClick={() => window.print()}>
-          <FiPrinter /> Imprimir PDF
-        </button>
-      </div>
-
-      <div className="stats-grid">
-        {[
-          { key: 'I',   label: 'TRIAGE I',   bg: '#fef2f2', color: '#dc2626' },
-          { key: 'II',  label: 'TRIAGE II',  bg: '#fff7ed', color: '#ea580c' },
-          { key: 'III', label: 'TRIAGE III', bg: '#fefce8', color: '#ca8a04' },
-          { key: 'IV',  label: 'TRIAGE IV',  bg: '#f0fdf4', color: '#16a34a' },
-          { key: 'V',   label: 'TRIAGE V',   bg: '#eff6ff', color: '#2563eb' },
-        ].map(t => (
-          <div key={t.key} className="stat-card">
-            <div className="stat-icon-box" style={{ background: t.bg, color: t.color }}>T-{t.key}</div>
-            <div className="stat-value">{stats[t.key]}</div>
-            <div className="stat-label">{t.label}</div>
+      {/* ── PANTALLA ── */}
+      <div className="no-print">
+        <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2>Reporte de Pacientes Atendidos</h2>
+            <p>Métricas de gestión diarias por nivel de riesgo.</p>
           </div>
-        ))}
-        <div className="stat-card">
-          <div className="stat-icon-box blue"><FiUsers size={22} /></div>
-          <div className="stat-value">{stats.total}</div>
-          <div className="stat-label">TOTAL HOY</div>
+          <button className="btn-logout btn-print" style={{ color: '#1e293b', borderColor: '#cbd5e1' }}
+            onClick={() => window.print()}>
+            <FiPrinter /> Imprimir PDF
+          </button>
         </div>
-      </div>
 
-      <div className="patient-sections" style={{ gridTemplateColumns: '1fr' }}>
-        <div className="directory-section">
-          <h3><FiClipboard className="section-icon" /> Registro de Atenciones (Hoy)</h3>
-          <div className="patient-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Hora</th>
-                  <th>Documento</th>
-                  <th>Paciente</th>
-                  <th>Nivel de Riesgo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cargando ? (
-                  <tr><td colSpan="4" className="no-results">Cargando...</td></tr>
-                ) : todos.length === 0 ? (
-                  <tr><td colSpan="4" className="no-results">No hay pacientes registrados hoy.</td></tr>
-                ) : (
-                  todos.map(pac => (
+        <div className="stats-grid">
+          {[
+            { key: 'I',   label: 'TRIAGE I',   bg: '#fef2f2', color: '#dc2626' },
+            { key: 'II',  label: 'TRIAGE II',  bg: '#fff7ed', color: '#ea580c' },
+            { key: 'III', label: 'TRIAGE III', bg: '#fefce8', color: '#ca8a04' },
+            { key: 'IV',  label: 'TRIAGE IV',  bg: '#f0fdf4', color: '#16a34a' },
+            { key: 'V',   label: 'TRIAGE V',   bg: '#eff6ff', color: '#2563eb' },
+          ].map(t => (
+            <div key={t.key} className="stat-card">
+              <div className="stat-icon-box" style={{ background: t.bg, color: t.color }}>T-{t.key}</div>
+              <div className="stat-value">{stats[t.key]}</div>
+              <div className="stat-label">{t.label}</div>
+            </div>
+          ))}
+          <div className="stat-card">
+            <div className="stat-icon-box blue"><FiUsers size={22} /></div>
+            <div className="stat-value">{stats.total}</div>
+            <div className="stat-label">TOTAL HOY</div>
+          </div>
+        </div>
+
+        <div className="patient-sections" style={{ gridTemplateColumns: '1fr' }}>
+          <div className="directory-section">
+            <h3><FiClipboard className="section-icon" /> Registro de Atenciones (Hoy)</h3>
+            <div className="patient-table">
+              <table>
+                <thead>
+                  <tr><th>Hora</th><th>Documento</th><th>Paciente</th><th>Nivel de Riesgo</th></tr>
+                </thead>
+                <tbody>
+                  {cargando ? (
+                    <tr><td colSpan="4" className="no-results">Cargando...</td></tr>
+                  ) : todos.length === 0 ? (
+                    <tr><td colSpan="4" className="no-results">No hay pacientes registrados hoy.</td></tr>
+                  ) : todos.map(pac => (
                     <tr key={pac.triId}>
                       <td>{new Date(pac.fechaHora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                       <td>{pac.documento}</td>
                       <td style={{ fontWeight: 500, color: '#1e293b' }}>{pac.nombre}</td>
-                      <td><span className={`triage-badge ${getTriageClass(pac.nivel)}`}>Triage {pac.nivel}</span></td>
+                      <td>
+                        <span style={{
+                          padding: '3px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 700,
+                          background: nivelBg[pac.nivel] || '#f1f5f9',
+                          color: nivelColor[pac.nivel] || '#475569',
+                          border: `1px solid ${nivelColor[pac.nivel] || '#cbd5e1'}22`
+                        }}>
+                          Triage {pac.nivel}
+                        </span>
+                      </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── DOCUMENTO IMPRIMIBLE ── */}
+      <div className="print-only" style={{ fontFamily: 'Georgia, serif', color: '#000', padding: '40px 50px', maxWidth: '800px', margin: '0 auto' }}>
+        {/* Encabezado */}
+        <div style={{ textAlign: 'center', borderBottom: '3px double #000', paddingBottom: '16px', marginBottom: '20px' }}>
+          <div style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '2px' }}>HOSPITAL CMQ</div>
+          <div style={{ fontSize: '13px', letterSpacing: '3px', textTransform: 'uppercase', marginTop: '4px' }}>Sistema de Información Clínica</div>
+          <div style={{ fontSize: '15px', fontStyle: 'italic', marginTop: '6px' }}>Reporte de Gestión Diario — Área de Triage</div>
+        </div>
+
+        {/* Fecha y enfermero */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', fontSize: '13px' }}>
+          <span><strong>Fecha del Reporte:</strong> {hoy}</span>
+          <span><strong>Enfermero en turno:</strong> {usuario.nombre || '—'}</span>
+        </div>
+
+        {/* Resumen stats */}
+        <div style={{ border: '1px solid #000', padding: '10px 16px', marginBottom: '24px', fontSize: '13px', display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+          {['I','II','III','IV','V'].map(k => (
+            <span key={k}><strong>TRIAGE {k}:</strong> {stats[k]}</span>
+          ))}
+          <span style={{ marginLeft: 'auto' }}><strong>TOTAL:</strong> {stats.total}</span>
+        </div>
+
+        {/* Tabla */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid #000', borderTop: '2px solid #000' }}>
+              <th style={{ padding: '8px 12px', textAlign: 'left' }}>Hora</th>
+              <th style={{ padding: '8px 12px', textAlign: 'left' }}>Doc. Identidad</th>
+              <th style={{ padding: '8px 12px', textAlign: 'left' }}>Nombre del Paciente</th>
+              <th style={{ padding: '8px 12px', textAlign: 'left' }}>Nivel de Riesgo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {todos.length === 0 ? (
+              <tr><td colSpan="4" style={{ padding: '16px', textAlign: 'center', fontStyle: 'italic' }}>Sin registros</td></tr>
+            ) : todos.map((pac, i) => (
+              <tr key={pac.triId} style={{ borderBottom: '1px solid #ccc', background: i % 2 === 0 ? '#fff' : '#f9f9f9' }}>
+                <td style={{ padding: '7px 12px' }}>{new Date(pac.fechaHora).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</td>
+                <td style={{ padding: '7px 12px' }}>{pac.documento}</td>
+                <td style={{ padding: '7px 12px', fontWeight: 600 }}>{pac.nombre}</td>
+                <td style={{ padding: '7px 12px' }}>Triage {pac.nivel}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Firma */}
+        <div style={{ marginTop: '60px', textAlign: 'right' }}>
+          <div style={{ display: 'inline-block', borderTop: '1px solid #000', paddingTop: '6px', minWidth: '220px', textAlign: 'center', fontSize: '12px' }}>
+            <strong>Firma del Enfermero en Turno</strong><br />
+            <span style={{ fontStyle: 'italic' }}>Documento de Gestión Interna</span>
           </div>
         </div>
       </div>
     </>
   )
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // =========================================================
 // PRINCIPAL
