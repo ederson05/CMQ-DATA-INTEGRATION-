@@ -142,30 +142,45 @@ const [formData, setFormData] = useState({
 
   // ── validación ──
   const validar = () => {
-    const errs = {}
-    if (!paciente) { errs.documento = 'Busque y seleccione un paciente primero'; setErrors(errs); return false }
-    if (!formData.sintomas.trim()) errs.sintomas = 'Los síntomas son obligatorios'
-    if (!formData.triage)          errs.triage   = 'Seleccione un nivel de triage'
+  const errs = {}
+  if (!paciente) { errs.documento = 'Busque y seleccione un paciente primero'; setErrors(errs); return false }
+  if (!formData.sintomas.trim()) errs.sintomas = 'Los síntomas son obligatorios'
+  if (!formData.triage) errs.triage = 'Seleccione un nivel de triage'
 
-    if (formData.presionArterial && !/^\d{2,3}\/\d{2,3}$/.test(formData.presionArterial))
-      errs.presionArterial = 'Formato inválido (Ej: 120/80)'
-
-    if (formData.frecuenciaCardiaca !== '') {
-      const v = Number(formData.frecuenciaCardiaca)
-      if (v < 0 || v > 300) errs.frecuenciaCardiaca = 'Debe estar entre 0 y 300 LPM'
-    }
-    if (formData.temperatura !== '') {
-      const v = Number(formData.temperatura)
-      if (v < 20 || v > 45) errs.temperatura = 'Debe estar entre 20°C y 45°C'
-    }
-    if (formData.saturacion !== '') {
-      const v = Number(formData.saturacion)
-      if (v < 0 || v > 100) errs.saturacion = 'Debe estar entre 0 y 100%'
-    }
-
-    setErrors(errs)
-    return Object.keys(errs).length === 0
+  if (!formData.presionArterial) {
+    errs.presionArterial = 'La presión arterial es obligatoria'
+  } else if (!/^\d{2,3}\/\d{2,3}$/.test(formData.presionArterial)) {
+    errs.presionArterial = 'Formato inválido (Ej: 120/80)'
   }
+
+  if (!formData.frecuenciaCardiaca) {
+    errs.frecuenciaCardiaca = 'La frecuencia cardíaca es obligatoria'
+  } else {
+    const v = Number(formData.frecuenciaCardiaca)
+    if (v < 0 || v > 300) errs.frecuenciaCardiaca = 'Debe estar entre 0 y 300 LPM'
+  }
+
+  if (!formData.temperatura) {
+    errs.temperatura = 'La temperatura es obligatoria'
+  } else {
+    const v = Number(formData.temperatura)
+    if (v < 20 || v > 45) errs.temperatura = 'Debe estar entre 20°C y 45°C'
+  }
+
+  if (!formData.saturacion) {
+    errs.saturacion = 'La saturación es obligatoria'
+  } else {
+    const v = Number(formData.saturacion)
+    if (v < 0 || v > 100) errs.saturacion = 'Debe estar entre 0 y 100%'
+  }
+
+  setErrors(errs)
+  return Object.keys(errs).length === 0
+}
+
+
+
+
 
   // ── submit ──
   const handleSubmit = async (e) => {
@@ -489,7 +504,7 @@ padding: '10px 20px', fontWeight: 700, cursor: 'pointer',
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Presión Arterial</label>
+                    <label>Presión Arterial*</label>
                     <CampoRequerido error={errors.presionArterial}>
                       <input type="text" name="presionArterial" value={formData.presionArterial}
                         onChange={handleChange} placeholder="120/80"
@@ -497,7 +512,7 @@ padding: '10px 20px', fontWeight: 700, cursor: 'pointer',
                     </CampoRequerido>
                   </div>
                   <div className="form-group">
-                    <label>Frecuencia Cardíaca</label>
+                    <label>Frecuencia Cardíaca*</label>
                     <CampoRequerido error={errors.frecuenciaCardiaca}>
                       <input type="text" inputMode="numeric" name="frecuenciaCardiaca"
                         value={formData.frecuenciaCardiaca} onChange={handleChange} placeholder="LPM"
@@ -508,7 +523,7 @@ padding: '10px 20px', fontWeight: 700, cursor: 'pointer',
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Temperatura</label>
+                    <label>Temperatura*</label>
                     <CampoRequerido error={errors.temperatura}>
                       <input type="text" inputMode="decimal" name="temperatura"
                         value={formData.temperatura} onChange={handleChange} placeholder="°C"
@@ -516,7 +531,7 @@ padding: '10px 20px', fontWeight: 700, cursor: 'pointer',
                     </CampoRequerido>
                   </div>
                   <div className="form-group">
-                    <label>Saturación O2</label>
+                    <label>Saturación O2*</label>
                     <CampoRequerido error={errors.saturacion}>
                       <input type="text" inputMode="numeric" name="saturacion"
                         value={formData.saturacion} onChange={handleChange} placeholder="%"
