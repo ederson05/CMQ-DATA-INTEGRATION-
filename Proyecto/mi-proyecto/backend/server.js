@@ -355,16 +355,9 @@ app.get('/api/historias/:pacDocumento', async (req, res) => {
        FROM tbl_historia_clinica hc
        JOIN tbl_anotacion a ON a.his_id = hc.his_id
        JOIN tbl_medico    m ON m.med_id = a.med_id
-       LEFT JOIN LATERAL (
-         SELECT c.cit_id, c.cit_nivel_paciente
-         FROM tbl_cita c
-         WHERE c.pac_documento = hc.pac_documento
-           AND ABS(EXTRACT(EPOCH FROM (c.cit_fecha_hora - a.ano_fecha_consulta))) < 300
-         ORDER BY ABS(EXTRACT(EPOCH FROM (c.cit_fecha_hora - a.ano_fecha_consulta))) ASC
-         LIMIT 1
-       ) c_match ON true
-       LEFT JOIN tbl_triage t ON t.cit_id = c_match.cit_id
-       LEFT JOIN tbl_signos_vitales s ON s.cit_id = c_match.cit_id
+       LEFT JOIN tbl_cita c_match ON c_match.cit_id = a.cit_id
+       LEFT JOIN tbl_triage t ON t.cit_id = c_match.cit_id AND a.ano_tipo_consulta = 'URGENCIA'
+       LEFT JOIN tbl_signos_vitales s ON s.cit_id = c_match.cit_id AND a.ano_tipo_consulta = 'URGENCIA'
        WHERE hc.pac_documento = $1
        ORDER BY a.ano_fecha_consulta DESC`,
       [req.params.pacDocumento]

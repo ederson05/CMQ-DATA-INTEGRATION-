@@ -575,6 +575,19 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
 
   const handleGuardarAnotacion = async () => {
     setIntentoAnot(true);
+
+    // Verificar que tiene cita activa hoy si no es urgencia
+    if (!formAnot.citId) {
+      const citaHoy = citasHoy.find(c =>
+        c.pacDoc === pacienteSeleccionado.documento &&
+        c.estado !== 'ATENDIDO'
+      )
+      if (!citaHoy) {
+        showError('El paciente no tiene una cita activa hoy')
+        return
+      }
+    }
+
     const errs = validarAnotacion(formAnot);
     setErrAnot(errs);
     if (Object.keys(errs).length > 0) {
