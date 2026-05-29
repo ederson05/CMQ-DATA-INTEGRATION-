@@ -71,6 +71,7 @@ export default function Urgencias() {
   const [tab, setTab]                  = useState('registrados')
   const [toast, setToast]              = useState({ msg: '', type: 'success' })
   const [pniSeleccionado, setPni]      = useState(null)
+  const [modalAbierto, setModalAbierto] = useState(false)
   const [errores, setErrores]          = useState({})
   const [guardando, setGuardando]      = useState(false)
 
@@ -120,6 +121,7 @@ export default function Urgencias() {
       emergenciaNombre: '', emergenciaTel: ''
     })
     setErrores({})
+    setModalAbierto(true)
   }
 
   const validar = () => {
@@ -161,8 +163,9 @@ export default function Urgencias() {
       })
       const data = await res.json()
       if (data.success) {
-        showToast(`✅ Paciente ${form.nombre} registrado exitosamente`)
+        showToast(`Paciente ${form.nombre} registrado exitosamente`)
         setPni(null)
+        setModalAbierto(false)
         await cargar()
       } else {
         showToast(data.error || 'Error al registrar', 'error')
@@ -180,7 +183,7 @@ export default function Urgencias() {
   })
 
   const usuario = (() => { try { return JSON.parse(localStorage.getItem('usuario')) || {} } catch { return {} } })()
-
+/*
   if (pniSeleccionado) return (
     <div className="citas-container">
       <Toast msg={toast.msg} type={toast.type} />
@@ -315,7 +318,7 @@ export default function Urgencias() {
       </div>
     </div>
   )
-
+*/
   return (
     <div className="citas-container">
       <Toast msg={toast.msg} type={toast.type} />
@@ -447,6 +450,109 @@ export default function Urgencias() {
           </div>
         </main>
       </div>
+
+      {modalAbierto && pniSeleccionado && (
+        <div className="modal-overlay" onClick={() => { setModalAbierto(false); setPni(null) }}>
+          <div className="modal modal-perfil" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title-group">
+                <div className="modal-icon-box" style={{ background: '#eff6ff', color: '#2563eb' }}>
+                  <FiUserPlus size={18} />
+                </div>
+                <div>
+                  <h3>Registrar Paciente PNI</h3>
+                  <p>Doc: {pniSeleccionado.documento} — Cita #{pniSeleccionado.citId}</p>
+                </div>
+              </div>
+              <button className="modal-close" onClick={() => { setModalAbierto(false); setPni(null) }}>✕</button>
+            </div>
+
+            <div className="modal-body" style={{ gap: '10px' }}>
+              <div className="form-section-label">IDENTIFICACIÓN</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div className="form-group">
+                  <label>NOMBRE COMPLETO *</label>
+                  <input name="nombre" value={form.nombre} onChange={handleChange} placeholder="Nombre completo"
+                    style={{ borderColor: errores.nombre ? '#ef4444' : '', background: errores.nombre ? '#fff5f5' : '' }} />
+                  <ErrorField msg={errores.nombre} />
+                </div>
+                <div className="form-group">
+                  <label>TELÉFONO *</label>
+                  <input name="telefono" value={form.telefono} onChange={handleChange} placeholder="Ej. 3214556879"
+                    style={{ borderColor: errores.telefono ? '#ef4444' : '', background: errores.telefono ? '#fff5f5' : '' }} />
+                  <ErrorField msg={errores.telefono} />
+                </div>
+                <div className="form-group">
+                  <label>FECHA DE NACIMIENTO *</label>
+                  <input type="date" name="fechaNacimiento" value={form.fechaNacimiento} onChange={handleChange}
+                    style={{ borderColor: errores.fechaNacimiento ? '#ef4444' : '', background: errores.fechaNacimiento ? '#fff5f5' : '' }} />
+                  <ErrorField msg={errores.fechaNacimiento} />
+                </div>
+                <div className="form-group">
+                  <label>GÉNERO *</label>
+                  <select name="genero" value={form.genero} onChange={handleChange}
+                    style={{ borderColor: errores.genero ? '#ef4444' : '', background: errores.genero ? '#fff5f5' : '' }}>
+                    <option value="">Seleccione</option>
+                    <option value="M">Masculino</option>
+                    <option value="F">Femenino</option>
+                    <option value="O">Otro</option>
+                  </select>
+                  <ErrorField msg={errores.genero} />
+                </div>
+                <div className="form-group">
+                  <label>TIPO DE SANGRE *</label>
+                  <select name="tipoSangre" value={form.tipoSangre} onChange={handleChange}
+                    style={{ borderColor: errores.tipoSangre ? '#ef4444' : '', background: errores.tipoSangre ? '#fff5f5' : '' }}>
+                    <option value="">Seleccione</option>
+                    {['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <ErrorField msg={errores.tipoSangre} />
+                </div>
+                <div className="form-group">
+                  <label>EMAIL (OPCIONAL)</label>
+                  <input name="email" value={form.email} onChange={handleChange} placeholder="correo@email.com" />
+                </div>
+              </div>
+
+              <div className="form-section-label" style={{ marginTop: '4px' }}>CONTACTO</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div className="form-group">
+                  <label>DIRECCIÓN *</label>
+                  <input name="direccion" value={form.direccion} onChange={handleChange} placeholder="Calle, carrera..."
+                    style={{ borderColor: errores.direccion ? '#ef4444' : '', background: errores.direccion ? '#fff5f5' : '' }} />
+                  <ErrorField msg={errores.direccion} />
+                </div>
+                <div className="form-group">
+                  <label>CIUDAD *</label>
+                  <input name="ciudad" value={form.ciudad} onChange={handleChange} placeholder="Ej. Bogotá"
+                    style={{ borderColor: errores.ciudad ? '#ef4444' : '', background: errores.ciudad ? '#fff5f5' : '' }} />
+                  <ErrorField msg={errores.ciudad} />
+                </div>
+                <div className="form-group">
+                  <label>NOMBRE CONTACTO EMERGENCIA *</label>
+                  <input name="emergenciaNombre" value={form.emergenciaNombre} onChange={handleChange} placeholder="Nombre"
+                    style={{ borderColor: errores.emergenciaNombre ? '#ef4444' : '', background: errores.emergenciaNombre ? '#fff5f5' : '' }} />
+                  <ErrorField msg={errores.emergenciaNombre} />
+                </div>
+                <div className="form-group">
+                  <label>TELÉFONO EMERGENCIA *</label>
+                  <input name="emergenciaTel" value={form.emergenciaTel} onChange={handleChange} placeholder="Teléfono"
+                    style={{ borderColor: errores.emergenciaTel ? '#ef4444' : '', background: errores.emergenciaTel ? '#fff5f5' : '' }} />
+                  <ErrorField msg={errores.emergenciaTel} />
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn-cancelar" onClick={() => { setModalAbierto(false); setPni(null) }}>Cancelar</button>
+              <button className="btn-guardar" onClick={handleRegistrar} disabled={guardando}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {guardando ? 'Registrando...' : <><FiCheckCircle size={13} /> Registrar paciente</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="main-footer">
         <span>CMQ — Módulo Urgencias</span>
