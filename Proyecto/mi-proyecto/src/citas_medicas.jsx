@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   FiCalendar, FiUsers, FiFileText,
-  FiEdit2, FiSearch, FiLogOut
+  FiEdit2, FiSearch, FiLogOut, FiAlertTriangle
 } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import './citas_medicas.css'
@@ -356,9 +356,9 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
   )
 
   const modules = [
-    { id: 'pacientes', name: 'Pacientes',        count: pacientes.length, icon: <FiUsers />,    path: '/secretaria' },
-    { id: 'citas',     name: 'Citas Médicas',    count: citas.length,     icon: <FiCalendar />, path: '/citas' },
-    { id: 'historia',  name: 'Historia Clínica', count: 2,                icon: <FiFileText />, path: '/historia' },
+    { id: 'pacientes',  name: 'Pacientes',     count: pacientes.length, icon: <FiUsers />,         path: '/secretaria' },
+    { id: 'citas',      name: 'Citas Médicas', count: citas.length,     icon: <FiCalendar />,      path: '/citas' },
+    { id: 'urgencias',  name: 'Urgencias',     count: 0,                icon: <FiAlertTriangle />, path: '/urgencias' },
   ]
 
   return (
