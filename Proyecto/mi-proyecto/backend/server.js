@@ -624,6 +624,23 @@ app.get('/api/enfermero/paciente/:documento', async (req, res) => {
 
     if (citaResult.rows.length > 0) {
       const r = citaResult.rows[0]
+
+      // Si ya tiene triage registrado, no permitir otro
+      const triExiste = await pool.query(
+        'SELECT tri_id FROM tbl_triage WHERE cit_id = $1',
+        [r.cit_id]
+      )
+      if (triExiste.rows.length > 0) {
+        return res.json({
+          encontrado: true,
+          estado: 'YA_REGISTRADO',
+          citId: r.cit_id,
+          documento: r.pac_documento,
+          nombre: r.pac_nombre,
+          motivo: r.cit_motivo_consulta
+        })
+      }
+
       return res.json({
         encontrado: true,
         citId: r.cit_id,
