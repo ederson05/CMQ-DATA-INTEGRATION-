@@ -920,6 +920,39 @@ app.get('/api/pacientes/:doc', async (req, res) => {
     });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
+
+
+
+app.get('/api/triage/paciente/:doc', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT t.tri_nivel, t.tri_sintomas, t.tri_fecha,
+              s.siv_presion_arterial, s.siv_frecuencia_cardiaca,
+              s.siv_temperatura, s.siv_saturacion_o2,
+              c.cit_nivel_paciente
+       FROM tbl_triage t
+       JOIN tbl_cita c ON c.cit_id = t.cit_id
+       LEFT JOIN tbl_signos_vitales s ON s.cit_id = t.cit_id
+       WHERE c.pac_documento = $1
+       ORDER BY t.tri_fecha DESC
+       LIMIT 1`,
+      [req.params.doc]
+    )
+    if (!result.rows[0]) return res.json(null)
+    const r = result.rows[0]
+    res.json({
+      nivel: r.tri_nivel, sintomas: r.tri_sintomas, fechaHora: r.tri_fecha,
+      nivelPaciente: r.cit_nivel_paciente,
+      signosVitales: {
+        presionArterial: r.siv_presion_arterial,
+        frecuenciaCardiaca: r.siv_frecuencia_cardiaca,
+        temperatura: r.siv_temperatura,
+        saturacion: r.siv_saturacion_o2
+      }
+    })
+  } catch (err) { res.status(500).json({ error: err.message }) }
+})
+
 // ============================================================
 // ✅ Puerto dinámico — requerido por Render
 // ============================================================

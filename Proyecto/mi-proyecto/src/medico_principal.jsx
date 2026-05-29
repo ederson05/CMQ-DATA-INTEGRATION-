@@ -378,6 +378,9 @@ function MedicoPrincipal() {
   const [citasHoy, setCitasHoy] = useState([]);
   const [pacienteSeleccionado, setPaciente] = useState(null);
   const [historial, setHistorial] = useState([]);
+
+const [triagePaciente, setTriagePaciente] = useState(null)
+
   const [aclaratorias, setAclaratorias] = useState([]);
   const [anotSeleccionada, setAnotSeleccionada] = useState(null);
   const [busqueda, setBusqueda] = useState("");
@@ -470,11 +473,16 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
   };
 
   const verHistorial = (pac) => {
-    setPaciente(pac);
-    setVista("historial");
-    limpiarFiltros();
-    cargarHistorial(pac.documento);
-  };
+  setPaciente(pac);
+  setVista("historial");
+  limpiarFiltros();
+  cargarHistorial(pac.documento);
+  setTriagePaciente(null)
+  fetch(`${API}/triage/paciente/${pac.documento}`)
+    .then(r => r.json())
+    .then(data => setTriagePaciente(data))
+    .catch(() => {})
+}
 
   // Actualiza el estado de una cita en el estado local sin recargar
   const handleEstadoChange = (citId, nuevoEstado) => {
@@ -1130,6 +1138,39 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
                   <span>{pacienteSeleccionado.ciudad}</span>
                 </div>
               </div>
+
+{triagePaciente && (
+  <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '10px', padding: '16px 20px', marginBottom: '16px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+      <span style={{ fontSize: '16px' }}>🚨</span>
+      <strong style={{ color: '#b91c1c', fontSize: '14px' }}>Ingreso por Urgencia</strong>
+      <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#94a3b8' }}>{fmtFecha(triagePaciente.fechaHora)}</span>
+      <span style={{ fontSize: '12px', fontWeight: 700, padding: '3px 10px', borderRadius: '12px',
+        background: triagePaciente.nivelPaciente === 'CRITICO' ? '#fee2e2' : triagePaciente.nivelPaciente === 'LEVE' ? '#dcfce7' : '#fef3c7',
+        color: triagePaciente.nivelPaciente === 'CRITICO' ? '#b91c1c' : triagePaciente.nivelPaciente === 'LEVE' ? '#166534' : '#92400e' }}>
+        {triagePaciente.nivelPaciente === 'CRITICO' ? '🔴' : triagePaciente.nivelPaciente === 'LEVE' ? '🟢' : '🟡'} {triagePaciente.nivelPaciente}
+      </span>
+    </div>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '10px', marginBottom: '10px' }}>
+      {[
+        { label: 'F. Cardíaca', valor: triagePaciente.signosVitales.frecuenciaCardiaca, unidad: 'LPM' },
+        { label: 'Presión', valor: triagePaciente.signosVitales.presionArterial, unidad: 'mmHg' },
+        { label: 'Temperatura', valor: triagePaciente.signosVitales.temperatura, unidad: '°C' },
+        { label: 'Saturación O₂', valor: triagePaciente.signosVitales.saturacion, unidad: '%' },
+      ].map(s => (
+        <div key={s.label} style={{ background: 'white', borderRadius: '8px', padding: '10px', textAlign: 'center', border: '1px solid #fecaca' }}>
+          <div style={{ fontSize: '16px', fontWeight: 700, color: '#1e293b' }}>{s.valor ?? '—'} <span style={{ fontSize: '11px', color: '#94a3b8' }}>{s.valor ? s.unidad : ''}</span></div>
+          <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>{s.label}</div>
+        </div>
+      ))}
+    </div>
+    {triagePaciente.sintomas && (
+      <div style={{ fontSize: '13px', color: '#475569' }}>
+        <strong>Síntomas:</strong> {triagePaciente.sintomas}
+      </div>
+    )}
+  </div>
+)}
 
               <div className="filtros-bar">
                 <FiFilter
