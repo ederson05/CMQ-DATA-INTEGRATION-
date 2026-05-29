@@ -1757,10 +1757,10 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
                 </div>
               )}
 
-                {triagePaciente && (
+                {triagePaciente && modalDetalle?.tipoConsulta === 'URGENCIA' && (
   <div className="perfil-seccion-titulo" style={{ color: '#b91c1c' }}>INGRESO POR URGENCIA</div>
 )}
-{triagePaciente && (
+{triagePaciente && modalDetalle?.tipoConsulta === 'URGENCIA' && (
   <>
     <div className="perfil-fila">
       <span>Nivel</span>
