@@ -1139,38 +1139,7 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
                 </div>
               </div>
 
-{triagePaciente && (
-  <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '10px', padding: '16px 20px', marginBottom: '16px' }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-      <span style={{ fontSize: '16px' }}>🚨</span>
-      <strong style={{ color: '#b91c1c', fontSize: '14px' }}>Ingreso por Urgencia</strong>
-      <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#94a3b8' }}>{fmtFecha(triagePaciente.fechaHora)}</span>
-      <span style={{ fontSize: '12px', fontWeight: 700, padding: '3px 10px', borderRadius: '12px',
-        background: triagePaciente.nivelPaciente === 'CRITICO' ? '#fee2e2' : triagePaciente.nivelPaciente === 'LEVE' ? '#dcfce7' : '#fef3c7',
-        color: triagePaciente.nivelPaciente === 'CRITICO' ? '#b91c1c' : triagePaciente.nivelPaciente === 'LEVE' ? '#166534' : '#92400e' }}>
-        {triagePaciente.nivelPaciente === 'CRITICO' ? '🔴' : triagePaciente.nivelPaciente === 'LEVE' ? '🟢' : '🟡'} {triagePaciente.nivelPaciente}
-      </span>
-    </div>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '10px', marginBottom: '10px' }}>
-      {[
-        { label: 'F. Cardíaca', valor: triagePaciente.signosVitales.frecuenciaCardiaca, unidad: 'LPM' },
-        { label: 'Presión', valor: triagePaciente.signosVitales.presionArterial, unidad: 'mmHg' },
-        { label: 'Temperatura', valor: triagePaciente.signosVitales.temperatura, unidad: '°C' },
-        { label: 'Saturación O₂', valor: triagePaciente.signosVitales.saturacion, unidad: '%' },
-      ].map(s => (
-        <div key={s.label} style={{ background: 'white', borderRadius: '8px', padding: '10px', textAlign: 'center', border: '1px solid #fecaca' }}>
-          <div style={{ fontSize: '16px', fontWeight: 700, color: '#1e293b' }}>{s.valor ?? '—'} <span style={{ fontSize: '11px', color: '#94a3b8' }}>{s.valor ? s.unidad : ''}</span></div>
-          <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>{s.label}</div>
-        </div>
-      ))}
-    </div>
-    {triagePaciente.sintomas && (
-      <div style={{ fontSize: '13px', color: '#475569' }}>
-        <strong>Síntomas:</strong> {triagePaciente.sintomas}
-      </div>
-    )}
-  </div>
-)}
+
 
               <div className="filtros-bar">
                 <FiFilter
@@ -1787,6 +1756,28 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
                   <span>{fmtFecha(modalDetalle.proximaCita)}</span>
                 </div>
               )}
+
+                {triagePaciente && (
+  <div className="perfil-seccion-titulo" style={{ color: '#b91c1c' }}>INGRESO POR URGENCIA</div>
+)}
+{triagePaciente && (
+  <>
+    <div className="perfil-fila">
+      <span>Nivel</span>
+      <span style={{ fontWeight: 700, color: triagePaciente.nivelPaciente === 'CRITICO' ? '#b91c1c' : triagePaciente.nivelPaciente === 'LEVE' ? '#166534' : '#92400e' }}>
+        {triagePaciente.nivelPaciente === 'CRITICO' ? '🔴' : triagePaciente.nivelPaciente === 'LEVE' ? '🟢' : '🟡'} {triagePaciente.nivelPaciente}
+      </span>
+    </div>
+    <div className="perfil-fila"><span>Triage</span><span>{triagePaciente.nivel && `Triage ${triagePaciente.nivel}`}</span></div>
+    <div className="perfil-fila"><span>F. Cardíaca</span><span>{triagePaciente.signosVitales.frecuenciaCardiaca ?? '—'} LPM</span></div>
+    <div className="perfil-fila"><span>Presión</span><span>{triagePaciente.signosVitales.presionArterial ?? '—'} mmHg</span></div>
+    <div className="perfil-fila"><span>Temperatura</span><span>{triagePaciente.signosVitales.temperatura ?? '—'} °C</span></div>
+    <div className="perfil-fila"><span>Saturación O₂</span><span>{triagePaciente.signosVitales.saturacion ?? '—'} %</span></div>
+    {triagePaciente.sintomas && <div className="perfil-fila"><span>Síntomas</span><span>{triagePaciente.sintomas}</span></div>}
+  </>
+)}
+
+
               <div className="perfil-seccion-titulo">NOTAS CLÍNICAS</div>
               <div
                 className="perfil-fila"
