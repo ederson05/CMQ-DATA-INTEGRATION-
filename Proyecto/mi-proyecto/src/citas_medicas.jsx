@@ -104,15 +104,32 @@ const getBadgeNivel = (nivel) => {
   )
 }
 
+function ErrorField({ msg }) {
+  if (!msg) return null
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px',
+      marginTop: '5px', padding: '6px 10px', background: '#fff5f5',
+      border: '1px solid #fca5a5', borderRadius: '6px' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        width: '16px', height: '16px', background: '#ef4444', borderRadius: '4px',
+        color: 'white', fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>!</span>
+      <span style={{ fontSize: '12px', color: '#dc2626', fontWeight: 500 }}>{msg}</span>
+    </div>
+  )
+}
+
 function CitasMedicas() {
   const navigate = useNavigate()
   const [currentTime, setCurrentTime] = useState(new Date())
   const [citaEditando, setCitaEditando] = useState(null)
+  const [erroresModal, setErroresModal] = useState({})
+  const [exitoMsg, setExitoMsg] = useState('')
   const [busqueda, setBusqueda] = useState('')
   const [citas, setCitas] = useState([])
   const [medicos, setMedicos] = useState([])
   const [pacientes, setPacientes] = useState([])
   const [errores, setErrores] = useState({})
+  const [intento, setIntento] = useState(false)
   const [nuevaCita, setNuevaCita] = useState({
     identificacion: '', medico: '', fecha: '', motivo: ''
   })
@@ -233,30 +250,40 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
 
   const handleConfirmarCita = async (e) => {
     e.preventDefault()
-    if (!nuevaCita.identificacion.trim()) { alert('⚠️ Ingresa la identificación del paciente'); return }
-    if (!nuevaCita.medico)                { alert('⚠️ Selecciona un médico'); return }
-    if (!nuevaCita.fecha)                 { alert('⚠️ Selecciona la fecha y hora'); return }
-    if (nuevaCita.fecha < ahoraPlus3()) {
-  setErrores(prev => ({ ...prev, fecha: 'La fecha mínima es 3 horas desde ahora' }))
-  return
-}
-const dispFinal = validarDisponibilidad(nuevaCita.fecha, nuevaCita.medico, citas)
-if (!dispFinal.disponible) {
-  setErrores(prev => ({ ...prev, fecha: dispFinal.mensaje }))
-  return
-}
+    setIntento(true)
+
+    const errs = {}
+    if (!nuevaCita.identificacion.trim()) errs.identificacion = 'La identificación del paciente es obligatoria'
+    if (!nuevaCita.medico) errs.medico = 'Debes seleccionar un médico'
+    if (!nuevaCita.fecha) {
+      errs.fecha = 'La fecha y hora son obligatorias'
+    } else if (nuevaCita.fecha < ahoraPlus3()) {
+      errs.fecha = 'La fecha mínima es 3 horas desde ahora'
+    } else {
+      const disp = validarDisponibilidad(nuevaCita.fecha, nuevaCita.medico, citas)
+      if (!disp.disponible) errs.fecha = disp.mensaje
+    }
+    if (!nuevaCita.motivo.trim()) errs.motivo = 'El motivo de consulta es obligatorio'
+
+    if (nuevaCita.identificacion.trim()) {
+      const paciente = pacientes.find(p => p.id === nuevaCita.identificacion.trim())
+      if (!paciente) errs.identificacion = 'No se encontró ningún paciente con esa identificación'
+    }
+
+    if (Object.keys(errs).length > 0) { setErrores(errs); return }
 
     const paciente = pacientes.find(p => p.id === nuevaCita.identificacion.trim())
-    if (!paciente) { alert('⚠️ No se encontró ningún paciente con esa identificación'); return }
-
-    const medico = medicos.find(m => String(m.id) === nuevaCita.medico)
+    const medico   = medicos.find(m => String(m.id) === nuevaCita.medico)
 
     const duplicada = citas.find(c =>
       c.pacDocumento === nuevaCita.identificacion.trim() &&
       c.medId === parseInt(nuevaCita.medico) &&
       c.fecha.split('T')[0] === nuevaCita.fecha.split('T')[0]
     )
-    if (duplicada) { alert('⚠️ Este paciente ya tiene una cita con ese médico en esa fecha'); return }
+    if (duplicada) {
+      setErrores(prev => ({ ...prev, identificacion: 'Este paciente ya tiene una cita con ese médico en esa fecha' }))
+      return
+    }
 
     try {
       const res = await fetch(`${API}/citas`, {
@@ -273,25 +300,29 @@ if (!dispFinal.disponible) {
       const data = await res.json()
       if (data.success) {
         await cargarDatos()
-        setNuevaCita({ identificacion: '', medico: '', fecha: '', motivo: '', nivelPaciente: 'ESTABLE' })
+        setNuevaCita({ identificacion: '', medico: '', fecha: '', motivo: '' })
         setErrores({})
-        alert(`✅ Cita generada\n\n👤 ${paciente.nombre}\n👨‍⚕️ ${medico?.nombre}\n📅 ${formatFecha(nuevaCita.fecha)}`)
+        setIntento(false)
+        setExitoMsg(`✅ Cita registrada — ${paciente.nombre} con ${medico?.nombre} el ${formatFecha(nuevaCita.fecha)}`)
+        setTimeout(() => setExitoMsg(''), 5000)
       } else {
-        alert('❌ Error: ' + data.error)
+        setErrores({ general: data.error || 'Error al registrar la cita' })
       }
-    } catch (err) {
-      alert('❌ Error conectando al servidor')
+    } catch {
+      setErrores({ general: 'Error conectando al servidor' })
     }
   }
 
   const handleEditarCita = (cita) => setCitaEditando({ ...cita })
 
   const handleGuardarCita = async () => {
-    if (!citaEditando.medId) { alert('⚠️ Selecciona un médico'); return }
-    if (!citaEditando.fecha) { alert('⚠️ Selecciona una fecha'); return }
-    if (citaEditando.estado !== 'CANCELADA' && citaEditando.fecha < ahora()) {
-      alert('⚠️ La fecha no puede ser en el pasado'); return
-    }
+    const errsM = {}
+    if (!citaEditando.medId) errsM.medId = 'Selecciona un médico'
+    if (!citaEditando.fecha) errsM.fecha = 'Selecciona una fecha'
+    else if (citaEditando.estado !== 'CANCELADA' && citaEditando.fecha < ahoraPlus3())
+      errsM.fecha = 'La fecha mínima es 3 horas desde ahora'
+    if (Object.keys(errsM).length > 0) { setErroresModal(errsM); return }
+    setErroresModal({})
 
     try {
       const res = await fetch(`${API}/citas/${citaEditando.citId}`, {
@@ -308,12 +339,14 @@ if (!dispFinal.disponible) {
       if (data.success) {
         await cargarDatos()
         setCitaEditando(null)
-        alert('✅ Cita modificada exitosamente')
+        setErroresModal({})
+        setExitoMsg('✅ Cita modificada exitosamente')
+        setTimeout(() => setExitoMsg(''), 4000)
       } else {
-        alert('❌ Error: ' + data.error)
+        setErroresModal({ general: data.error || 'Error al guardar' })
       }
-    } catch (err) {
-      alert('❌ Error conectando al servidor')
+    } catch {
+      setErroresModal({ general: 'Error conectando al servidor' })
     }
   }
 
@@ -382,38 +415,63 @@ if (!dispFinal.disponible) {
             {/* PROGRAMAR CITA */}
             <div className="form-section">
               <h3><FiCalendar className="section-icon" /> Programar Cita</h3>
+
+              {exitoMsg && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '12px 16px', background: '#f0fdf4', border: '1px solid #86efac',
+                  borderRadius: '8px', marginBottom: '16px' }}>
+                  <span style={{ fontSize: '18px' }}>✅</span>
+                  <span style={{ fontSize: '13px', color: '#166534', fontWeight: 600 }}>{exitoMsg}</span>
+                </div>
+              )}
+
+              {errores.general && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '12px 16px', background: '#fef2f2', border: '1px solid #fca5a5',
+                  borderRadius: '8px', marginBottom: '16px' }}>
+                  <span style={{ fontSize: '18px' }}>❌</span>
+                  <span style={{ fontSize: '13px', color: '#dc2626', fontWeight: 600 }}>{errores.general}</span>
+                </div>
+              )}
+
               <form onSubmit={handleConfirmarCita} className="cita-form">
 
                 <div className="form-group">
-                  <label>IDENTIFICACIÓN DEL PACIENTE</label>
+                  <label>IDENTIFICACIÓN DEL PACIENTE *</label>
                   <input type="text" name="identificacion" placeholder="Ej. 1088156632"
-                    value={nuevaCita.identificacion} onChange={handleInputCita} />
+                    value={nuevaCita.identificacion} onChange={handleInputCita}
+                    style={{ borderColor: errores.identificacion ? '#ef4444' : '', background: errores.identificacion ? '#fff5f5' : '' }} />
+                  <ErrorField msg={errores.identificacion} />
                 </div>
 
                 <div className="form-group">
-                  <label>MÉDICO / ESPECIALISTA</label>
-                  <select name="medico" value={nuevaCita.medico} onChange={handleInputCita}>
+                  <label>MÉDICO / ESPECIALISTA *</label>
+                  <select name="medico" value={nuevaCita.medico} onChange={handleInputCita}
+                    style={{ borderColor: errores.medico ? '#ef4444' : '', background: errores.medico ? '#fff5f5' : '' }}>
                     <option value="">Seleccione un médico</option>
                     {medicos.map(m => (
                       <option key={m.id} value={m.id}>{m.nombre} — {m.especialidad}</option>
                     ))}
                   </select>
+                  <ErrorField msg={errores.medico} />
                 </div>
 
                 <div className="form-group">
-                  <label>FECHA Y HORA</label>
+                  <label>FECHA Y HORA *</label>
                   <input type="datetime-local" name="fecha"
                     min={ahoraPlus3()} max={maxFecha()}
                     value={nuevaCita.fecha} onChange={handleInputCita}
                     style={{ borderColor: errores.fecha ? '#ef4444' : '', background: errores.fecha ? '#fff5f5' : '' }} />
-                  {errores.fecha && <span style={{ color: '#ef4444', fontSize: '11px' }}>{errores.fecha}</span>}
+                  <ErrorField msg={errores.fecha} />
                 </div>
 
                 <div className="form-group">
-                  <label>MOTIVO DE CONSULTA</label>
+                  <label>MOTIVO DE CONSULTA *</label>
                   <input type="text" name="motivo"
                     placeholder="Ej. Dolor de cabeza, control rutinario..."
-                    value={nuevaCita.motivo} onChange={handleInputCita} />
+                    value={nuevaCita.motivo} onChange={handleInputCita}
+                    style={{ borderColor: errores.motivo ? '#ef4444' : '', background: errores.motivo ? '#fff5f5' : '' }} />
+                  <ErrorField msg={errores.motivo} />
                 </div>
 
                 <button type="submit" className="btn-confirmar">
@@ -494,9 +552,18 @@ if (!dispFinal.disponible) {
                 <label>NOMBRE DEL PACIENTE</label>
                 <input type="text" value={citaEditando.nombre} disabled />
               </div>
+              {erroresModal.general && (
+                <div style={{ display:'flex', gap:'8px', alignItems:'center',
+                  padding:'10px 14px', background:'#fef2f2', border:'1px solid #fca5a5',
+                  borderRadius:'8px', marginBottom:'12px' }}>
+                  <span style={{fontSize:'16px'}}>❌</span>
+                  <span style={{fontSize:'12px', color:'#dc2626', fontWeight:600}}>{erroresModal.general}</span>
+                </div>
+              )}
               <div className="form-group">
                 <label>MÉDICO / ESPECIALISTA</label>
                 <select value={citaEditando.medId}
+                  style={{ borderColor: erroresModal.medId ? '#ef4444' : '', background: erroresModal.medId ? '#fff5f5' : '' }}
                   onChange={(e) => setCitaEditando(prev => ({ ...prev, medId: parseInt(e.target.value) }))}>
                   <option value="">Seleccione un médico</option>
                   {medicos.map(m => (
@@ -507,7 +574,7 @@ if (!dispFinal.disponible) {
               <div className="form-group">
                 <label>FECHA Y HORA</label>
                 <input type="datetime-local" value={citaEditando.fecha}
-                  min={ahora()} max="2099-12-31T23:59"
+                  min={ahoraPlus3()} max={maxFecha()}
                   onChange={(e) => setCitaEditando(prev => ({ ...prev, fecha: e.target.value }))} />
               </div>
               <div className="form-group">
