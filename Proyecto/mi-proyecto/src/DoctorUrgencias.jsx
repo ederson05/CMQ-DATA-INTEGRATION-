@@ -74,7 +74,7 @@ const TRIAGE_LABEL = {
 /* ────────────────────────────────────────────────────────── */
 /*  COMPONENTE PRINCIPAL                                       */
 /* ────────────────────────────────────────────────────────── */
-export default function DoctorUrgencias({ paciente, onClose }) {
+export default function DoctorUrgencias({ paciente, onClose, onVerHistorial }) {
   const [datos, setDatos] = useState(null);
   const [cargando, setCargando] = useState(true);
 
