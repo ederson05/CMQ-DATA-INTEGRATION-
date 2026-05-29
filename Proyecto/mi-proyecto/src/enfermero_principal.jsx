@@ -305,7 +305,7 @@ setFormData({
                   <input
                     type="text"
                     value={documento}
-                    onChange={(e) => { setDocumento(e.target.value); setPaciente(null); setNoEncontrado(false) }}
+                    onChange={(e) => { const v = e.target.value.replace(/\D/g, ''); setDocumento(v); setPaciente(null); setNoEncontrado(false) }}
                     onKeyDown={handleDocumentoKeyDown}
                     placeholder="Ej: 10203040"
                     style={errors.documento ? { borderColor: '#ef4444', background: '#fff5f5' } : {}}

@@ -230,22 +230,33 @@ useEffect(() => {
   const handleCancelar = () => { setNuevoEstado(cita.estado); setEditando(false); };
 
   const esTriage = cita.motivo === "URGENCIA" && cita.estado !== "ATENDIDO";
+const nivelColor = {
+  CRITICO: { bg: '#fef2f2', border: '#ef4444', shadow: '#fee2e2', avatar: 'linear-gradient(135deg,#ef4444,#b91c1c)', badge: '#fee2e2', badgeText: '#b91c1c', badgeBorder: '#fca5a5' },
+  ESTABLE: { bg: '#fffbeb', border: '#f59e0b', shadow: '#fef3c7', avatar: 'linear-gradient(135deg,#f59e0b,#d97706)', badge: '#fef3c7', badgeText: '#92400e', badgeBorder: '#fcd34d' },
+  LEVE:    { bg: '#f0fdf4', border: '#22c55e', shadow: '#dcfce7', avatar: 'linear-gradient(135deg,#22c55e,#16a34a)', badge: '#dcfce7', badgeText: '#166534', badgeBorder: '#86efac' },
+}
+const colores = esTriage ? (nivelColor[cita.nivelPaciente] || nivelColor.ESTABLE) : null
 
   return (
     <div style={{
       display: "flex", flexDirection: "column", gap: "8px",
       padding: "12px 14px",
-      background: esTriage ? "#fff1f1" : "white",
-      borderRadius: "10px",
-      border: esTriage ? "1.5px solid #ef4444" : "1px solid #e2e8f0",
-      boxShadow: esTriage ? "0 0 0 3px #fee2e2" : "0 1px 3px rgba(0,0,0,0.05)",
+
+
+      background: esTriage ? colores.bg : "white",
+borderRadius: "10px",
+border: esTriage ? `1.5px solid ${colores.border}` : "1px solid #e2e8f0",
+boxShadow: esTriage ? `0 0 0 3px ${colores.shadow}` : "0 1px 3px rgba(0,0,0,0.05)",
+      
+      
       transition: "all .2s",
+
     }}>
       {/* Fila superior */}
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <div style={{
           width: "40px", height: "40px", borderRadius: "50%",
-          background: esTriage ? "linear-gradient(135deg,#ef4444,#b91c1c)" : "linear-gradient(135deg,#3b82f6,#1d4ed8)",
+          background: esTriage ? colores.avatar : "linear-gradient(135deg,#3b82f6,#1d4ed8)",
           display: "flex", alignItems: "center", justifyContent: "center",
           color: "white", fontWeight: 700, fontSize: "13px", flexShrink: 0,
         }}>
@@ -271,10 +282,10 @@ useEffect(() => {
           <span style={{
             fontSize: "11px", fontWeight: 700, padding: "4px 12px", borderRadius: "12px",
             ...(esTriage
-              ? { background: "#fee2e2", color: "#b91c1c", border: "1px solid #fca5a5" }
-              : ESTADO_STYLE[cita.estado])
+  ? { background: colores.badge, color: colores.badgeText, border: `1px solid ${colores.badgeBorder}` }
+  : ESTADO_STYLE[cita.estado])
           }}>
-            {esTriage ? "🔴 EN TRIAGE" : (ESTADO_LABEL[cita.estado] || cita.estado)}
+            {esTriage ? `${cita.nivelPaciente === 'CRITICO' ? '🔴' : cita.nivelPaciente === 'LEVE' ? '🟢' : '🟡'} ${cita.nivelPaciente || 'URGENCIA'}` : (ESTADO_LABEL[cita.estado] || cita.estado)}
           </span>
           <div style={{ display: "flex", gap: "6px" }}>
             {esTriage && (

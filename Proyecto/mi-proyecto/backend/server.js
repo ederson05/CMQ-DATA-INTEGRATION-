@@ -196,14 +196,15 @@ app.get('/api/citas/hoy/:medId', async (req, res) => {
        ORDER BY c.cit_fecha_hora ASC`,
       [Number(req.params.medId)]
     );
-    res.json(result.rows.map(r => ({
-      citId:     r.cit_id,
-      pacDoc:    r.pac_documento,
-      pacNombre: r.pac_nombre,
-      fechaHora: r.cit_fecha_hora,
-      motivo:    r.cit_motivo_consulta,
-      estado:    r.cit_estado
-    })));
+   res.json(result.rows.map(r => ({
+  citId:        r.cit_id,
+  pacDoc:       r.pac_documento,
+  pacNombre:    r.pac_nombre,
+  fechaHora:    r.cit_fecha_hora,
+  motivo:       r.cit_motivo_consulta,
+  estado:       r.cit_estado,
+  nivelPaciente: r.cit_nivel_paciente
+})));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -684,10 +685,14 @@ app.post('/api/triage', async (req, res) => {
     );
 
     // Actualizar estado cita a EN_TRIAGE
-    await client.query(
-      `UPDATE tbl_cita SET cit_estado = 'EN_TRIAGE' WHERE cit_id = $1`,
-      [citId]
-    );
+  // Mapear nivel triage a nivel paciente
+const nivelMap = { 'I': 'CRITICO', 'II': 'CRITICO', 'III': 'ESTABLE', 'IV': 'LEVE', 'V': 'LEVE' }
+const nivelPaciente = nivelMap[nivel] || 'ESTABLE'
+
+await client.query(
+  `UPDATE tbl_cita SET cit_estado = 'EN_TRIAGE', cit_nivel_paciente = $1 WHERE cit_id = $2`,
+  [nivelPaciente, citId]
+)
 
     // Auditoría
     try {
