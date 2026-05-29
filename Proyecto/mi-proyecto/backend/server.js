@@ -113,18 +113,42 @@ app.post('/api/pacientes', async (req, res) => {
     email, direccion, ciudad, contactoEmergenciaNombre, contactoEmergenciaTel
   } = req.body;
   try {
-    await pool.query(
-      `INSERT INTO tbl_paciente (
-         pac_documento, pac_nombre, pac_telefono, pac_fecha_nacimiento,
-         pac_genero, pac_tipo_sangre, pac_email, pac_direccion,
-         pac_ciudad, pac_emergencia_nombre, pac_emergencia_telefono, pac_registro
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, NOW())`,
-      [
-        String(id).trim(), nombre, telefono, fechaNacimiento, genero, tipoSangre,
-        email || '', direccion, ciudad,
-        contactoEmergenciaNombre || '', contactoEmergenciaTel || ''
-      ]
+    const existe = await pool.query(
+      'SELECT pac_documento FROM tbl_paciente WHERE pac_documento = $1',
+      [String(id).trim()]
     );
+
+    if (existe.rows.length > 0) {
+      await pool.query(
+        `UPDATE tbl_paciente SET
+           pac_nombre              = $1,
+           pac_telefono            = $2,
+           pac_fecha_nacimiento    = $3,
+           pac_genero              = $4,
+           pac_tipo_sangre         = $5,
+           pac_email               = $6,
+           pac_direccion           = $7,
+           pac_ciudad              = $8,
+           pac_emergencia_nombre   = $9,
+           pac_emergencia_telefono = $10
+         WHERE pac_documento = $11`,
+        [nombre, telefono, fechaNacimiento, genero, tipoSangre,
+         email || '', direccion, ciudad,
+         contactoEmergenciaNombre || '', contactoEmergenciaTel || '',
+         String(id).trim()]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO tbl_paciente (
+           pac_documento, pac_nombre, pac_telefono, pac_fecha_nacimiento,
+           pac_genero, pac_tipo_sangre, pac_email, pac_direccion,
+           pac_ciudad, pac_emergencia_nombre, pac_emergencia_telefono, pac_registro
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, NOW())`,
+        [String(id).trim(), nombre, telefono, fechaNacimiento, genero, tipoSangre,
+         email || '', direccion, ciudad,
+         contactoEmergenciaNombre || '', contactoEmergenciaTel || '']
+      );
+    }
     res.json({ success: true });
   } catch (err) {
     console.error('❌ ERROR POST /api/pacientes:', err.message);
