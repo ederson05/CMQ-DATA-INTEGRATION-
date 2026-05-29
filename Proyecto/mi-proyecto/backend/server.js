@@ -992,7 +992,7 @@ app.get('/api/urgencias/hoy', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT
-         c.cit_id, c.pac_documento, p.pac_nombre,
+         c.cit_id, c.pac_documento, p.pac_nombre, p.pac_telefono,
          c.cit_estado, c.cit_nivel_paciente, c.cit_fecha_hora,
          m.med_nombre,
          u.usu_nombre AS enfermero_nombre,
