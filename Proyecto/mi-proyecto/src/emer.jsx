@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { FiAlertTriangle, FiUsers, FiLogOut, FiRefreshCw,
-         FiUserPlus, FiChevronLeft, FiCheckCircle } from 'react-icons/fi'
+         FiUserPlus, FiChevronLeft, FiCheckCircle, FiCalendar } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import './emer.css'
 
@@ -348,10 +348,12 @@ export default function Urgencias() {
             <button className="module-item" onClick={() => navigate('/secretaria')}>
               <span className="module-icon"><FiUsers /></span>
               <span className="module-name">Pacientes</span>
+              <span className="module-count">0</span>
             </button>
             <button className="module-item" onClick={() => navigate('/citas')}>
-              <span className="module-icon">📅</span>
+              <span className="module-icon"><FiCalendar /></span>
               <span className="module-name">Citas Médicas</span>
+              <span className="module-count">0</span>
             </button>
             <button className="module-item active">
               <span className="module-icon"><FiAlertTriangle /></span>
