@@ -1010,6 +1010,7 @@ app.get('/api/urgencias/hoy', async (req, res) => {
              = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::date
        ORDER BY c.cit_fecha_hora DESC`
     )
+    console.log('URGENCIAS:', result.rows.map(r => ({ doc: r.pac_documento, tel: r.pac_telefono, nombre: r.pac_nombre })))
     res.json(result.rows.map(r => ({
       citId:              r.cit_id,
       documento:          r.pac_documento,
