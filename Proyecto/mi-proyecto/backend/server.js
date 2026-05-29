@@ -1027,13 +1027,11 @@ app.get('/api/urgencias/hoy', async (req, res) => {
       temperatura:        r.siv_temperatura,
       saturacion:         r.siv_saturacion_o2,
       esPNI: !r.pac_nombre ||
-             !r.pac_direccion || r.pac_direccion === 'DESCONOCIDO' ||
-             !r.pac_ciudad    || r.pac_ciudad    === 'DESCONOCIDO' ||
-             !r.pac_telefono  || String(r.pac_telefono) === '0'    ||
-             !r.pac_fecha_nacimiento ||
-             new Date(r.pac_fecha_nacimiento).getFullYear() === 1900 ||
-             r.pac_emergencia_nombre   === 'DESCONOCIDO' ||
-             r.pac_emergencia_telefono === '0'
+             r.pac_direccion === 'DESCONOCIDO' ||
+             r.pac_ciudad    === 'DESCONOCIDO' ||
+             String(r.pac_telefono) === '0'    ||
+             (r.pac_fecha_nacimiento &&
+               new Date(r.pac_fecha_nacimiento).getFullYear() === 1900)
     })))
   } catch (err) {
     res.status(500).json({ error: err.message })
