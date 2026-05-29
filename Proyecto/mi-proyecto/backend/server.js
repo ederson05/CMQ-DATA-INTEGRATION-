@@ -186,9 +186,15 @@ app.get('/api/medicos', async (req, res) => {
 app.get('/api/citas/hoy/:medId', async (req, res) => {
   try {
     const result = await pool.query(
+
+
       `SELECT c.cit_id, c.pac_documento, p.pac_nombre,
-              c.cit_fecha_hora, c.cit_motivo_consulta, c.cit_estado
-       FROM tbl_cita c
+        c.cit_fecha_hora, c.cit_motivo_consulta, c.cit_estado, c.cit_nivel_paciente
+ FROM tbl_cita c
+
+
+
+
        JOIN tbl_paciente p ON c.pac_documento = p.pac_documento
        WHERE c.med_id = $1
          AND DATE(c.cit_fecha_hora AT TIME ZONE 'America/Bogota') 
@@ -539,9 +545,15 @@ app.get('/api/enfermero/paciente/:documento', async (req, res) => {
 
     // Primero buscar cita programada hoy
     const citaResult = await pool.query(
+
+
       `SELECT c.cit_id, c.pac_documento, p.pac_nombre,
-              c.cit_fecha_hora, c.cit_motivo_consulta, c.cit_estado
-       FROM tbl_cita c
+        c.cit_fecha_hora, c.cit_motivo_consulta, c.cit_estado, c.cit_nivel_paciente
+ FROM tbl_cita c
+
+
+
+
        JOIN tbl_paciente p ON p.pac_documento = c.pac_documento
        WHERE c.pac_documento = $1
          AND DATE(c.cit_fecha_hora AT TIME ZONE 'America/Bogota')
@@ -810,7 +822,7 @@ app.post('/api/enfermero/urgencia', async (req, res) => {
         [
           documento,
           nombre,
-          genero     || 'DESCONOCIDO',
+          genero     || 'D',
           tipoSangre || 'DESCONOCIDO'
         ]
       )
