@@ -204,7 +204,7 @@ const validarAnotacion = (f) => {
 
 
 
-function CitaCard({ cita, onEstadoChange, medId, onVerHistorial }) {
+function CitaCard({ cita, onEstadoChange, medId, onVerHistorial, onVerHistorialPac, onAnotar }) {
   const [editando, setEditando] = useState(false);
   const [nuevoEstado, setNuevoEstado] = useState(cita.estado);
 
@@ -310,18 +310,46 @@ boxShadow: esTriage ? `0 0 0 3px ${colores.shadow}` : "0 1px 3px rgba(0,0,0,0.05
           </span>
           <div style={{ display: "flex", gap: "6px" }}>
             {esTriage && (
-  <button
-    onClick={() => onVerHistorial(cita)}
-    style={{
-      display: "flex", alignItems: "center", gap: "4px",
-      background: "#dc2626", color: "white", border: "none",
-      borderRadius: "6px", padding: "4px 10px", fontSize: "12px",
-      fontWeight: 700, cursor: "pointer",
-    }}
-  >
-    <FiEye size={12} /> Ver paciente
-  </button>
-)}
+              <button
+                onClick={() => onVerHistorial(cita)}
+                style={{
+                  display: "flex", alignItems: "center", gap: "4px",
+                  background: "#dc2626", color: "white", border: "none",
+                  borderRadius: "6px", padding: "4px 10px", fontSize: "12px",
+                  fontWeight: 700, cursor: "pointer",
+                }}
+              >
+                <FiEye size={12} /> Ver paciente
+              </button>
+            )}
+
+            {!esTriage && (
+              <button
+                onClick={() => onVerHistorialPac(cita)}
+                style={{
+                  display: "flex", alignItems: "center", gap: "4px",
+                  background: "none", border: "1px solid #bfdbfe",
+                  borderRadius: "6px", padding: "4px 10px", fontSize: "12px",
+                  color: "#2563eb", cursor: "pointer", fontWeight: 500,
+                }}
+              >
+                <FiEye size={12} /> Historial
+              </button>
+            )}
+
+            {!esTriage && cita.estado === "EN_ESPERA" && (
+              <button
+                onClick={() => onAnotar(cita)}
+                style={{
+                  display: "flex", alignItems: "center", gap: "4px",
+                  background: "#2563eb", color: "white", border: "none",
+                  borderRadius: "6px", padding: "4px 10px", fontSize: "12px",
+                  fontWeight: 700, cursor: "pointer",
+                }}
+              >
+                <FiPlusCircle size={12} /> Anotar
+              </button>
+            )}
 
 {cita.estado !== "ATENDIDO" && (
   <button
@@ -562,6 +590,7 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
           pacDocumento: pacienteSeleccionado.documento,
           medId: usuario.medId || usuario.id,
           usuId: usuario.id,
+          citId: formAnot.citId || null,
           tipoConsulta: formAnot.tipoConsulta,
           diagnostico: formAnot.diagnostico,
           tratamiento: formAnot.tratamiento,
@@ -970,6 +999,20 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
   onEstadoChange={handleEstadoChange}
   medId={usuario.medId || usuario.id}
   onVerHistorial={(cita) => setUrgenciaPaciente(cita)}
+  onVerHistorialPac={(cita) => {
+    const pac = todosPacientes.find(p => p.documento === cita.pacDoc)
+    if (pac) verHistorial(pac)
+  }}
+  onAnotar={(cita) => {
+    const pac = todosPacientes.find(p => p.documento === cita.pacDoc)
+    if (pac) {
+      setPaciente(pac)
+      setFormAnot({ citId: cita.citId, tipoConsulta: '', diagnostico: '', tratamiento: '', observaciones: '', proximaCita: '' })
+      setErrAnot({})
+      setIntentoAnot(false)
+      setVista('nueva-anotacion')
+    }
+  }}
 />
 
 
