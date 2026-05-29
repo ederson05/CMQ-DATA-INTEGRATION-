@@ -1115,7 +1115,9 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
                                   onClick={() => {
                                     setPaciente(p);
                                     const citaUrgencia = citasHoy.find(c => c.pacDoc === p.documento && c.motivo === "URGENCIA" && c.estado !== "ATENDIDO");
+                                    const citaActiva = citasHoy.find(c => c.pacDoc === p.documento && c.estado !== "ATENDIDO");
                                     setFormAnot({
+                                      citId: citaActiva?.citId || null,
                                       tipoConsulta: citaUrgencia ? "URGENCIA" : "",
                                       diagnostico: "",
                                       tratamiento: "",
