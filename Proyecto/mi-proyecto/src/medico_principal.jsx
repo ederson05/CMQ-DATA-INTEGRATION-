@@ -1869,3 +1869,5 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
     </div>
     );
   }
+
+  export default MedicoPrincipal;
