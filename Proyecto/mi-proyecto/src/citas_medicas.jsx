@@ -333,8 +333,8 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
 
 if (!citaEditando.fecha) {
       errsM.fecha = 'Selecciona una fecha'
-    } else if (citaEditando.fecha < ahoraPlus3()) {
-      errsM.fecha = 'La fecha debe ser mínimo 3 horas desde ahora'
+    } else if (citaEditando.fecha < new Date().toISOString().slice(0,16)) {
+      errsM.fecha = 'No se pueden ingresar fechas pasadas'
     }
 
 
@@ -484,7 +484,7 @@ if (!citaEditando.fecha) {
                 <div className="form-group">
                   <label>FECHA Y HORA *</label>
                   <input type="datetime-local" name="fecha"
-                    min={ahoraPlus3()} max={maxFecha()}
+                    min={new Date().toISOString().slice(0,16)} max={maxFecha()}
                     value={nuevaCita.fecha} onChange={handleInputCita}
                     style={{ borderColor: errores.fecha ? '#ef4444' : '', background: errores.fecha ? '#fff5f5' : '' }} />
                   <ErrorField msg={errores.fecha} />
@@ -599,7 +599,7 @@ if (!citaEditando.fecha) {
               <div className="form-group">
                 <label>FECHA Y HORA</label>
                 <input type="datetime-local" value={citaEditando.fecha}
-                  min={ahoraPlus3()} max={maxFecha()}
+                  min={new Date().toISOString().slice(0,16)} max={maxFecha()}
                   style={{ borderColor: erroresModal.fecha ? '#ef4444' : '', background: erroresModal.fecha ? '#fff5f5' : '' }}
                   onChange={(e) => setCitaEditando(prev => ({ ...prev, fecha: e.target.value }))} />
                 <ErrorField msg={erroresModal.fecha} />
