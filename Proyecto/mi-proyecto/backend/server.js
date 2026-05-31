@@ -783,8 +783,8 @@ app.post('/api/triage', async (req, res) => {
 
     // Insertar triage
     const triResult = await client.query(
-      `INSERT INTO tbl_triage (cit_id, tri_nivel, tri_sintomas, usu_id)
-       VALUES ($1,$2,$3,$4) RETURNING tri_id`,
+      `INSERT INTO tbl_triage (cit_id, tri_nivel, tri_sintomas, usu_id, tri_fecha)
+       VALUES ($1,$2,$3,$4, CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota') RETURNING tri_id`,
       [citId, nivel, sintomas, usuId || null]
     );
 
@@ -850,7 +850,7 @@ app.get('/api/triage/hoy/:usuId', async (req, res) => {
               t.tri_nivel, t.tri_sintomas,
               s.siv_presion_arterial, s.siv_frecuencia_cardiaca,
               s.siv_temperatura, s.siv_saturacion_o2,
-              (t.tri_fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota') AS tri_fecha
+              t.tri_fecha
        FROM tbl_triage t
        JOIN tbl_cita c               ON c.cit_id       = t.cit_id
        JOIN tbl_paciente p           ON p.pac_documento = c.pac_documento
