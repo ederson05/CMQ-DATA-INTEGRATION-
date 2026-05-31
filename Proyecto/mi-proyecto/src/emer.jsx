@@ -391,14 +391,13 @@ const validar = () => {
                   </select>
                   <ErrorField msg={errores.tipoSangre} />
                 </div>
-                <div className="form-group">
+
+
+                
+                   <div className="form-group">
                   <label>EMAIL (OPCIONAL)</label>
                   <input name="email" value={form.email} onChange={handleChange} placeholder="correo@email.com" />
                 </div>
-              </div>
-
-              <div className="form-section-label" style={{ marginTop: '4px' }}>CONTACTO</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div className="form-group">
                   <label>DIRECCIÓN *</label>
                   <input name="direccion" value={form.direccion} onChange={handleChange} placeholder="Calle, carrera..."
@@ -411,14 +410,32 @@ const validar = () => {
                     style={{ borderColor: errores.ciudad ? '#ef4444' : '', background: errores.ciudad ? '#fff5f5' : '' }} />
                   <ErrorField msg={errores.ciudad} />
                 </div>
+              </div>
+
+              <div className="form-section-label" style={{ marginTop: '4px' }}>CONTACTO DE EMERGENCIA</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+
+
+
+
+
+                
+
+
+
+
+
+
+
+
                 <div className="form-group">
-                  <label>NOMBRE CONTACTO EMERGENCIA *</label>
+                  <label>NOMBRE CONTACTO EMERGENCIA (OPCIONAL)</label>
                   <input name="emergenciaNombre" value={form.emergenciaNombre} onChange={handleChange} placeholder="Nombre"
                     style={{ borderColor: errores.emergenciaNombre ? '#ef4444' : '', background: errores.emergenciaNombre ? '#fff5f5' : '' }} />
                   <ErrorField msg={errores.emergenciaNombre} />
                 </div>
                 <div className="form-group">
-                  <label>TELÉFONO EMERGENCIA *</label>
+                  <label>TELÉFONO EMERGENCIA (OPCIONAL)</label>
                   <input name="emergenciaTel" value={form.emergenciaTel} onChange={handleChange} placeholder="Teléfono"
                     style={{ borderColor: errores.emergenciaTel ? '#ef4444' : '', background: errores.emergenciaTel ? '#fff5f5' : '' }} />
                   <ErrorField msg={errores.emergenciaTel} />
