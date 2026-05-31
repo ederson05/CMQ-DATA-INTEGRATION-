@@ -250,11 +250,11 @@ const validar = () => {
 
         <main className="content-area">
           <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
+            <div style={{ flex: 1, textAlign: 'center' }}>
               <h2>Urgencias del Día</h2>
               <p>Pacientes atendidos por urgencia hoy — registrados y no registrados</p>
             </div>
-            <button className="btn-cancelar" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            <button className="btn-cancelar" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
               onClick={cargar}>
               <FiRefreshCw size={13} /> Actualizar
             </button>
