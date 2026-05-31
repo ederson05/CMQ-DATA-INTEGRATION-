@@ -543,7 +543,11 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
 
   const histFiltrado = historial.filter((a) => {
     if (filtroTipo && a.tipoConsulta !== filtroTipo) return false;
-    const fechaAnot = new Date(String(a.fechaConsulta).replace(" ", "T"));
+    const limpia = String(a.fechaConsulta).replace("T", " ").split(".")[0];
+const [f, h] = limpia.split(" ");
+const [anio, mes, dia] = f.split("-");
+const [hh, mm] = h.split(":");
+const fechaAnot = new Date(anio, mes - 1, dia, hh, mm);
     if (filtroDesde) {
       const desde = new Date(filtroDesde + "T00:00:00");
       if (fechaAnot < desde) return false;
