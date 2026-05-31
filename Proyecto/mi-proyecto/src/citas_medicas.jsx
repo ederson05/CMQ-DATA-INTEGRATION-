@@ -335,6 +335,9 @@ if (!citaEditando.fecha) {
       errsM.fecha = 'Selecciona una fecha'
     } else if (citaEditando.fecha < new Date().toISOString().slice(0,16)) {
       errsM.fecha = 'No se pueden ingresar fechas pasadas'
+    } else {
+      const disp = validarDisponibilidad(citaEditando.fecha, citaEditando.medId, citas)
+      if (!disp.disponible) errsM.fecha = disp.mensaje
     }
 
 
