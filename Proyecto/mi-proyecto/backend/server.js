@@ -850,7 +850,7 @@ app.get('/api/triage/hoy/:usuId', async (req, res) => {
               t.tri_nivel, t.tri_sintomas,
               s.siv_presion_arterial, s.siv_frecuencia_cardiaca,
               s.siv_temperatura, s.siv_saturacion_o2,
-              t.tri_fecha
+              (t.tri_fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bogota') AS tri_fecha
        FROM tbl_triage t
        JOIN tbl_cita c               ON c.cit_id       = t.cit_id
        JOIN tbl_paciente p           ON p.pac_documento = c.pac_documento
