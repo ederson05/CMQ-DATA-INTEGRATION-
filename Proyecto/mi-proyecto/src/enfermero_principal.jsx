@@ -161,21 +161,21 @@ const [formData, setFormData] = useState({
     errs.frecuenciaCardiaca = 'La frecuencia cardíaca es obligatoria'
   } else {
     const v = Number(formData.frecuenciaCardiaca)
-    if (v < 0 || v > 300) errs.frecuenciaCardiaca = 'Debe estar entre 0 y 300 LPM'
+    if (v < 20 || v > 250) errs.frecuenciaCardiaca = 'Frecuencia inválida (rango: 20 – 250 LPM)'
   }
 
   if (!formData.temperatura) {
     errs.temperatura = 'La temperatura es obligatoria'
   } else {
     const v = Number(formData.temperatura)
-    if (v < 20 || v > 45) errs.temperatura = 'Debe estar entre 20°C y 45°C'
+    if (v < 25 || v > 45) errs.temperatura = 'Temperatura inválida (rango: 25°C – 45°C)'
   }
 
   if (!formData.saturacion) {
     errs.saturacion = 'La saturación es obligatoria'
   } else {
     const v = Number(formData.saturacion)
-    if (v < 0 || v > 100) errs.saturacion = 'Debe estar entre 0 y 100%'
+    if (v < 50 || v > 100) errs.saturacion = 'Saturación inválida (rango: 50% – 100%)'
   }
 
   setErrors(errs)

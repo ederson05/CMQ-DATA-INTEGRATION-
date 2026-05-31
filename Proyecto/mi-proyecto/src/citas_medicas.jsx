@@ -318,9 +318,16 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
   const handleGuardarCita = async () => {
     const errsM = {}
     if (!citaEditando.medId) errsM.medId = 'Selecciona un médico'
-    if (!citaEditando.fecha) errsM.fecha = 'Selecciona una fecha'
-    else if (citaEditando.estado !== 'CANCELADA' && citaEditando.fecha < ahoraPlus3())
-      errsM.fecha = 'La fecha mínima es 3 horas desde ahora'
+
+
+if (!citaEditando.fecha) {
+      errsM.fecha = 'Selecciona una fecha'
+    } else if (citaEditando.fecha < ahoraPlus3()) {
+      errsM.fecha = 'La fecha debe ser mínimo 3 horas desde ahora'
+    }
+
+
+
     if (Object.keys(errsM).length > 0) { setErroresModal(errsM); return }
     setErroresModal({})
 
@@ -582,7 +589,9 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
                 <label>FECHA Y HORA</label>
                 <input type="datetime-local" value={citaEditando.fecha}
                   min={ahoraPlus3()} max={maxFecha()}
+                  style={{ borderColor: erroresModal.fecha ? '#ef4444' : '', background: erroresModal.fecha ? '#fff5f5' : '' }}
                   onChange={(e) => setCitaEditando(prev => ({ ...prev, fecha: e.target.value }))} />
+                <ErrorField msg={erroresModal.fecha} />
               </div>
               <div className="form-group">
                 <label>ESTADO DE LA CITA</label>
