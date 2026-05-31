@@ -314,6 +314,7 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
   }
 
   const handleEditarCita = (cita) => {
+    setErroresModal({})
     // Normalizar fecha al formato requerido por datetime-local
     let fechaNorm = cita.fecha || ''
     if (fechaNorm) {
