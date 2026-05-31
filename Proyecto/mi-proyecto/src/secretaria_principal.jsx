@@ -13,7 +13,11 @@ import './secretaria_principal.css'
 //API
 const API = 'https://cmq-backend.onrender.com/api'
 
-const hoy = new Date().toISOString().split('T')[0]
+const hoy = (() => {
+  const d = new Date()
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+})()
 
 /* REGLAS DE VALIDACIÓN*/
 const REGLAS = {
@@ -21,7 +25,13 @@ const REGLAS = {
   emailValido: (valor) => /^[a-zA-Z0-9._+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(valor),
   soloNumeros: (valor) => /^\d+$/.test(valor),
   telefono: (valor) => String(valor || '').replace(/\D/g, '').length === 10,
-  fechaValida: (valor) => valor && valor <= hoy,
+  fechaValida: (valor) => {
+  if (!valor) return false
+  const [anio, mes, dia] = valor.split('-')
+  const sel = new Date(anio, mes - 1, dia)
+  const manana = new Date(); manana.setHours(0,0,0,0); manana.setDate(manana.getDate() + 1)
+  return sel < manana
+},
 }
 
 const validarCampoRegistro = (name, value) => {
