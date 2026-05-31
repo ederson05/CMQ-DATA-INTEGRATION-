@@ -672,7 +672,7 @@ function VistaReporte({ pacientes, usuarioId }) {
                     <tr><td colSpan="4" className="no-results">No hay pacientes registrados hoy.</td></tr>
                   ) : todos.map(pac => (
                     <tr key={pac.triId}>
-                      <td>{new Date(pac.fechaHora).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota' })}</td>
+                      <td>{new Date(pac.fechaHora).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Bogota' })}</td>
                       <td>{pac.documento}</td>
                       <td style={{ fontWeight: 500, color: '#1e293b' }}>{pac.nombre}</td>
                       <td>
