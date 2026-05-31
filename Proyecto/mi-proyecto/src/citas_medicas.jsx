@@ -313,7 +313,18 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
     }
   }
 
-  const handleEditarCita = (cita) => setCitaEditando({ ...cita })
+  const handleEditarCita = (cita) => {
+    // Normalizar fecha al formato requerido por datetime-local
+    let fechaNorm = cita.fecha || ''
+    if (fechaNorm) {
+      const limpia = fechaNorm.replace('T', ' ').split('.')[0]
+      const [fecha, hora] = limpia.split(' ')
+      const [a, m, d] = fecha.split('-')
+      const [hh, mm] = hora.split(':')
+      fechaNorm = `${a}-${pad(m)}-${pad(d)}T${pad(hh)}:${pad(mm)}`
+    }
+    setCitaEditando({ ...cita, fecha: fechaNorm })
+  }
 
   const handleGuardarCita = async () => {
     const errsM = {}
