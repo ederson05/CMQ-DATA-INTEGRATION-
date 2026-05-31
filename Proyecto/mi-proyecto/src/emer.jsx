@@ -412,7 +412,7 @@ const validar = () => {
                 </div>
               </div>
 
-              <div className="form-section-label" style={{ marginTop: '4px' }}>CONTACTO DE EMERGENCIA</div>
+              <div className="form-section-label" style={{ marginTop: '4px' }}>CONTACTO DE EMERGENCIA (OPCIONAL)</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
 
 
@@ -429,13 +429,13 @@ const validar = () => {
 
 
                 <div className="form-group">
-                  <label>NOMBRE CONTACTO EMERGENCIA (OPCIONAL)</label>
+                  <label>NOMBRE CONTACTO EMERGENCIA </label>
                   <input name="emergenciaNombre" value={form.emergenciaNombre} onChange={handleChange} placeholder="Nombre"
                     style={{ borderColor: errores.emergenciaNombre ? '#ef4444' : '', background: errores.emergenciaNombre ? '#fff5f5' : '' }} />
                   <ErrorField msg={errores.emergenciaNombre} />
                 </div>
                 <div className="form-group">
-                  <label>TELÉFONO EMERGENCIA (OPCIONAL)</label>
+                  <label>TELÉFONO EMERGENCIA </label>
                   <input name="emergenciaTel" value={form.emergenciaTel} onChange={handleChange} placeholder="Teléfono"
                     style={{ borderColor: errores.emergenciaTel ? '#ef4444' : '', background: errores.emergenciaTel ? '#fff5f5' : '' }} />
                   <ErrorField msg={errores.emergenciaTel} />
