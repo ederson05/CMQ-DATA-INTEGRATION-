@@ -732,7 +732,7 @@ function VistaReporte({ pacientes, usuarioId }) {
               <tr><td colSpan="4" style={{ padding: '16px', textAlign: 'center', fontStyle: 'italic' }}>Sin registros</td></tr>
             ) : todos.map((pac, i) => (
               <tr key={pac.triId} style={{ borderBottom: '1px solid #ccc', background: i % 2 === 0 ? '#fff' : '#f9f9f9' }}>
-                <td style={{ padding: '7px 12px' }}>{new Date(pac.fechaHora).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</td>
+                <td style={{ padding: '7px 12px' }}>{new Date(pac.fechaHora).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Bogota' })}</td>
                 <td style={{ padding: '7px 12px' }}>{pac.documento}</td>
                 <td style={{ padding: '7px 12px', fontWeight: 600 }}>{pac.nombre}</td>
                 <td style={{ padding: '7px 12px' }}>Triage {pac.nivel}</td>
