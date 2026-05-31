@@ -464,7 +464,7 @@ app.post('/api/anotaciones', async (req, res) => {
          ano_id, his_id, med_id, ano_tipo_consulta, ano_fecha_consulta,
          ano_diagnostico, ano_tratamiento, ano_observaciones,
          ano_proxima_cita, ano_fecha_creacion, cit_id
-       ) VALUES ($1,$2,$3,$4, NOW(),$5,$6,$7,$8, NOW(),$9)`,
+       ) VALUES ($1,$2,$3,$4, CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota',$5,$6,$7,$8, CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota',$9)`,
       [
         anoId, hisId, medId, tipoConsulta,
         diagnostico, tratamiento, observaciones,

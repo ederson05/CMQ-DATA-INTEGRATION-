@@ -995,6 +995,10 @@ const [urgenciaPaciente, setUrgenciaPaciente] = useState(null);
   const atendidoB = b.estado === "ATENDIDO" ? 1 : 0;
   if (atendidoA !== atendidoB) return atendidoA - atendidoB;
 
+  const esUrgenciaA = a.motivo === "URGENCIA" ? 0 : 1;
+  const esUrgenciaB = b.motivo === "URGENCIA" ? 0 : 1;
+  if (esUrgenciaA !== esUrgenciaB) return esUrgenciaA - esUrgenciaB;
+
   const prioridad = { CRITICO: 0, ESTABLE: 1, LEVE: 2 };
   const pA = prioridad[a.nivelPaciente] ?? 3;
   const pB = prioridad[b.nivelPaciente] ?? 3;
