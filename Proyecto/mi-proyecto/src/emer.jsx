@@ -129,16 +129,26 @@ export default function Urgencias() {
 
 const validar = () => {
   const e = {}
-  if (!form.nombre.trim())         e.nombre          = 'El nombre es obligatorio'
-   if (!form.telefono.trim() || form.telefono.length !== 10 || !/^\d+$/.test(form.telefono))
-    e.telefono = 'Teléfono inválido (solo números, máximo 10 dígitos)'
-  if (!form.fechaNacimiento) {
-    e.fechaNacimiento = 'La fecha de nacimiento es obligatoria'
-  } else if (new Date(form.fechaNacimiento) > new Date()) {
-    e.fechaNacimiento = 'La fecha de nacimiento no puede ser futura'
+  if (!form.nombre.trim()) e.nombre = 'El nombre es obligatorio'
+  else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(form.nombre.trim())) e.nombre = 'Solo se permiten letras'
+
+  if (!form.telefono.trim()) e.telefono = 'El teléfono es obligatorio'
+  else if (!/^\d{10}$/.test(form.telefono.trim())) e.telefono = 'El teléfono debe tener exactamente 10 dígitos'
+
+  if (!form.fechaNacimiento) e.fechaNacimiento = 'La fecha de nacimiento es obligatoria'
+  else {
+    const [anio, mes, dia] = form.fechaNacimiento.split('-')
+    const nac = new Date(anio, mes - 1, dia)
+    const manana = new Date(); manana.setHours(0,0,0,0); manana.setDate(manana.getDate() + 1)
+    if (nac >= manana) e.fechaNacimiento = 'La fecha de nacimiento no puede ser futura'
   }
-  if (!form.genero)                 e.genero          = 'Seleccione un género'
-  if (!form.tipoSangre)             e.tipoSangre      = 'Seleccione el tipo de sangre'
+
+  if (!form.genero) e.genero = 'Seleccione un género'
+  if (!form.tipoSangre) e.tipoSangre = 'Seleccione el tipo de sangre'
+  if (!form.direccion.trim()) e.direccion = 'La dirección es obligatoria'
+  if (!form.ciudad.trim()) e.ciudad = 'La ciudad es obligatoria'
+  else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(form.ciudad.trim())) e.ciudad = 'La ciudad solo debe contener letras'
+
   setErrores(e)
   return Object.keys(e).length === 0
 }

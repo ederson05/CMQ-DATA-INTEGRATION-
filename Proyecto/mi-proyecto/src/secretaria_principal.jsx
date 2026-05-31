@@ -272,13 +272,23 @@ function SecretariaPrincipal() {
   const formatTime = (d) => d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
 
   const calcularEdad = (fechaNacimiento) => {
-    if (!fechaNacimiento) return '-'
-    const hoyD = new Date(), nac = new Date(fechaNacimiento)
-    let edad = hoyD.getFullYear() - nac.getFullYear()
-    const m = hoyD.getMonth() - nac.getMonth()
-    if (m < 0 || (m === 0 && hoyD.getDate() < nac.getDate())) edad--
-    return `${edad} años`
+  if (!fechaNacimiento) return '-'
+  const hoyD = new Date()
+  const [anio, mes, dia] = fechaNacimiento.split('-')
+  const nac = new Date(anio, mes - 1, dia)
+  let edad = hoyD.getFullYear() - nac.getFullYear()
+  const m = hoyD.getMonth() - nac.getMonth()
+  if (m < 0 || (m === 0 && hoyD.getDate() < nac.getDate())) edad--
+
+  if (edad < 1) {
+    const meses = hoyD.getMonth() - nac.getMonth() + (hoyD.getFullYear() - nac.getFullYear()) * 12
+    const diasNac = new Date(nac.getFullYear(), nac.getMonth() + meses, nac.getDate())
+    const dias = Math.floor((hoyD - diasNac) / (1000 * 60 * 60 * 24))
+    if (meses === 0) return `${dias} día${dias !== 1 ? 's' : ''}`
+    return `${meses} mes${meses !== 1 ? 'es' : ''}${dias > 0 ? `, ${dias} día${dias !== 1 ? 's' : ''}` : ''}`
   }
+  return `${edad} años`
+}
 
   const formatGenero = (g) =>
     g === 'M' ? 'Masculino' : g === 'F' ? 'Femenino' : g === 'O' ? 'Otro' : '-'
