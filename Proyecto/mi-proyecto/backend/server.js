@@ -855,7 +855,7 @@ app.get('/api/triage/hoy/:usuId', async (req, res) => {
        JOIN tbl_cita c               ON c.cit_id       = t.cit_id
        JOIN tbl_paciente p           ON p.pac_documento = c.pac_documento
        LEFT JOIN tbl_signos_vitales s ON s.cit_id       = t.cit_id
-       WHERE c.usu_id = $1
+       WHERE t.usu_id = $1
          AND DATE(t.tri_fecha AT TIME ZONE 'America/Bogota')
              = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::date
        ORDER BY t.tri_fecha DESC`,
