@@ -333,13 +333,17 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
 
 
 if (!citaEditando.fecha) {
-      errsM.fecha = 'Selecciona una fecha'
-    } else if (citaEditando.fecha < new Date().toISOString().slice(0,16)) {
-      errsM.fecha = 'No se pueden ingresar fechas pasadas'
-    } else {
-      const disp = validarDisponibilidad(citaEditando.fecha, citaEditando.medId, citas)
-      if (!disp.disponible) errsM.fecha = disp.mensaje
-    }
+  errsM.fecha = 'Selecciona una fecha'
+} else {
+  const ahora = new Date()
+  const ahoraLocal = `${ahora.getFullYear()}-${pad(ahora.getMonth()+1)}-${pad(ahora.getDate())}T${pad(ahora.getHours())}:${pad(ahora.getMinutes())}`
+  if (citaEditando.fecha < ahoraLocal) {
+    errsM.fecha = 'No se pueden ingresar fechas pasadas'
+  } else {
+    const disp = validarDisponibilidad(citaEditando.fecha, citaEditando.medId, citas)
+    if (!disp.disponible) errsM.fecha = disp.mensaje
+  }
+}
 
 
 
