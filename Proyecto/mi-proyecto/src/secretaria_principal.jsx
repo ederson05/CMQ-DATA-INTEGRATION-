@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   FiUsers, FiCalendar, FiFileText, FiUser,
-  FiSearch, FiEdit2, FiLogOut, FiEye, FiAlertTriangle
+  FiSearch, FiEdit2, FiLogOut, FiEye, //FiAlertTriangle
 } from 'react-icons/fi'
 import { FaStethoscope } from 'react-icons/fa'
 import { useNavigate } from 'react-router-dom'
@@ -441,7 +441,7 @@ function SecretariaPrincipal() {
   const modules = [
     { id: 'pacientes',  name: 'Pacientes',     count: pacientes.length, icon: <FiUsers />,        path: '/secretaria' },
     { id: 'citas',      name: 'Citas Médicas', count: 0,                icon: <FiCalendar />,     path: '/citas' },
-    { id: 'urgencias',  name: 'Urgencias',     count: 0,                icon: <FiAlertTriangle />, path: '/urgencias' },
+    //{ id: 'urgencias',  name: 'Urgencias',     count: 0,                icon: <FiAlertTriangle />, path: '/urgencias' },
   ]
 
   const stats = [
