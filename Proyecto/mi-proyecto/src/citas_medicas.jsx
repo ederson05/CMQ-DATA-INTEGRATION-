@@ -231,14 +231,16 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
   const { name, value } = e.target
   setNuevaCita(prev => ({ ...prev, [name]: value }))
   let error = ''
-  if (name === 'fecha' && value) {
-    if (value < ahoraPlus3())
-      error = 'La fecha mínima es 3 horas desde ahora'
-    else if (nuevaCita.medico) {
-      const disp = validarDisponibilidad(value, nuevaCita.medico, citas)
-      if (!disp.disponible) error = disp.mensaje
-    }
+if (name === 'fecha' && value) {
+  const ahora = new Date()
+  const ahoraLocal = `${ahora.getFullYear()}-${pad(ahora.getMonth()+1)}-${pad(ahora.getDate())}T${pad(ahora.getHours())}:${pad(ahora.getMinutes())}`
+  if (value < ahoraLocal) {
+    error = 'No se pueden ingresar fechas pasadas'
+  } else if (nuevaCita.medico) {
+    const disp = validarDisponibilidad(value, nuevaCita.medico, citas)
+    if (!disp.disponible) error = disp.mensaje
   }
+}
   if (name === 'medico' && nuevaCita.fecha) {
     const disp = validarDisponibilidad(nuevaCita.fecha, value, citas)
     if (!disp.disponible) error = disp.mensaje
@@ -246,6 +248,7 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
     return
   }
   setErrores(prev => ({ ...prev, [name]: error }))
+  
 }
 
   const handleConfirmarCita = async (e) => {
@@ -255,15 +258,20 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
     const errs = {}
     if (!nuevaCita.identificacion.trim()) errs.identificacion = 'La identificación del paciente es obligatoria'
     if (!nuevaCita.medico) errs.medico = 'Debes seleccionar un médico'
-    if (!nuevaCita.fecha) {
-      errs.fecha = 'La fecha y hora son obligatorias'
-    } else if (nuevaCita.fecha < ahoraPlus3()) {
-      errs.fecha = 'La fecha mínima es 3 horas desde ahora'
-    } else {
-      const disp = validarDisponibilidad(nuevaCita.fecha, nuevaCita.medico, citas)
-      if (!disp.disponible) errs.fecha = disp.mensaje
-    }
-    if (!nuevaCita.motivo.trim()) errs.motivo = 'El motivo de consulta es obligatorio'
+    
+    
+  if (!nuevaCita.fecha) {
+  errs.fecha = 'La fecha y hora son obligatorias'
+} else {
+  const ahora = new Date()
+  const ahoraLocal = `${ahora.getFullYear()}-${pad(ahora.getMonth()+1)}-${pad(ahora.getDate())}T${pad(ahora.getHours())}:${pad(ahora.getMinutes())}`
+  if (nuevaCita.fecha < ahoraLocal) {
+    errs.fecha = 'No se pueden ingresar fechas pasadas'
+  } else {
+    const disp = validarDisponibilidad(nuevaCita.fecha, nuevaCita.medico, citas)
+    if (!disp.disponible) errs.fecha = disp.mensaje
+  }
+}   if (!nuevaCita.motivo.trim()) errs.motivo = 'El motivo de consulta es obligatorio'
 
     if (nuevaCita.identificacion.trim()) {
       const paciente = pacientes.find(p => p.id === nuevaCita.identificacion.trim())
