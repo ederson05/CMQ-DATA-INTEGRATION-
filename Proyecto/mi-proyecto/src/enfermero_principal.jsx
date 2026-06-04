@@ -631,7 +631,6 @@ function VistaReporte({ pacientes, usuarioId }) {
   const nivelColor = { I: '#dc2626', II: '#ea580c', III: '#ca8a04', IV: '#16a34a', V: '#2563eb' }
   const nivelBg    = { I: '#fef2f2', II: '#fff7ed', III: '#fefce8', IV: '#f0fdf4', V: '#eff6ff' }
 
-  const [generado, setGenerado] = useState(false)
 
   return (
     <>
