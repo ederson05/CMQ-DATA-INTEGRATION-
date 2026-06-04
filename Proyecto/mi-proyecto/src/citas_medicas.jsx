@@ -234,9 +234,11 @@ setPacientes(Array.isArray(dataPacientes) ? dataPacientes.map(row => ({
 if (name === 'fecha' && value) {
   const ahora = new Date()
   const ahoraLocal = `${ahora.getFullYear()}-${pad(ahora.getMonth()+1)}-${pad(ahora.getDate())}T${pad(ahora.getHours())}:${pad(ahora.getMinutes())}`
-  if (value < ahoraLocal) {
-    error = 'No se pueden ingresar fechas pasadas'
-  } else if (nuevaCita.medico) {
+ if (value < ahoraLocal) {
+  error = 'No se pueden ingresar fechas pasadas'
+} else if (value > maxFecha()) {
+  error = 'Solo se pueden agendar citas con un máximo de 4 meses de anticipación'
+} else if (nuevaCita.medico) {
     const disp = validarDisponibilidad(value, nuevaCita.medico, citas)
     if (!disp.disponible) error = disp.mensaje
   }
@@ -266,8 +268,10 @@ if (name === 'fecha' && value) {
   const ahora = new Date()
   const ahoraLocal = `${ahora.getFullYear()}-${pad(ahora.getMonth()+1)}-${pad(ahora.getDate())}T${pad(ahora.getHours())}:${pad(ahora.getMinutes())}`
   if (nuevaCita.fecha < ahoraLocal) {
-    errs.fecha = 'No se pueden ingresar fechas pasadas'
-  } else {
+  errs.fecha = 'No se pueden ingresar fechas pasadas'
+} else if (nuevaCita.fecha > maxFecha()) {
+  errs.fecha = 'Solo se pueden agendar citas con un máximo de 4 meses de anticipación'
+} else {
     const disp = validarDisponibilidad(nuevaCita.fecha, nuevaCita.medico, citas)
     if (!disp.disponible) errs.fecha = disp.mensaje
   }
@@ -283,11 +287,16 @@ if (name === 'fecha' && value) {
     const paciente = pacientes.find(p => p.id === nuevaCita.identificacion.trim())
     const medico   = medicos.find(m => String(m.id) === nuevaCita.medico)
 
-    const duplicada = citas.find(c =>
-      c.pacDocumento === nuevaCita.identificacion.trim() &&
-      c.medId === parseInt(nuevaCita.medico) &&
-      c.fecha.split('T')[0] === nuevaCita.fecha.split('T')[0]
-    )
+   const duplicada = citas.find(c =>
+  c.pacDocumento === nuevaCita.identificacion.trim() &&
+  c.medId === parseInt(nuevaCita.medico) &&
+  c.fecha.replace(' ', 'T').split('T')[0] === nuevaCita.fecha.split('T')[0] &&
+  c.estado !== 'CANCELADA'
+)
+
+
+
+
     if (duplicada) {
       setErrores(prev => ({ ...prev, identificacion: 'Este paciente ya tiene una cita con ese médico en esa fecha' }))
       return
@@ -501,10 +510,16 @@ if (!citaEditando.fecha) {
 
                 <div className="form-group">
                   <label>FECHA Y HORA *</label>
-                  <input type="datetime-local" name="fecha"
-                    min={new Date().toISOString().slice(0,16)} max={maxFecha()}
-                    value={nuevaCita.fecha} onChange={handleInputCita}
-                    style={{ borderColor: errores.fecha ? '#ef4444' : '', background: errores.fecha ? '#fff5f5' : '' }} />
+
+
+<input type="datetime-local" name="fecha"
+  min={new Date().toISOString().slice(0,16)}
+  value={nuevaCita.fecha} onChange={handleInputCita}
+  style={{ borderColor: errores.fecha ? '#ef4444' : '', background: errores.fecha ? '#fff5f5' : '' }} />
+                  
+                  
+                  
+                  
                   <ErrorField msg={errores.fecha} />
                 </div>
 
