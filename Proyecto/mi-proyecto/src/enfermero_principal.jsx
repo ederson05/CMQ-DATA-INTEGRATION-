@@ -617,20 +617,9 @@ function VistaReporte({ pacientes, usuarioId }) {
   todos.forEach(p => { if (stats[p.nivel] !== undefined) stats[p.nivel]++ })
 
   const hoy = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })
-  const [generado, setGenerado] = useState(false)
-
-  if (!generado) return (
-    <div style={{ textAlign: 'center', padding: '80px 0' }}>
-      <p style={{ color: '#64748b', marginBottom: '20px' }}>Haga clic para generar el reporte del día</p>
-      <button className="btn-confirmar" onClick={() => setGenerado(true)}>
-        <FiClipboard /> Generar Reporte del Día
-      </button>
-    </div>
-  )
 
   const nivelColor = { I: '#dc2626', II: '#ea580c', III: '#ca8a04', IV: '#16a34a', V: '#2563eb' }
   const nivelBg    = { I: '#fef2f2', II: '#fff7ed', III: '#fefce8', IV: '#f0fdf4', V: '#eff6ff' }
-
 
   return (
     <>
