@@ -343,42 +343,39 @@ if (name === 'fecha' && value) {
     setCitaEditando({ ...cita, fecha: fechaNorm })
   }
 
-  const handleGuardarCita = async () => {
+const handleGuardarCita = async () => {
+    const original = citas.find(c => c.citId === citaEditando.citId)
+    if (original) {
+      const sinCambios =
+        String(original.medId) === String(citaEditando.medId) &&
+        original.fecha.replace(' ', 'T').slice(0, 16) === citaEditando.fecha.slice(0, 16) &&
+        original.estado === citaEditando.estado
+      if (sinCambios) {
+        setErroresModal({ general: 'No realizaste ningún cambio en la cita' })
+        return
+      }
+    }
+
     const errsM = {}
     if (!citaEditando.medId) errsM.medId = 'Selecciona un médico'
 
-
-if (!citaEditando.fecha) {
-  errsM.fecha = 'Selecciona una fecha'
-} else {
-  const ahora = new Date()
-  const ahoraLocal = `${ahora.getFullYear()}-${pad(ahora.getMonth()+1)}-${pad(ahora.getDate())}T${pad(ahora.getHours())}:${pad(ahora.getMinutes())}`
-  if (citaEditando.fecha < ahoraLocal) {
-    errsM.fecha = 'No se pueden ingresar fechas pasadas'
-  } else {
-    const disp = validarDisponibilidad(citaEditando.fecha, citaEditando.medId, citas)
-    if (!disp.disponible) errsM.fecha = disp.mensaje
-  }
-}
-
-
+    if (!citaEditando.fecha) {
+      errsM.fecha = 'Selecciona una fecha'
+    } else {
+      const ahora = new Date()
+      const ahoraLocal = `${ahora.getFullYear()}-${pad(ahora.getMonth()+1)}-${pad(ahora.getDate())}T${pad(ahora.getHours())}:${pad(ahora.getMinutes())}`
+      if (citaEditando.fecha < ahoraLocal) {
+        errsM.fecha = 'No se pueden ingresar fechas pasadas'
+      } else {
+        const disp = validarDisponibilidad(citaEditando.fecha, citaEditando.medId, citas)
+        if (!disp.disponible) errsM.fecha = disp.mensaje
+      }
+    }
 
     if (Object.keys(errsM).length > 0) { setErroresModal(errsM); return }
-setErroresModal({})
+    setErroresModal({})
 
-const original = citas.find(c => c.citId === citaEditando.citId)
-if (original) {
-  const sinCambios =
-    String(original.medId) === String(citaEditando.medId) &&
-    original.fecha.replace(' ', 'T').slice(0, 16) === citaEditando.fecha.slice(0, 16) &&
-    original.estado === citaEditando.estado
-  if (sinCambios) {
-    setErroresModal({ general: 'No realizaste ningún cambio en la cita' })
-    return
-  }
-}
-
-try {
+    try {
       const res = await fetch(`${API}/citas/${citaEditando.citId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
