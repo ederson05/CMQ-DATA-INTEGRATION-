@@ -280,14 +280,30 @@ setFormData({
   // ── alertas de signos vitales ──
   const alertasSignos = () => {
     const alertas = []
-    if (formData.temperatura && Number(formData.temperatura) >= 38.5)
-      alertas.push('⚠️ Fiebre alta (≥38.5°C)')
+
+    if (formData.temperatura) {
+      const t = Number(formData.temperatura)
+      if (t >= 38.5) alertas.push('⚠️ Fiebre alta (≥38.5°C)')
+      if (t <= 35)   alertas.push('🔵 Hipotermia (≤35°C)')
+    }
+
     if (formData.saturacion && Number(formData.saturacion) < 90)
       alertas.push('🔴 Saturación crítica (<90%)')
-    if (formData.frecuenciaCardiaca && Number(formData.frecuenciaCardiaca) > 100)
-      alertas.push('⚠️ Taquicardia (>100 LPM)')
-    if (formData.frecuenciaCardiaca && Number(formData.frecuenciaCardiaca) < 60)
-      alertas.push('⚠️ Bradicardia (<60 LPM)')
+
+    if (formData.frecuenciaCardiaca) {
+      const fc = Number(formData.frecuenciaCardiaca)
+      if (fc > 100) alertas.push('⚠️ Taquicardia (>100 LPM)')
+      if (fc < 60)  alertas.push('⚠️ Bradicardia (<60 LPM)')
+    }
+
+    if (formData.presionArterial && /^\d{2,3}\/\d{2,3}$/.test(formData.presionArterial)) {
+      const [sis, dia] = formData.presionArterial.split('/').map(Number)
+      if (sis >= 180 || dia >= 110)      alertas.push('🔴 Hipertensión nivel 3 (≥180/110 mmHg)')
+      else if (sis >= 160 || dia >= 100) alertas.push('🟠 Hipertensión nivel 2 (160-179/100-109 mmHg)')
+      else if (sis >= 140 || dia >= 90)  alertas.push('🟡 Hipertensión nivel 1 (140-159/90-99 mmHg)')
+      else if (sis < 90  || dia < 60)    alertas.push('🔵 Hipotensión (<90/60 mmHg)')
+    }
+
     return alertas
   }
 
