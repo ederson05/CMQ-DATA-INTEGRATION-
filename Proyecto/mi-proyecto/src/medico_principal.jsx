@@ -205,13 +205,21 @@ const validarAnotacion = (f) => {
 
 
 function CitaCard({ cita, onEstadoChange, medId, onVerHistorial, onVerHistorialPac, onAnotar }) {
-  const [editando, setEditando] = useState(false);
-  const [nuevoEstado, setNuevoEstado] = useState(cita.estado);
+  
+  
+  
+const [editando, setEditando] = useState(false);
+const [estadoMostrado, setEstadoMostrado] = useState(cita.estado);
+const [nuevoEstado, setNuevoEstado] = useState(cita.estado);
+const [guardando, setGuardando] = useState(false);
 
 useEffect(() => {
+  setEstadoMostrado(cita.estado);
   setNuevoEstado(cita.estado);
 }, [cita.estado]);
-  const [guardando, setGuardando] = useState(false);
+
+
+
 
   const fmtHora = (ts) => {
     if (!ts) return "-";
@@ -237,7 +245,7 @@ useEffect(() => {
         }),
       });
       const data = await res.json();
-      if (data.success) { onEstadoChange(cita.citId, nuevoEstado); setEditando(false); }
+      if (data.success) { setEstadoMostrado(nuevoEstado); onEstadoChange(cita.citId, nuevoEstado); setEditando(false); }
       else { alert("Error al actualizar el estado: " + (data.error || "Error desconocido")); setEditando(false); }
     } catch (e) {
       console.error(e);
@@ -304,9 +312,9 @@ boxShadow: esTriage ? `0 0 0 3px ${colores.shadow}` : "0 1px 3px rgba(0,0,0,0.05
             fontSize: "11px", fontWeight: 700, padding: "4px 12px", borderRadius: "12px",
             ...(esTriage
   ? { background: colores.badge, color: colores.badgeText, border: `1px solid ${colores.badgeBorder}` }
-  : ESTADO_STYLE[cita.estado])
+  : ESTADO_STYLE[estadoMostrado])
           }}>
-            {esTriage ? `${cita.nivelPaciente === 'CRITICO' ? '🔴' : cita.nivelPaciente === 'LEVE' ? '🟢' : '🟡'} ${cita.nivelPaciente || 'URGENCIA'}` : (ESTADO_LABEL[cita.estado] || cita.estado)}
+            {esTriage ? `${cita.nivelPaciente === 'CRITICO' ? '🔴' : cita.nivelPaciente === 'LEVE' ? '🟢' : '🟡'} ${cita.nivelPaciente || 'URGENCIA'}` : (ESTADO_LABEL[estadoMostrado] || estadoMostrado)}
           </span>
           <div style={{ display: "flex", gap: "6px" }}>
             {esTriage && (
@@ -337,7 +345,7 @@ boxShadow: esTriage ? `0 0 0 3px ${colores.shadow}` : "0 1px 3px rgba(0,0,0,0.05
               </button>
             )}
 
-            {!esTriage && cita.estado === "EN_ESPERA" && (
+            {!esTriage && estadoMostrado === "EN_ESPERA" && (
               <button
                 onClick={() => onAnotar(cita)}
                 style={{
@@ -351,7 +359,7 @@ boxShadow: esTriage ? `0 0 0 3px ${colores.shadow}` : "0 1px 3px rgba(0,0,0,0.05
               </button>
             )}
 
-{cita.estado !== "ATENDIDO" && (
+{estadoMostrado !== "ATENDIDO" && (
   <button
     onClick={() => { setNuevoEstado(cita.estado); setEditando(true); }}
     style={{
