@@ -289,7 +289,6 @@ if (name === 'fecha' && value) {
 
    const duplicada = citas.find(c =>
   c.pacDocumento === nuevaCita.identificacion.trim() &&
-  c.medId === parseInt(nuevaCita.medico) &&
   c.fecha.replace(' ', 'T').split('T')[0] === nuevaCita.fecha.split('T')[0] &&
   c.estado !== 'CANCELADA'
 )
