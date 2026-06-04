@@ -630,10 +630,22 @@ function VistaReporte({ pacientes, usuarioId }) {
             <h2>Reporte de Pacientes Atendidos</h2>
             <p>Métricas de gestión diarias por nivel de riesgo.</p>
           </div>
+
+
           <button className="btn-logout btn-print" style={{ color: '#1e293b', borderColor: '#cbd5e1' }}
-            onClick={() => window.print()}>
-            <FiPrinter /> Imprimir PDF
-          </button>
+  onClick={() => {
+    if (todos.length === 0) {
+      alert('No hay pacientes registrados para la fecha seleccionada.')
+      return
+    }
+    window.print()
+  }}>
+  <FiPrinter /> Imprimir PDF
+</button>
+
+
+
+
         </div>
 
         <div className="stats-grid">
