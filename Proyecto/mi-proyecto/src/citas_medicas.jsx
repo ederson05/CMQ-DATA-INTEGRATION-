@@ -364,9 +364,21 @@ if (!citaEditando.fecha) {
 
 
     if (Object.keys(errsM).length > 0) { setErroresModal(errsM); return }
-    setErroresModal({})
+setErroresModal({})
 
-    try {
+const original = citas.find(c => c.citId === citaEditando.citId)
+if (original) {
+  const sinCambios =
+    String(original.medId) === String(citaEditando.medId) &&
+    original.fecha.replace(' ', 'T').slice(0, 16) === citaEditando.fecha.slice(0, 16) &&
+    original.estado === citaEditando.estado
+  if (sinCambios) {
+    setErroresModal({ general: 'No realizaste ningún cambio en la cita' })
+    return
+  }
+}
+
+try {
       const res = await fetch(`${API}/citas/${citaEditando.citId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
