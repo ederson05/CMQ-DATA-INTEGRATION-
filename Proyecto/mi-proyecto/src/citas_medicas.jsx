@@ -248,7 +248,7 @@ if (name === 'fecha' && value) {
     return
   }
   setErrores(prev => ({ ...prev, [name]: error }))
-  
+
 }
 
   const handleConfirmarCita = async (e) => {
@@ -412,8 +412,10 @@ if (!citaEditando.fecha) {
             <FiLogOut /> Cerrar sesión
           </button>
           <div className="datetime-box">
-            <span className="current-date">{formatDate(currentTime)}</span>
-            <span className="current-time">{formatTime(currentTime)}</span>
+            <span className="current-date">{currentTime.toLocaleString('es-CO', {
+              day: '2-digit', month: '2-digit', year: 'numeric',
+              hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+            })}</span>
           </div>
           <div className="user-profile">
             <div className="user-avatar">AD</div>

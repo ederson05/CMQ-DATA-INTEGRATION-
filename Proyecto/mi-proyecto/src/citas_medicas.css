@@ -131,6 +131,10 @@ html, body {
   gap: 20px; min-width: 0;
 }
 
+@media (max-width: 1200px) {
+  .citas-sections { grid-template-columns: 1fr; }
+}
+
 .form-section,
 .directory-section {
   background: white; border-radius: 12px;
@@ -343,7 +347,7 @@ html, body {
 /* ══════════════════════════════
    RESPONSIVE
 ══════════════════════════════ */
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   .citas-sections { grid-template-columns: 1fr; }
 }
 @media (max-width: 768px) {
