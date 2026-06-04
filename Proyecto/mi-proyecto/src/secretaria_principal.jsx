@@ -211,7 +211,11 @@ function SecretariaPrincipal() {
   const [pacienteViendo, setPacienteViendo]     = useState(null)
   const [pacientes, setPacientes]               = useState([])
   const [numMedicos, setNumMedicos]             = useState(0)
-  const [numHistorias, setNumHistorias]         = useState(0)
+  
+  const [numHistorias, setNumHistorias] = useState(0)
+  const [numCitas, setNumCitas]         = useState(0)
+  
+  
   const [busqueda, setBusqueda]                 = useState('')
   const [errores, setErrores]                   = useState({})
   const [erroresEdit, setErroresEdit]           = useState({})
@@ -234,6 +238,7 @@ function SecretariaPrincipal() {
     cargarPacientes()
     cargarMedicos()
     cargarHistorias()
+    cargarCitas()
   }, [])
 
   /* ── API calls ── */
@@ -271,6 +276,14 @@ function SecretariaPrincipal() {
       const data = await res.json()
       setNumHistorias(Array.isArray(data) ? data.length : 0)
     } catch { setNumHistorias(0) }
+  }
+
+  const cargarCitas = async () => {
+    try {
+      const res  = await fetch(`${API}/citas`)
+      const data = await res.json()
+      setNumCitas(Array.isArray(data) ? data.length : 0)
+    } catch { setNumCitas(0) }
   }
 
   /* ── Helpers de formato ── */
@@ -440,13 +453,13 @@ function SecretariaPrincipal() {
 
   const modules = [
     { id: 'pacientes',  name: 'Pacientes',     count: pacientes.length, icon: <FiUsers />,        path: '/secretaria' },
-    { id: 'citas',      name: 'Citas Médicas', count: 0,                icon: <FiCalendar />,     path: '/citas' },
+    { id: 'citas', name: 'Citas Médicas', count: numCitas, icon: <FiCalendar />, path: '/citas' },
     //{ id: 'urgencias',  name: 'Urgencias',     count: 0,                icon: <FiAlertTriangle />, path: '/urgencias' },
   ]
 
   const stats = [
     { label: 'TOTAL PACIENTES', value: pacientes.length, subtext: 'Registrados en sistema', color: 'blue',   icon: <FiUsers size={22} />,       dot: '#3b82f6' },
-    { label: 'CITAS ACTIVAS',   value: 0,                subtext: 'Citas programadas',      color: 'green',  icon: <FiCalendar size={22} />,    dot: '#10b981' },
+    { label: 'CITAS ACTIVAS',   value: numCitas,          subtext: 'Citas programadas',      color: 'green',  icon: <FiCalendar size={22} />,    dot: '#10b981' },
     { label: 'MÉDICOS',         value: numMedicos,        subtext: 'Especialistas activos',  color: 'orange', icon: <FaStethoscope size={22} />, dot: '#f97316' },
     { label: 'HISTORIALES',     value: numHistorias,      subtext: 'Registros clínicos',     color: 'purple', icon: <FiFileText size={22} />,    dot: '#8b5cf6' },
   ]
