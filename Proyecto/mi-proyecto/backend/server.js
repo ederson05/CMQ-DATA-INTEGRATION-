@@ -59,6 +59,9 @@ app.post('/api/login', async (req, res) => {
     const u = result.rows[0];
 
     let medId = null;
+
+    /*
+    prueba123
     if (u.usu_rol === 'MEDICO') {
       const med = await pool.query(
         'SELECT med_id FROM tbl_medico WHERE med_id = $1',
@@ -66,6 +69,13 @@ app.post('/api/login', async (req, res) => {
       );
       if (med.rows.length > 0) medId = med.rows[0].med_id;
     }
+      */
+
+
+    if (u.usu_rol === 'MEDICO') {
+  medId = u.usu_id;
+}
+
 
     await pool.query(
       'UPDATE tbl_usuario SET usu_ultimo_acceso = NOW() WHERE usu_id = $1',
