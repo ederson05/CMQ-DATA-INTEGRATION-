@@ -589,7 +589,7 @@ padding: '10px 20px', fontWeight: 700, cursor: 'pointer',
 // =========================================================
 // VISTA: REPORTE
 // =========================================================
-function VistaReporte({ pacientes, usuarioId }) {
+function VistaReporte({ pacientes, usuarioId, onError }) {
   const [cargando, setCargando] = useState(true)
   const [listado, setListado]   = useState([])
   const [usuario, setUsuario]   = useState({})
@@ -635,7 +635,7 @@ function VistaReporte({ pacientes, usuarioId }) {
           <button className="btn-logout btn-print" style={{ color: '#1e293b', borderColor: '#cbd5e1' }}
   onClick={() => {
     if (todos.length === 0) {
-      alert('No hay pacientes registrados para la fecha seleccionada.')
+      onError('No hay pacientes registrados para la fecha seleccionada.')
       return
     }
     window.print()
@@ -909,6 +909,7 @@ function EnfermeroPrincipal() {
             <VistaReporte
               pacientes={pacientesHoy}
               usuarioId={usuario.id}
+              onError={showError}
             />
           )}
         </main>
