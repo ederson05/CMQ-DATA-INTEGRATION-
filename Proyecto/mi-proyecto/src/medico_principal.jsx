@@ -256,7 +256,7 @@ useEffect(() => {
     }
   };
 
-  const handleCancelar = () => { setNuevoEstado(cita.estado); setEditando(false); };
+  const handleCancelar = () => { setNuevoEstado(estadoMostrado); setEditando(false); };
 
   const esTriage = cita.motivo === "URGENCIA" && cita.estado !== "ATENDIDO";
 const nivelColor = {
@@ -361,7 +361,7 @@ boxShadow: esTriage ? `0 0 0 3px ${colores.shadow}` : "0 1px 3px rgba(0,0,0,0.05
 
 {estadoMostrado !== "ATENDIDO" && (
   <button
-    onClick={() => { setNuevoEstado(cita.estado); setEditando(true); }}
+    onClick={() => { setNuevoEstado(estadoMostrado); setEditando(true); }}
     style={{
       display: "flex", alignItems: "center", gap: "4px", background: "none",
       border: "1px solid #e2e8f0", borderRadius: "6px", padding: "4px 10px",
