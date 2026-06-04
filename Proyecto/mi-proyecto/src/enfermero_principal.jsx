@@ -147,7 +147,8 @@ const [formData, setFormData] = useState({
   // ── validación ──
   const validar = () => {
   const errs = {}
-  if (!paciente) { errs.documento = 'Busque y seleccione un paciente primero'; setErrors(errs); return false }
+  if (documento.length > 15) { errs.documento = 'Máximo 15 dígitos'; setErrors(errs); return false }
+if (!paciente) { errs.documento = 'Busque y seleccione un paciente primero'; setErrors(errs); return false }
   if (!formData.sintomas.trim()) errs.sintomas = 'Los síntomas son obligatorios'
   if (!formData.triage) errs.triage = 'Seleccione un nivel de triage'
 
@@ -340,7 +341,7 @@ setFormData({
                   <input
                     type="text"
                     value={documento}
-                    onChange={(e) => { const v = e.target.value.replace(/\D/g, ''); setDocumento(v); setPaciente(null); setNoEncontrado(false) }}
+                    onChange={(e) => { const v = e.target.value.replace(/\D/g, ''); if (v.length > 15) return; setDocumento(v); setPaciente(null); setNoEncontrado(false) }}
                     onKeyDown={handleDocumentoKeyDown}
                     placeholder="Ej: 10203040"
                     style={errors.documento ? { borderColor: '#ef4444', background: '#fff5f5' } : {}}
