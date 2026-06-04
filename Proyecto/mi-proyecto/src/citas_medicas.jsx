@@ -36,10 +36,10 @@ const validarDisponibilidad = (fechaSeleccionada, medicoId, citasExistentes) => 
   }
 
   const citasDelMedico = citasExistentes.filter(c =>
-    String(c.medId) === String(medicoId) &&
-    c.fecha.split('T')[0] === fechaSeleccionada.split('T')[0] &&
-    c.estado !== 'CANCELADA'
-  )
+  String(c.medId) === String(medicoId) &&
+  c.fecha.replace(' ', 'T').split('T')[0] === fechaSeleccionada.split('T')[0] &&
+  c.estado !== 'CANCELADA'
+)
 
   const choque = citasDelMedico.find(c => {
     const existente = new Date(c.fecha.replace(' ', 'T'))
