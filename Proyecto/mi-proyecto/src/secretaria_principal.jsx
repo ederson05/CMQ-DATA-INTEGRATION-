@@ -74,10 +74,21 @@ const validarCampoRegistro = (name, value) => {
     case 'contactoEmergenciaNombre':
       if (v && !REGLAS.soloLetras(v)) return 'El nombre de contacto solo debe contener letras y espacios'
       return ''
+
+
+
+
+
+
     case 'contactoEmergenciaTel':
       if (v && !REGLAS.telefono(v)) return 'El teléfono de emergencia debe contener exactamente 10 dígitos numéricos'
       return ''
     default:
+
+
+
+
+
       return ''
   }
 }
@@ -107,10 +118,17 @@ const validarCampoEdicion = (name, value) => {
     case 'contactoEmergenciaNombre':
       if (v && !REGLAS.soloLetras(v)) return 'El nombre de contacto solo debe contener letras y espacios'
       return ''
-    case 'contactoEmergenciaTel':
-      if (v && !REGLAS.telefono(v)) return 'El teléfono de emergencia debe contener exactamente 10 dígitos numéricos'
-      return ''
-    default:
+
+case 'contactoEmergenciaTel':
+  if (v && !REGLAS.telefono(v)) return 'El teléfono de emergencia debe contener exactamente 10 dígitos numéricos'
+  return ''
+case 'fechaNacimiento':
+  if (!v) return 'La fecha de nacimiento es requerida'
+  if (!REGLAS.fechaValida(v)) return 'La fecha de nacimiento no puede ser una fecha futura'
+  return ''
+default:
+
+
       return ''
   }
 }
@@ -131,9 +149,9 @@ const validarFormularioCompleto = (paciente) => {
 
 const validarEdicionCompleta = (paciente) => {
   const campos = [
-    'nombre', 'telefono', 'email', 'direccion', 'ciudad',
-    'contactoEmergenciaNombre', 'contactoEmergenciaTel'
-  ]
+  'nombre', 'fechaNacimiento', 'telefono', 'email', 'direccion', 'ciudad',
+  'contactoEmergenciaNombre', 'contactoEmergenciaTel'
+]
   const errores = {}
   campos.forEach(campo => {
     const err = validarCampoEdicion(campo, paciente[campo])
@@ -767,10 +785,27 @@ function SecretariaPrincipal() {
             </div>
             <div className="modal-body">
 
-              <div className="form-group">
-                <label>IDENTIFICACION DEL PACIENTE</label>
-                <input type="text" value={pacienteEditando.id} disabled />
-              </div>
+
+
+
+<div className="form-group">
+  <label>IDENTIFICACION DEL PACIENTE</label>
+  <input type="text" value={pacienteEditando.id} disabled />
+</div>
+
+<div className="form-group">
+  <label>FECHA DE NACIMIENTO *</label>
+  <CampoRequerido error={erroresEdit.fechaNacimiento}>
+    <input type="date" max={hoy}
+      value={pacienteEditando.fechaNacimiento}
+      onChange={(e) => handleCambioEdit('fechaNacimiento', e.target.value)}
+      style={inputStyleEdit('fechaNacimiento')} />
+  </CampoRequerido>
+</div>
+
+
+
+
 
               <div className="form-group">
                 <label>NOMBRE COMPLETO *</label>
