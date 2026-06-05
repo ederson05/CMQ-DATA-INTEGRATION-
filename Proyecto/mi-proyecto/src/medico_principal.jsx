@@ -2024,7 +2024,7 @@ const fechaAnot = new Date(anio, mes - 1, dia, hh, mm);
                       </span>
                     </div>
                     <p className="acl-desc">{ac.descripcion}</p>
-                    <span className="acl-medico">Dr. {ac.medicoNombre}</span>
+                    <span className="acl-medico">  {ac.medicoNombre}</span>
                   </div>
                 ))
               )}
