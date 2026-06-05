@@ -230,19 +230,7 @@ app.get('/api/citas/hoy/:medId', async (req, res) => {
 
 
        JOIN tbl_paciente p ON c.pac_documento = p.pac_documento
-       WHERE (
-         c.med_id = $1
-         OR (
-           c.cit_motivo_consulta = 'URGENCIA'
-           AND c.cit_estado != 'ATENDIDO'
-           AND EXISTS (
-             SELECT 1 FROM tbl_medico
-             WHERE med_id = $1
-               AND med_especialidad = 'MEDICINA GENERAL'
-               AND med_activo = 1
-           )
-         )
-       )
+       WHERE c.med_id = $1
          AND DATE(c.cit_fecha_hora AT TIME ZONE 'America/Bogota') 
              = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')::date
        ORDER BY c.cit_fecha_hora ASC`,
